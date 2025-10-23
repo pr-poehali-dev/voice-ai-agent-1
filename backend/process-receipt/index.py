@@ -206,48 +206,128 @@ def detect_operation_type(text: str) -> str:
 
 
 def parse_receipt_from_text(text: str) -> Dict[str, Any]:
+    import re
     text_lower = text.lower()
     
     items = []
     total = 0
     
     if 'хлеб' in text_lower or 'булка' in text_lower:
-        items.append({'name': 'Хлеб', 'price': 50.00, 'quantity': 1})
+        items.append({
+            'name': 'Хлеб', 
+            'price': 50.00, 
+            'quantity': 1,
+            'measure': 'шт',
+            'vat': 'none',
+            'payment_method': 'full_payment',
+            'payment_object': 'commodity'
+        })
         total += 50.00
     
     if 'молоко' in text_lower:
-        items.append({'name': 'Молоко', 'price': 80.00, 'quantity': 1})
+        items.append({
+            'name': 'Молоко', 
+            'price': 80.00, 
+            'quantity': 1,
+            'measure': 'шт',
+            'vat': 'none',
+            'payment_method': 'full_payment',
+            'payment_object': 'commodity'
+        })
         total += 80.00
     
     if 'яблок' in text_lower or 'яблоко' in text_lower:
-        items.append({'name': 'Яблоки', 'price': 120.00, 'quantity': 1})
+        items.append({
+            'name': 'Яблоки', 
+            'price': 120.00, 
+            'quantity': 1,
+            'measure': 'кг',
+            'vat': 'none',
+            'payment_method': 'full_payment',
+            'payment_object': 'commodity'
+        })
         total += 120.00
     
     if 'кофе' in text_lower:
-        items.append({'name': 'Кофе', 'price': 350.00, 'quantity': 1})
+        items.append({
+            'name': 'Кофе', 
+            'price': 350.00, 
+            'quantity': 1,
+            'measure': 'шт',
+            'vat': 'none',
+            'payment_method': 'full_payment',
+            'payment_object': 'commodity'
+        })
         total += 350.00
     
     if 'сыр' in text_lower:
-        items.append({'name': 'Сыр', 'price': 450.00, 'quantity': 1})
+        items.append({
+            'name': 'Сыр', 
+            'price': 450.00, 
+            'quantity': 1,
+            'measure': 'кг',
+            'vat': 'none',
+            'payment_method': 'full_payment',
+            'payment_object': 'commodity'
+        })
         total += 450.00
     
-    import re
     price_matches = re.findall(r'(\d+)\s*(?:руб|₽|рублей)', text_lower)
     if price_matches and not items:
         for price_str in price_matches:
             price_val = float(price_str)
-            items.append({'name': 'Товар', 'price': price_val, 'quantity': 1})
+            items.append({
+                'name': 'Товар', 
+                'price': price_val, 
+                'quantity': 1,
+                'measure': 'шт',
+                'vat': 'none',
+                'payment_method': 'full_payment',
+                'payment_object': 'commodity'
+            })
             total += price_val
     
     if not items:
-        items.append({'name': 'Товар по умолчанию', 'price': 100.00, 'quantity': 1})
+        items.append({
+            'name': 'Товар по умолчанию', 
+            'price': 100.00, 
+            'quantity': 1,
+            'measure': 'шт',
+            'vat': 'none',
+            'payment_method': 'full_payment',
+            'payment_object': 'commodity'
+        })
         total = 100.00
+    
+    email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
+    customer_email = email_match.group(0) if email_match else 'customer@example.com'
+    
+    phone_match = re.search(r'\+?[78][\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}', text)
+    customer_phone = phone_match.group(0) if phone_match else None
+    
+    payment_type = 'electronically'
+    if 'налич' in text_lower or 'наличные' in text_lower or 'кэш' in text_lower:
+        payment_type = 'cash'
+    elif 'карт' in text_lower or 'безнал' in text_lower:
+        payment_type = 'electronically'
     
     return {
         'items': items,
         'total': round(total, 2),
-        'payment_type': 'card',
-        'customer_email': 'customer@example.com'
+        'payments': [{
+            'type': payment_type,
+            'sum': round(total, 2)
+        }],
+        'client': {
+            'email': customer_email,
+            'phone': customer_phone
+        },
+        'company': {
+            'email': 'company@example.com',
+            'sno': 'usn_income',
+            'inn': '1234567890',
+            'payment_address': 'example.com'
+        }
     }
 
 
