@@ -244,26 +244,27 @@ export const ReceiptPreview = ({
                       updateEditedField('items', newItems);
                     }}
                     className="h-7 text-sm bg-background border rounded px-1"
+                    title="Предмет расчета (тег 1212)"
                   >
-                    <option value="commodity">Товар</option>
-                    <option value="excise">Подакцизный</option>
-                    <option value="job">Работа</option>
-                    <option value="service">Услуга</option>
-                    <option value="gambling_bet">Ставка</option>
-                    <option value="gambling_prize">Выигрыш</option>
-                    <option value="lottery">Лотерея</option>
-                    <option value="lottery_prize">Приз</option>
-                    <option value="intellectual_activity">РИД</option>
-                    <option value="payment">Платеж</option>
-                    <option value="agent_commission">Агентское</option>
-                    <option value="composite">Составной</option>
-                    <option value="another">Иной</option>
-                    <option value="property_right">Имущество</option>
-                    <option value="non_operating_gain">Внереализ.</option>
-                    <option value="insurance_premium">Страховка</option>
-                    <option value="sales_tax">Торг. сбор</option>
-                    <option value="resort_fee">Курорт. сбор</option>
-                    <option value="deposit">Залог</option>
+                    <option value="commodity">1. Товар</option>
+                    <option value="excise">2. Подакцизный товар</option>
+                    <option value="job">3. Работа</option>
+                    <option value="service">4. Услуга</option>
+                    <option value="gambling_bet">5. Ставка азартной игры</option>
+                    <option value="gambling_prize">6. Выигрыш азартной игры</option>
+                    <option value="lottery">7. Лотерейный билет</option>
+                    <option value="lottery_prize">8. Выигрыш лотереи</option>
+                    <option value="intellectual_activity">9. РИД</option>
+                    <option value="payment">10. Платеж</option>
+                    <option value="agent_commission">11. Агентское вознаграждение</option>
+                    <option value="composite">12. Составной предмет расчета</option>
+                    <option value="another">13. Иной предмет расчета</option>
+                    <option value="property_right">14. Имущественное право</option>
+                    <option value="non_operating_gain">15. Внереализационный доход</option>
+                    <option value="insurance_premium">16. Страховые взносы</option>
+                    <option value="sales_tax">17. Торговый сбор</option>
+                    <option value="resort_fee">18. Курортный сбор</option>
+                    <option value="deposit">19. Залог</option>
                   </select>
                 </div>
                 <select 
@@ -290,9 +291,40 @@ export const ReceiptPreview = ({
                   <span className="font-medium">{item.name}</span>
                   <span className="font-medium">{item.price}₽</span>
                 </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
+                <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
                   <span>{item.quantity} {item.measure || 'шт'} • {item.vat === 'none' ? 'Без НДС' : item.vat}</span>
-                  <span>{(item.price * item.quantity).toFixed(2)}₽</span>
+                  <span className="text-right">{(item.price * item.quantity).toFixed(2)}₽</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Предмет: {
+                    item.payment_object === 'commodity' ? 'Товар' :
+                    item.payment_object === 'excise' ? 'Подакцизный товар' :
+                    item.payment_object === 'job' ? 'Работа' :
+                    item.payment_object === 'service' ? 'Услуга' :
+                    item.payment_object === 'gambling_bet' ? 'Ставка' :
+                    item.payment_object === 'gambling_prize' ? 'Выигрыш' :
+                    item.payment_object === 'lottery' ? 'Лотерея' :
+                    item.payment_object === 'lottery_prize' ? 'Приз лотереи' :
+                    item.payment_object === 'intellectual_activity' ? 'РИД' :
+                    item.payment_object === 'payment' ? 'Платеж' :
+                    item.payment_object === 'agent_commission' ? 'Агентское' :
+                    item.payment_object === 'composite' ? 'Составной' :
+                    item.payment_object === 'another' ? 'Иной' :
+                    item.payment_object === 'property_right' ? 'Имущество' :
+                    item.payment_object === 'non_operating_gain' ? 'Внереализ.' :
+                    item.payment_object === 'insurance_premium' ? 'Страховка' :
+                    item.payment_object === 'sales_tax' ? 'Торг. сбор' :
+                    item.payment_object === 'resort_fee' ? 'Курорт. сбор' :
+                    item.payment_object === 'deposit' ? 'Залог' : 'Товар'
+                  } • Метод: {
+                    item.payment_method === 'full_prepayment' ? 'Предоплата 100%' :
+                    item.payment_method === 'prepayment' ? 'Предоплата' :
+                    item.payment_method === 'advance' ? 'Аванс' :
+                    item.payment_method === 'full_payment' ? 'Полный расчет' :
+                    item.payment_method === 'partial_payment' ? 'Частичный' :
+                    item.payment_method === 'credit' ? 'Кредит' :
+                    item.payment_method === 'credit_payment' ? 'Оплата кредита' : 'Полный расчет'
+                  }
                 </div>
               </div>
             )}
