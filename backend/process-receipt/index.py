@@ -38,6 +38,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     body_data = json.loads(event.get('body', '{}'))
     user_message: str = body_data.get('message', '')
     operation_type: str = body_data.get('operation_type', '')
+    preview_only: bool = body_data.get('preview_only', False)
     
     if not user_message:
         return {
@@ -53,6 +54,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         operation_type = detect_operation_type(user_message)
     
     parsed_receipt = parse_receipt_from_text(user_message)
+    
+    if preview_only:
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'success': True,
+                'message': 'Предпросмотр чека',
+                'receipt': parsed_receipt,
+                'operation_type': operation_type,
+                'preview': True
+            })
+        }
     
     login = os.environ.get('ECOMKASSA_LOGIN', '')
     password = os.environ.get('ECOMKASSA_PASSWORD', '')

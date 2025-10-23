@@ -9,10 +9,11 @@ import { toast } from 'sonner';
 
 interface Message {
   id: string;
-  type: 'user' | 'agent';
+  type: 'user' | 'agent' | 'preview';
   content: string;
   timestamp: Date;
   receiptData?: any;
+  previewData?: any;
 }
 
 const Index = () => {
@@ -29,6 +30,7 @@ const Index = () => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [operationType, setOperationType] = useState('sell');
+  const [pendingReceipt, setPendingReceipt] = useState<any>(null);
 
   const handleSendMessage = async () => {
     if (!input.trim() || isProcessing) return;
@@ -51,7 +53,7 @@ const Index = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: userInput, operation_type: operationType }),
+        body: JSON.stringify({ message: userInput, operation_type: operationType, preview_only: true }),
       });
 
       const data = await response.json();
@@ -66,21 +68,17 @@ const Index = () => {
       const detectedType = data.operation_type || operationType;
       const typeName = operationNames[detectedType] || detectedType;
 
-      const agentMessage: Message = {
+      const previewMessage: Message = {
         id: (Date.now() + 1).toString(),
-        type: 'agent',
-        content: `${data.message || 'Чек обработан'} (${typeName})`,
+        type: 'preview',
+        content: 'Проверь данные чека перед отправкой',
         timestamp: new Date(),
-        receiptData: data.receipt,
+        previewData: { ...data.receipt, operation_type: detectedType, typeName },
       };
 
-      setMessages((prev) => [...prev, agentMessage]);
-      
-      if (data.success) {
-        toast.success(`Чек успешно создан! Тип: ${typeName}`);
-      } else {
-        toast.error('Произошла ошибка при создании чека');
-      }
+      setMessages((prev) => [...prev, previewMessage]);
+      setPendingReceipt({ userInput, operationType: detectedType });
+      toast.info('Проверь данные и подтверди отправку');
     } catch (error) {
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
@@ -93,6 +91,62 @@ const Index = () => {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleConfirmReceipt = async () => {
+    if (!pendingReceipt) return;
+    
+    setIsProcessing(true);
+    try {
+      const response = await fetch('https://functions.poehali.dev/734da785-2867-4c5d-b20c-90fc6d86b11c', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          message: pendingReceipt.userInput, 
+          operation_type: pendingReceipt.operationType,
+          preview_only: false 
+        }),
+      });
+
+      const data = await response.json();
+
+      const operationNames: Record<string, string> = {
+        sell: 'Продажа',
+        refund: 'Возврат',
+        sell_correction: 'Коррекция прихода',
+        refund_correction: 'Коррекция расхода'
+      };
+
+      const typeName = operationNames[pendingReceipt.operationType] || pendingReceipt.operationType;
+
+      const agentMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'agent',
+        content: `${data.message || 'Чек отправлен'} (${typeName})`,
+        timestamp: new Date(),
+        receiptData: data.receipt,
+      };
+
+      setMessages((prev) => [...prev, agentMessage]);
+      setPendingReceipt(null);
+      
+      if (data.success) {
+        toast.success(`Чек успешно создан! Тип: ${typeName}`);
+      } else {
+        toast.error('Произошла ошибка при создании чека');
+      }
+    } catch (error) {
+      toast.error('Ошибка соединения с сервером');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCancelReceipt = () => {
+    setPendingReceipt(null);
+    toast.info('Отменено');
   };
 
   const handleVoiceInput = () => {
@@ -163,12 +217,12 @@ const Index = () => {
             >
               <Avatar
                 className={`w-10 h-10 flex items-center justify-center ${
-                  message.type === 'agent'
+                  message.type === 'agent' || message.type === 'preview'
                     ? 'bg-gradient-to-br from-primary to-secondary'
                     : 'bg-muted'
                 }`}
               >
-                {message.type === 'agent' ? (
+                {message.type === 'agent' || message.type === 'preview' ? (
                   <Icon name="Bot" size={20} className="text-white" />
                 ) : (
                   <Icon name="User" size={20} className="text-foreground" />
@@ -184,10 +238,64 @@ const Index = () => {
                   className={`p-4 ${
                     message.type === 'agent'
                       ? 'bg-card border-primary/20'
+                      : message.type === 'preview'
+                      ? 'bg-accent/10 border-accent'
                       : 'bg-primary text-primary-foreground border-primary'
                   }`}
                 >
                   <p className="text-sm leading-relaxed">{message.content}</p>
+                  {message.previewData && (
+                    <div className="mt-4 space-y-3">
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="bg-background/50 p-2 rounded">
+                          <div className="text-xs text-muted-foreground">Тип операции</div>
+                          <div className="font-medium">{message.previewData.typeName}</div>
+                        </div>
+                        <div className="bg-background/50 p-2 rounded">
+                          <div className="text-xs text-muted-foreground">Email клиента</div>
+                          <div className="font-medium">{message.previewData.buyer?.email || 'Не указан'}</div>
+                        </div>
+                        <div className="bg-background/50 p-2 rounded">
+                          <div className="text-xs text-muted-foreground">ИНН продавца</div>
+                          <div className="font-medium">{message.previewData.seller?.inn || 'Не указан'}</div>
+                        </div>
+                        <div className="bg-background/50 p-2 rounded">
+                          <div className="text-xs text-muted-foreground">Адрес расчетов</div>
+                          <div className="font-medium text-xs truncate">{message.previewData.seller?.payment_address || 'Не указан'}</div>
+                        </div>
+                      </div>
+                      <div className="bg-background/50 p-3 rounded space-y-2">
+                        <div className="text-xs font-medium text-muted-foreground">Товары</div>
+                        {message.previewData.items?.map((item: any, idx: number) => (
+                          <div key={idx} className="flex justify-between text-sm border-b border-border/50 pb-1">
+                            <span>{item.name} x{item.quantity} {item.measure || 'шт'}</span>
+                            <span className="font-medium">{item.price}₽</span>
+                          </div>
+                        ))}
+                        <div className="flex justify-between text-base font-bold pt-2 border-t border-border">
+                          <span>Итого</span>
+                          <span>{message.previewData.total}₽</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <Button 
+                          onClick={handleConfirmReceipt} 
+                          disabled={isProcessing}
+                          className="flex-1"
+                        >
+                          <Icon name="Check" size={16} className="mr-2" />
+                          Отправить чек
+                        </Button>
+                        <Button 
+                          onClick={handleCancelReceipt}
+                          variant="outline"
+                          disabled={isProcessing}
+                        >
+                          <Icon name="X" size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   {message.receiptData && (
                     <div className="mt-3 pt-3 border-t border-primary/20 space-y-2">
                       <div className="flex items-center gap-2 text-xs text-accent">

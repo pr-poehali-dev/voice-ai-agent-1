@@ -1,14 +1,16 @@
 {
   "tests": [
     {
-      "name": "Test receipt parsing from text",
+      "name": "Test receipt preview mode",
       "method": "POST",
       "body": {
-        "message": "Создай чек на хлеб за 50 рублей и молоко за 80 рублей"
+        "message": "Создай чек на хлеб за 50 рублей и молоко за 80 рублей",
+        "preview_only": true
       },
       "expectedStatus": 200,
       "expectedBody": {
-        "success": true
+        "success": true,
+        "preview": true
       },
       "bodyMatcher": "partial"
     },
