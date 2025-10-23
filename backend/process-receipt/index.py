@@ -248,6 +248,13 @@ def parse_receipt_from_text(text: str) -> Dict[str, Any]:
 
 Текст клиента: "{text}"
 
+ОБЯЗАТЕЛЬНЫЕ ПОЛЯ, которые должны быть в тексте:
+1. Email клиента (обязательно)
+2. Название товара/услуги (обязательно)
+3. Цена товара/услуги (обязательно)
+
+Если любое из этих полей отсутствует, верни JSON с полем "error" и описанием чего не хватает.
+
 Верни JSON в формате:
 {{
   "items": [
@@ -268,15 +275,18 @@ def parse_receipt_from_text(text: str) -> Dict[str, Any]:
   "payment_type": "electronically"
 }}
 
-Правила:
-- ВАЖНО: Используй ТОЛЬКО цены из текста. Если цена не указана, верни price: 0
-- Если email не указан, используй "customer@example.com"
+Правила определения полей:
+- payment_object: Определи автоматически из названия товара:
+  * "commodity" - физические товары (круассан, кофе, книга, телефон)
+  * "service" - услуги (консультация, стрижка, доставка, ремонт)
+  * "work" - выполнение работ (монтаж, установка, строительство)
+- payment_method: всегда "full_payment" (полная оплата)
+- payment_type: "cash" если явно указано "наличными", иначе "electronically"
+- measure: "шт" для товаров, "услуга" для услуг, "работа" для работ
+- vat: "none" по умолчанию
+- quantity: 1 если не указано иначе
 - Если телефон не указан, оставь null
-- payment_type: "cash" для наличных, "electronically" для безнала
-- measure: "шт", "кг", "л", "м" и т.д.
-- vat: "none", "vat0", "vat10", "vat20"
-- payment_object: "commodity" (товар), "service" (услуга), "work" (работа)
-- Не придумывай цены — бери из текста или ставь 0
+- ВАЖНО: Цена обязательна. Если не указана - верни ошибку
 """
     
     chat_url = 'https://gigachat.devices.sberbank.ru/api/v1/chat/completions'
@@ -311,6 +321,19 @@ def parse_receipt_from_text(text: str) -> Dict[str, Any]:
             parsed_data = json.loads(json_match.group(0))
             
             print(f"[DEBUG] Parsed data: {parsed_data}")
+            
+            if 'error' in parsed_data:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({
+                        'error': parsed_data['error'],
+                        'message': 'Не хватает обязательных данных для создания чека'
+                    })
+                }
             
             total = sum(item.get('price', 0) * item.get('quantity', 1) for item in parsed_data.get('items', []))
             
