@@ -238,7 +238,7 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
     if settings is None:
         settings = {}
     
-    auth_key = os.environ.get('GIGACHAT_AUTH_KEY', '')
+    auth_key = settings.get('gigachat_auth_key') or os.environ.get('GIGACHAT_AUTH_KEY', '')
     
     if not auth_key:
         return fallback_parse_receipt(text, settings)
