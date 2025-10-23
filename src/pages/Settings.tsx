@@ -85,11 +85,24 @@ const Settings = () => {
         })
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Ошибка загрузки данных');
+        const errorMsg = data.error || `Ошибка ${response.status}`;
+        toast.error(`API Екомкасса: ${errorMsg}`);
+        return;
       }
 
-      const data = await response.json();
+      if (typeof data === 'string') {
+        toast.error('API вернул некорректные данные. Проверьте логин и пароль.');
+        return;
+      }
+
+      if (!Array.isArray(data)) {
+        toast.error('API вернул неожиданный формат данных');
+        return;
+      }
+
       const shops: Shop[] = data.map((shop: any) => ({
         id: shop.id || '',
         description: shop.description || 'Без описания',
@@ -101,7 +114,7 @@ const Settings = () => {
       setSettings({ ...settings, available_shops: shops });
       toast.success(`Загружено магазинов: ${shops.length}`);
     } catch (error) {
-      toast.error('Не удалось загрузить список магазинов');
+      toast.error('Ошибка соединения с сервером');
     } finally {
       setIsLoadingShops(false);
     }
