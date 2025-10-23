@@ -257,14 +257,24 @@ export const ReceiptPreview = ({
                     <option value="intellectual_activity">9. РИД</option>
                     <option value="payment">10. Платеж</option>
                     <option value="agent_commission">11. Агентское вознаграждение</option>
-                    <option value="composite">12. Составной предмет расчета</option>
-                    <option value="another">13. Иной предмет расчета</option>
+                    <option value="composite">12. Составной</option>
+                    <option value="another">13. Иной</option>
                     <option value="property_right">14. Имущественное право</option>
                     <option value="non_operating_gain">15. Внереализационный доход</option>
                     <option value="insurance_premium">16. Страховые взносы</option>
                     <option value="sales_tax">17. Торговый сбор</option>
                     <option value="resort_fee">18. Курортный сбор</option>
                     <option value="deposit">19. Залог</option>
+                    <option value="expense">20. Расход (ФФД 1.2)</option>
+                    <option value="pension_insurance">21. Пенсионное страхование ИП (ФФД 1.2)</option>
+                    <option value="health_insurance">22. Медицинское страхование ИП (ФФД 1.2)</option>
+                    <option value="social_insurance">23. Социальное страхование ИП (ФФД 1.2)</option>
+                    <option value="casino_payment">24. Выплата казино (ФФД 1.2)</option>
+                    <option value="vendor_commission">25. Вознаграждение оператора (ФФД 1.2)</option>
+                    <option value="marked_commodity">30. Товар с маркировкой (ФФД 1.2)</option>
+                    <option value="marked_excise">31. Подакцизный с маркировкой (ФФД 1.2)</option>
+                    <option value="unmarked_commodity">32. Товар без маркировки (ФФД 1.2)</option>
+                    <option value="unmarked_excise">33. Подакцизный без маркировки (ФФД 1.2)</option>
                   </select>
                 </div>
                 <select 
@@ -275,14 +285,15 @@ export const ReceiptPreview = ({
                     updateEditedField('items', newItems);
                   }}
                   className="h-7 text-sm bg-background border rounded px-1"
+                  title="Признак способа расчета (тег 1214)"
                 >
-                  <option value="full_prepayment">Предоплата 100%</option>
-                  <option value="prepayment">Предоплата</option>
-                  <option value="advance">Аванс</option>
-                  <option value="full_payment">Полный расчет</option>
-                  <option value="partial_payment">Частичный расчет и кредит</option>
-                  <option value="credit">Передача в кредит</option>
-                  <option value="credit_payment">Оплата кредита</option>
+                  <option value="full_prepayment">1. Предоплата 100%</option>
+                  <option value="prepayment">2. Предоплата</option>
+                  <option value="advance">3. Аванс</option>
+                  <option value="full_payment">4. Полный расчет</option>
+                  <option value="partial_payment">5. Частичный расчет и кредит</option>
+                  <option value="credit">6. Передача в кредит</option>
+                  <option value="credit_payment">7. Оплата кредита</option>
                 </select>
               </div>
             ) : (
@@ -298,13 +309,13 @@ export const ReceiptPreview = ({
                 <div className="text-xs text-muted-foreground">
                   Предмет: {
                     item.payment_object === 'commodity' ? 'Товар' :
-                    item.payment_object === 'excise' ? 'Подакцизный товар' :
+                    item.payment_object === 'excise' ? 'Подакцизный' :
                     item.payment_object === 'job' ? 'Работа' :
                     item.payment_object === 'service' ? 'Услуга' :
                     item.payment_object === 'gambling_bet' ? 'Ставка' :
                     item.payment_object === 'gambling_prize' ? 'Выигрыш' :
                     item.payment_object === 'lottery' ? 'Лотерея' :
-                    item.payment_object === 'lottery_prize' ? 'Приз лотереи' :
+                    item.payment_object === 'lottery_prize' ? 'Приз' :
                     item.payment_object === 'intellectual_activity' ? 'РИД' :
                     item.payment_object === 'payment' ? 'Платеж' :
                     item.payment_object === 'agent_commission' ? 'Агентское' :
@@ -315,7 +326,17 @@ export const ReceiptPreview = ({
                     item.payment_object === 'insurance_premium' ? 'Страховка' :
                     item.payment_object === 'sales_tax' ? 'Торг. сбор' :
                     item.payment_object === 'resort_fee' ? 'Курорт. сбор' :
-                    item.payment_object === 'deposit' ? 'Залог' : 'Товар'
+                    item.payment_object === 'deposit' ? 'Залог' :
+                    item.payment_object === 'expense' ? 'Расход' :
+                    item.payment_object === 'pension_insurance' ? 'Пенсионное' :
+                    item.payment_object === 'health_insurance' ? 'Медицинское' :
+                    item.payment_object === 'social_insurance' ? 'Социальное' :
+                    item.payment_object === 'casino_payment' ? 'Выплата казино' :
+                    item.payment_object === 'vendor_commission' ? 'Комиссия' :
+                    item.payment_object === 'marked_commodity' ? 'Товар (марк.)' :
+                    item.payment_object === 'marked_excise' ? 'Подакциз (марк.)' :
+                    item.payment_object === 'unmarked_commodity' ? 'Товар (без марк.)' :
+                    item.payment_object === 'unmarked_excise' ? 'Подакциз (без марк.)' : 'Товар'
                   } • Метод: {
                     item.payment_method === 'full_prepayment' ? 'Предоплата 100%' :
                     item.payment_method === 'prepayment' ? 'Предоплата' :
