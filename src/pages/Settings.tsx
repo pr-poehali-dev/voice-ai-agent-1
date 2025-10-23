@@ -16,6 +16,9 @@ interface IntegrationSettings {
   default_vat: string;
   company_email: string;
   payment_address: string;
+  gigachat_auth_key: string;
+  ecomkassa_login: string;
+  ecomkassa_password: string;
 }
 
 const Settings = () => {
@@ -26,7 +29,10 @@ const Settings = () => {
     sno: 'usn_income',
     default_vat: 'none',
     company_email: '',
-    payment_address: ''
+    payment_address: '',
+    gigachat_auth_key: '',
+    ecomkassa_login: '',
+    ecomkassa_password: ''
   });
 
   useEffect(() => {
@@ -65,26 +71,28 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Alert>
-                <AlertDescription className="space-y-2">
-                  <p className="font-medium">GigaChat Authorization Key</p>
-                  <p className="text-sm">
-                    Секрет <code className="bg-muted px-1 py-0.5 rounded">GIGACHAT_AUTH_KEY</code> уже настроен на сервере.
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Формат: base64(Client_ID:Client_Secret). Получить ключи можно в{' '}
-                    <a 
-                      href="https://developers.sber.ru/studio/workspaces" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline inline-flex items-center gap-1"
-                    >
-                      GigaChat Studio
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </p>
-                </AlertDescription>
-              </Alert>
+              <div className="space-y-2">
+                <Label htmlFor="gigachat_auth_key">GigaChat Authorization Key</Label>
+                <Input
+                  id="gigachat_auth_key"
+                  type="password"
+                  value={settings.gigachat_auth_key}
+                  onChange={(e) => setSettings({ ...settings, gigachat_auth_key: e.target.value })}
+                  placeholder="Введите ключ или оставьте пустым для использования серверного"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Формат: base64(Client_ID:Client_Secret). Получить ключи можно в{' '}
+                  <a 
+                    href="https://developers.sber.ru/studio/workspaces" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    GigaChat Studio
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </p>
+              </div>
             </CardContent>
           </Card>
 
@@ -96,15 +104,26 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Alert>
-                <AlertDescription className="space-y-2">
-                  <p className="font-medium">API Credentials</p>
-                  <p className="text-sm">
-                    Секреты <code className="bg-muted px-1 py-0.5 rounded">ECOMKASSA_LOGIN</code> и{' '}
-                    <code className="bg-muted px-1 py-0.5 rounded">ECOMKASSA_PASSWORD</code> настроены на сервере.
-                  </p>
-                </AlertDescription>
-              </Alert>
+              <div className="space-y-2">
+                <Label htmlFor="ecomkassa_login">Логин API Екомкасса</Label>
+                <Input
+                  id="ecomkassa_login"
+                  value={settings.ecomkassa_login}
+                  onChange={(e) => setSettings({ ...settings, ecomkassa_login: e.target.value })}
+                  placeholder="Введите логин или оставьте пустым для использования серверного"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ecomkassa_password">Пароль API Екомкасса</Label>
+                <Input
+                  id="ecomkassa_password"
+                  type="password"
+                  value={settings.ecomkassa_password}
+                  onChange={(e) => setSettings({ ...settings, ecomkassa_password: e.target.value })}
+                  placeholder="Введите пароль или оставьте пустым для использования серверного"
+                />
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="group_code">ID магазина (Group Code)</Label>
