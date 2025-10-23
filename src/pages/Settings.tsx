@@ -9,6 +9,14 @@ import { ArrowLeft, Save, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+interface Shop {
+  id: string;
+  description: string;
+  inn: string;
+  sno: string;
+  payment_address: string;
+}
+
 interface IntegrationSettings {
   group_code: string;
   inn: string;
@@ -19,6 +27,7 @@ interface IntegrationSettings {
   gigachat_auth_key: string;
   ecomkassa_login: string;
   ecomkassa_password: string;
+  available_shops: Shop[];
 }
 
 const Settings = () => {
@@ -32,8 +41,10 @@ const Settings = () => {
     payment_address: '',
     gigachat_auth_key: '',
     ecomkassa_login: '',
-    ecomkassa_password: ''
+    ecomkassa_password: '',
+    available_shops: []
   });
+  const [isLoadingShops, setIsLoadingShops] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('ecomkassa_settings');
@@ -48,10 +59,63 @@ const Settings = () => {
         payment_address: parsed.payment_address || '',
         gigachat_auth_key: parsed.gigachat_auth_key || '',
         ecomkassa_login: parsed.ecomkassa_login || '',
-        ecomkassa_password: parsed.ecomkassa_password || ''
+        ecomkassa_password: parsed.ecomkassa_password || '',
+        available_shops: parsed.available_shops || []
       });
     }
   }, []);
+
+  const loadShops = async () => {
+    if (!settings.ecomkassa_login || !settings.ecomkassa_password) {
+      toast.error('Введите логин и пароль API Екомкасса');
+      return;
+    }
+
+    setIsLoadingShops(true);
+    try {
+      const auth = btoa(`${settings.ecomkassa_login}:${settings.ecomkassa_password}`);
+      const response = await fetch('https://api.ecomkassa.ru/api/mobile/v1/profile/firm', {
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка загрузки данных');
+      }
+
+      const data = await response.json();
+      const shops: Shop[] = data.map((shop: any) => ({
+        id: shop.id || '',
+        description: shop.description || 'Без описания',
+        inn: shop.inn || '',
+        sno: shop.sno || 'usn_income',
+        payment_address: shop.payment_address || ''
+      }));
+
+      setSettings({ ...settings, available_shops: shops });
+      toast.success(`Загружено магазинов: ${shops.length}`);
+    } catch (error) {
+      toast.error('Не удалось загрузить список магазинов');
+    } finally {
+      setIsLoadingShops(false);
+    }
+  };
+
+  const handleShopSelect = (shopId: string) => {
+    const shop = settings.available_shops.find(s => s.id === shopId);
+    if (shop) {
+      setSettings({
+        ...settings,
+        group_code: shop.id,
+        inn: shop.inn,
+        sno: shop.sno,
+        payment_address: shop.payment_address
+      });
+      toast.info(`Выбран магазин: ${shop.description}`);
+    }
+  };
 
   const handleSave = () => {
     localStorage.setItem('ecomkassa_settings', JSON.stringify(settings));
@@ -137,13 +201,39 @@ const Settings = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="group_code">ID магазина (Group Code)</Label>
-                <Input
-                  id="group_code"
-                  value={settings.group_code}
-                  onChange={(e) => setSettings({ ...settings, group_code: e.target.value })}
-                  placeholder="Введите ID магазина"
-                />
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="group_code">Магазин</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={loadShops}
+                    disabled={isLoadingShops || !settings.ecomkassa_login || !settings.ecomkassa_password}
+                  >
+                    {isLoadingShops ? 'Загрузка...' : 'Загрузить магазины'}
+                  </Button>
+                </div>
+                {settings.available_shops.length > 0 ? (
+                  <Select value={settings.group_code} onValueChange={handleShopSelect}>
+                    <SelectTrigger id="group_code">
+                      <SelectValue placeholder="Выберите магазин" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {settings.available_shops.map((shop) => (
+                        <SelectItem key={shop.id} value={shop.id}>
+                          {shop.id} - {shop.description}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    id="group_code"
+                    value={settings.group_code}
+                    onChange={(e) => setSettings({ ...settings, group_code: e.target.value })}
+                    placeholder="Введите ID магазина или загрузите список"
+                  />
+                )}
               </div>
 
               <div className="space-y-2">
