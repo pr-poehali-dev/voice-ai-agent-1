@@ -51,8 +51,13 @@ export const ReceiptPreview = ({
               onChange={(e) => updateEditedField('payments.0.type', e.target.value)}
               className="w-full bg-background border rounded px-2 py-1 text-sm"
             >
-              <option value="electronically">Безналичный</option>
-              <option value="cash">Наличные</option>
+              <option value="0">Наличные</option>
+              <option value="1">Безналичный</option>
+              <option value="2">Предварительная оплата (аванс)</option>
+              <option value="3">Последующая оплата (кредит)</option>
+              <option value="4">Иная форма оплаты</option>
+              <option value="5">Расширенный аванс</option>
+              <option value="6">Расширенный кредит</option>
             </select>
           ) : (
             <div className="font-medium">
@@ -161,7 +166,7 @@ export const ReceiptPreview = ({
                     placeholder="Цена"
                   />
                 </div>
-                <div className="grid grid-cols-3 gap-1">
+                <div className="grid grid-cols-2 gap-1">
                   <Input 
                     type="number"
                     value={item.quantity}
@@ -174,18 +179,56 @@ export const ReceiptPreview = ({
                     placeholder="Кол-во"
                   />
                   <select 
-                    value={item.vat || 'none'}
+                    value={item.measurement_unit || '0'}
                     onChange={(e) => {
                       const newItems = [...editedData.items];
-                      newItems[idx].vat = e.target.value;
+                      newItems[idx].measurement_unit = e.target.value;
+                      updateEditedField('items', newItems);
+                    }}
+                    className="h-7 text-sm bg-background border rounded px-1"
+                  >
+                    <option value="0">Штука</option>
+                    <option value="10">Грамм</option>
+                    <option value="11">Килограмм</option>
+                    <option value="12">Тонна</option>
+                    <option value="20">Сантиметр</option>
+                    <option value="21">Дециметр</option>
+                    <option value="22">Метр</option>
+                    <option value="30">Кв. см</option>
+                    <option value="31">Кв. дм</option>
+                    <option value="32">Кв. м</option>
+                    <option value="40">Миллилитр</option>
+                    <option value="41">Литр</option>
+                    <option value="42">Куб. м</option>
+                    <option value="50">кВт⋅ч</option>
+                    <option value="51">Гкал</option>
+                    <option value="70">Сутки</option>
+                    <option value="71">Час</option>
+                    <option value="72">Минута</option>
+                    <option value="73">Секунда</option>
+                    <option value="80">Кбайт</option>
+                    <option value="81">Мбайт</option>
+                    <option value="82">Гбайт</option>
+                    <option value="83">Тбайт</option>
+                    <option value="255">Иная</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-1">
+                  <select 
+                    value={item.vat?.type || 'none'}
+                    onChange={(e) => {
+                      const newItems = [...editedData.items];
+                      newItems[idx].vat = { type: e.target.value };
                       updateEditedField('items', newItems);
                     }}
                     className="h-7 text-sm bg-background border rounded px-1"
                   >
                     <option value="none">Без НДС</option>
-                    <option value="vat20">НДС 20%</option>
-                    <option value="vat10">НДС 10%</option>
                     <option value="vat0">НДС 0%</option>
+                    <option value="vat10">НДС 10%</option>
+                    <option value="vat110">НДС 10/110</option>
+                    <option value="vat20">НДС 20%</option>
+                    <option value="vat120">НДС 20/120</option>
                   </select>
                   <select 
                     value={item.payment_object || 'commodity'}
@@ -197,10 +240,43 @@ export const ReceiptPreview = ({
                     className="h-7 text-sm bg-background border rounded px-1"
                   >
                     <option value="commodity">Товар</option>
+                    <option value="excise">Подакцизный</option>
+                    <option value="job">Работа</option>
                     <option value="service">Услуга</option>
-                    <option value="work">Работа</option>
+                    <option value="gambling_bet">Ставка</option>
+                    <option value="gambling_prize">Выигрыш</option>
+                    <option value="lottery">Лотерея</option>
+                    <option value="lottery_prize">Приз</option>
+                    <option value="intellectual_activity">РИД</option>
+                    <option value="payment">Платеж</option>
+                    <option value="agent_commission">Агентское</option>
+                    <option value="composite">Составной</option>
+                    <option value="another">Иной</option>
+                    <option value="property_right">Имущество</option>
+                    <option value="non_operating_gain">Внереализ.</option>
+                    <option value="insurance_premium">Страховка</option>
+                    <option value="sales_tax">Торг. сбор</option>
+                    <option value="resort_fee">Курорт. сбор</option>
+                    <option value="deposit">Залог</option>
                   </select>
                 </div>
+                <select 
+                  value={item.payment_method || 'full_payment'}
+                  onChange={(e) => {
+                    const newItems = [...editedData.items];
+                    newItems[idx].payment_method = e.target.value;
+                    updateEditedField('items', newItems);
+                  }}
+                  className="h-7 text-sm bg-background border rounded px-1"
+                >
+                  <option value="full_prepayment">Предоплата 100%</option>
+                  <option value="prepayment">Предоплата</option>
+                  <option value="advance">Аванс</option>
+                  <option value="full_payment">Полный расчет</option>
+                  <option value="partial_payment">Частичный расчет и кредит</option>
+                  <option value="credit">Передача в кредит</option>
+                  <option value="credit_payment">Оплата кредита</option>
+                </select>
               </div>
             ) : (
               <div className="space-y-1">
