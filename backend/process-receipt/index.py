@@ -269,13 +269,14 @@ def parse_receipt_from_text(text: str) -> Dict[str, Any]:
 }}
 
 Правила:
+- ВАЖНО: Используй ТОЛЬКО цены из текста. Если цена не указана, верни price: 0
 - Если email не указан, используй "customer@example.com"
 - Если телефон не указан, оставь null
 - payment_type: "cash" для наличных, "electronically" для безнала
 - measure: "шт", "кг", "л", "м" и т.д.
 - vat: "none", "vat0", "vat10", "vat20"
 - payment_object: "commodity" (товар), "service" (услуга), "work" (работа)
-- Если цена не указана явно, оцени разумную рыночную цену
+- Не придумывай цены — бери из текста или ставь 0
 """
     
     chat_url = 'https://gigachat.devices.sberbank.ru/api/v1/chat/completions'
