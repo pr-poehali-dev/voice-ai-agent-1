@@ -540,6 +540,25 @@ def create_ecomkassa_receipt(
     client_data = receipt_data.get('client', {})
     company_data = receipt_data.get('company', {})
     
+    measure_map = {
+        'шт': '0',
+        'г': '10',
+        'кг': '11',
+        'т': '12',
+        'см': '13',
+        'м': '14',
+        'км': '15',
+        'кв.м': '16',
+        'куб.м': '17',
+        'л': '18',
+        'час': '19',
+        'мин': '20',
+        'сек': '21',
+        'кВт⋅ч': '22',
+        'Гкал': '23',
+        'сутки': '24'
+    }
+    
     ecomkassa_payload = {
         'external_id': f'receipt_{abs(hash(str(receipt_data)))}',
         'print': True,
@@ -560,7 +579,7 @@ def create_ecomkassa_receipt(
                 'price': item['price'],
                 'quantity': item.get('quantity', 1),
                 'amount': round(item['price'] * item.get('quantity', 1), 2),
-                'measurement_unit': item.get('measurement_unit', '0'),
+                'measurement_unit': measure_map.get(item.get('measure', 'шт'), '0'),
                 'payment_method': item.get('payment_method', 'full_payment'),
                 'payment_object': item.get('payment_object', 'commodity'),
                 'vat': {
