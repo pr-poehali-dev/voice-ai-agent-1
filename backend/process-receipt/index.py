@@ -500,15 +500,21 @@ def create_ecomkassa_receipt(
     
     from datetime import datetime
     
+    client_data = receipt_data.get('client', {})
+    company_data = receipt_data.get('company', {})
+    
     ecomkassa_payload = {
         'external_id': f'receipt_{abs(hash(str(receipt_data)))}',
         'print': True,
         'timestamp': datetime.now().strftime('%d.%m.%Y %H:%M:%S'),
         'client': {
-            'email': receipt_data.get('customer_email', '')
+            'email': client_data.get('email', '')
         },
         'company': {
-            'payment_address': 'example.com'
+            'email': company_data.get('email', ''),
+            'sno': company_data.get('sno', 'usn_income'),
+            'inn': company_data.get('inn', ''),
+            'payment_address': company_data.get('payment_address', '')
         },
         'items': [
             {
@@ -517,17 +523,21 @@ def create_ecomkassa_receipt(
                 'price': item['price'],
                 'quantity': item.get('quantity', 1),
                 'amount': round(item['price'] * item.get('quantity', 1), 2),
-                'measure': 'piece',
-                'payment_method': 'full_payment',
-                'vat': 'none'
+                'measurement_unit': item.get('measurement_unit', '0'),
+                'payment_method': item.get('payment_method', 'full_payment'),
+                'payment_object': item.get('payment_object', 'commodity'),
+                'vat': {
+                    'type': item.get('vat', 'none')
+                }
             }
             for item in receipt_data['items']
         ],
         'payments': [
             {
-                'type': 'card' if receipt_data.get('payment_type') == 'card' else 'cash',
-                'amount': receipt_data['total']
+                'type': payment.get('type', '1'),
+                'amount': payment.get('sum', receipt_data['total'])
             }
+            for payment in receipt_data.get('payments', [{'type': '1', 'sum': receipt_data['total']}])
         ],
         'total': receipt_data['total']
     }
