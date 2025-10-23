@@ -132,11 +132,13 @@ const Settings = () => {
   const handleShopSelect = (shopId: string) => {
     const shop = settings.available_shops.find(s => s.storeId === shopId);
     if (shop) {
-      setSettings({
+      const updatedSettings = {
         ...settings,
         group_code: shop.storeId,
         payment_address: shop.storeAddress
-      });
+      };
+      setSettings(updatedSettings);
+      localStorage.setItem('ecomkassa_settings', JSON.stringify(updatedSettings));
       toast.info(`Выбран магазин: ${shop.storeName}`);
     }
   };
