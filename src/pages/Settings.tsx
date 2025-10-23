@@ -10,11 +10,9 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Shop {
-  id: string;
-  description: string;
-  inn: string;
-  sno: string;
-  payment_address: string;
+  storeId: string;
+  storeName: string;
+  storeAddress: string;
 }
 
 interface IntegrationSettings {
@@ -98,21 +96,23 @@ const Settings = () => {
         return;
       }
 
-      if (!Array.isArray(data)) {
-        toast.error('API вернул неожиданный формат данных');
-        return;
-      }
+      const taxIdentity = data.taxIdentity || '';
+      const taxVariant = data.taxVariant || 'usn_income';
+      const stores = data.stores || [];
 
-      const shops: Shop[] = data.map((shop: any) => ({
-        id: shop.id || '',
-        description: shop.description || 'Без описания',
-        inn: shop.inn || '',
-        sno: shop.sno || 'usn_income',
-        payment_address: shop.payment_address || ''
+      const shops: Shop[] = stores.map((shop: any) => ({
+        storeId: shop.storeId || '',
+        storeName: shop.storeName || 'Без названия',
+        storeAddress: shop.storeAddress || ''
       }));
 
-      setSettings({ ...settings, available_shops: shops });
-      toast.success(`Загружено магазинов: ${shops.length}`);
+      setSettings({ 
+        ...settings, 
+        inn: taxIdentity,
+        sno: taxVariant,
+        available_shops: shops 
+      });
+      toast.success(`Загружен профиль. Магазинов: ${shops.length}`);
     } catch (error) {
       toast.error('Ошибка соединения с сервером');
     } finally {
@@ -121,16 +121,14 @@ const Settings = () => {
   };
 
   const handleShopSelect = (shopId: string) => {
-    const shop = settings.available_shops.find(s => s.id === shopId);
+    const shop = settings.available_shops.find(s => s.storeId === shopId);
     if (shop) {
       setSettings({
         ...settings,
-        group_code: shop.id,
-        inn: shop.inn,
-        sno: shop.sno,
-        payment_address: shop.payment_address
+        group_code: shop.storeId,
+        payment_address: shop.storeAddress
       });
-      toast.info(`Выбран магазин: ${shop.description}`);
+      toast.info(`Выбран магазин: ${shop.storeName}`);
     }
   };
 
@@ -233,7 +231,7 @@ const Settings = () => {
                     onClick={loadShops}
                     disabled={isLoadingShops || !settings.ecomkassa_login || !settings.ecomkassa_password}
                   >
-                    {isLoadingShops ? 'Загрузка...' : 'Загрузить магазины'}
+                    {isLoadingShops ? 'Загрузка...' : 'Загрузить профиль'}
                   </Button>
                 </div>
                 {settings.available_shops.length > 0 ? (
@@ -243,8 +241,8 @@ const Settings = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {settings.available_shops.map((shop) => (
-                        <SelectItem key={shop.id} value={shop.id}>
-                          {shop.id} - {shop.description}
+                        <SelectItem key={shop.storeId} value={shop.storeId}>
+                          {shop.storeName} - {shop.storeId}
                         </SelectItem>
                       ))}
                     </SelectContent>
