@@ -2,6 +2,7 @@ import json
 import os
 import urllib.request
 import urllib.error
+import uuid
 from typing import Dict, Any, Optional
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -205,75 +206,146 @@ def detect_operation_type(text: str) -> str:
     return 'sell'
 
 
+def get_gigachat_token(auth_key: str) -> Optional[str]:
+    import requests
+    
+    token_url = 'https://ngw.devices.sberbank.ru:9443/api/v2/oauth'
+    
+    headers = {
+        'Authorization': f'Basic {auth_key}',
+        'RqUID': str(uuid.uuid4()),
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    
+    data = {
+        'scope': 'GIGACHAT_API_PERS'
+    }
+    
+    try:
+        response = requests.post(token_url, headers=headers, data=data, verify=False, timeout=10)
+        response_data = response.json()
+        return response_data.get('access_token')
+    except Exception as e:
+        return None
+
+
 def parse_receipt_from_text(text: str) -> Dict[str, Any]:
     import re
-    text_lower = text.lower()
+    import requests
+    import uuid
+    
+    auth_key = os.environ.get('GIGACHAT_AUTH_KEY', '')
+    
+    if not auth_key:
+        return fallback_parse_receipt(text)
+    
+    access_token = get_gigachat_token(auth_key)
+    
+    if not access_token:
+        return fallback_parse_receipt(text)
+    
+    prompt = f"""Извлеки из текста данные для чека и верни ТОЛЬКО валидный JSON без дополнительного текста.
+
+Текст клиента: "{text}"
+
+Верни JSON в формате:
+{{
+  "items": [
+    {{
+      "name": "Название товара",
+      "price": 100.00,
+      "quantity": 1,
+      "measure": "шт",
+      "vat": "none",
+      "payment_method": "full_payment",
+      "payment_object": "commodity"
+    }}
+  ],
+  "client": {{
+    "email": "email@example.com",
+    "phone": "+79991234567"
+  }},
+  "payment_type": "electronically"
+}}
+
+Правила:
+- Если email не указан, используй "customer@example.com"
+- Если телефон не указан, оставь null
+- payment_type: "cash" для наличных, "electronically" для безнала
+- measure: "шт", "кг", "л", "м" и т.д.
+- vat: "none", "vat0", "vat10", "vat20"
+- payment_object: "commodity" (товар), "service" (услуга), "work" (работа)
+- Если цена не указана явно, оцени разумную рыночную цену
+"""
+    
+    chat_url = 'https://gigachat.devices.sberbank.ru/api/v1/chat/completions'
+    
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
+    }
+    
+    payload = {
+        'model': 'GigaChat',
+        'messages': [
+            {
+                'role': 'user',
+                'content': prompt
+            }
+        ],
+        'temperature': 0.1,
+        'max_tokens': 1000
+    }
+    
+    try:
+        response = requests.post(chat_url, headers=headers, json=payload, verify=False, timeout=20)
+        result = response.json()
+        
+        ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+        
+        json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+        if json_match:
+            parsed_data = json.loads(json_match.group(0))
+            
+            total = sum(item.get('price', 0) * item.get('quantity', 1) for item in parsed_data.get('items', []))
+            
+            return {
+                'items': parsed_data.get('items', []),
+                'total': round(total, 2),
+                'payments': [{
+                    'type': parsed_data.get('payment_type', 'electronically'),
+                    'sum': round(total, 2)
+                }],
+                'client': parsed_data.get('client', {'email': 'customer@example.com', 'phone': None}),
+                'company': {
+                    'email': 'company@example.com',
+                    'sno': 'usn_income',
+                    'inn': '1234567890',
+                    'payment_address': 'example.com'
+                }
+            }
+        
+        return fallback_parse_receipt(text)
+        
+    except Exception as e:
+        return fallback_parse_receipt(text)
+
+
+def fallback_parse_receipt(text: str) -> Dict[str, Any]:
+    import re
+    
+    email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
+    customer_email = email_match.group(0) if email_match else 'customer@example.com'
+    
+    phone_match = re.search(r'\+?[78][\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}', text)
+    customer_phone = phone_match.group(0) if phone_match else None
+    
+    price_matches = re.findall(r'(\d+)\s*(?:руб|₽|рублей)', text.lower())
     
     items = []
     total = 0
     
-    if 'хлеб' in text_lower or 'булка' in text_lower:
-        items.append({
-            'name': 'Хлеб', 
-            'price': 50.00, 
-            'quantity': 1,
-            'measure': 'шт',
-            'vat': 'none',
-            'payment_method': 'full_payment',
-            'payment_object': 'commodity'
-        })
-        total += 50.00
-    
-    if 'молоко' in text_lower:
-        items.append({
-            'name': 'Молоко', 
-            'price': 80.00, 
-            'quantity': 1,
-            'measure': 'шт',
-            'vat': 'none',
-            'payment_method': 'full_payment',
-            'payment_object': 'commodity'
-        })
-        total += 80.00
-    
-    if 'яблок' in text_lower or 'яблоко' in text_lower:
-        items.append({
-            'name': 'Яблоки', 
-            'price': 120.00, 
-            'quantity': 1,
-            'measure': 'кг',
-            'vat': 'none',
-            'payment_method': 'full_payment',
-            'payment_object': 'commodity'
-        })
-        total += 120.00
-    
-    if 'кофе' in text_lower:
-        items.append({
-            'name': 'Кофе', 
-            'price': 350.00, 
-            'quantity': 1,
-            'measure': 'шт',
-            'vat': 'none',
-            'payment_method': 'full_payment',
-            'payment_object': 'commodity'
-        })
-        total += 350.00
-    
-    if 'сыр' in text_lower:
-        items.append({
-            'name': 'Сыр', 
-            'price': 450.00, 
-            'quantity': 1,
-            'measure': 'кг',
-            'vat': 'none',
-            'payment_method': 'full_payment',
-            'payment_object': 'commodity'
-        })
-        total += 450.00
-    
-    price_matches = re.findall(r'(\d+)\s*(?:руб|₽|рублей)', text_lower)
-    if price_matches and not items:
+    if price_matches:
         for price_str in price_matches:
             price_val = float(price_str)
             items.append({
@@ -289,7 +361,7 @@ def parse_receipt_from_text(text: str) -> Dict[str, Any]:
     
     if not items:
         items.append({
-            'name': 'Товар по умолчанию', 
+            'name': 'Товар', 
             'price': 100.00, 
             'quantity': 1,
             'measure': 'шт',
@@ -299,17 +371,9 @@ def parse_receipt_from_text(text: str) -> Dict[str, Any]:
         })
         total = 100.00
     
-    email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
-    customer_email = email_match.group(0) if email_match else 'customer@example.com'
-    
-    phone_match = re.search(r'\+?[78][\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}', text)
-    customer_phone = phone_match.group(0) if phone_match else None
-    
     payment_type = 'electronically'
-    if 'налич' in text_lower or 'наличные' in text_lower or 'кэш' in text_lower:
+    if 'налич' in text.lower() or 'наличные' in text.lower():
         payment_type = 'cash'
-    elif 'карт' in text_lower or 'безнал' in text_lower:
-        payment_type = 'electronically'
     
     return {
         'items': items,
