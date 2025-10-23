@@ -56,10 +56,20 @@ const Index = () => {
 
       const data = await response.json();
 
+      const operationNames: Record<string, string> = {
+        sell: 'Продажа',
+        refund: 'Возврат',
+        sell_correction: 'Коррекция прихода',
+        refund_correction: 'Коррекция расхода'
+      };
+
+      const detectedType = data.operation_type || operationType;
+      const typeName = operationNames[detectedType] || detectedType;
+
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'agent',
-        content: data.message || 'Чек обработан',
+        content: `${data.message || 'Чек обработан'} (${typeName})`,
         timestamp: new Date(),
         receiptData: data.receipt,
       };
@@ -67,7 +77,7 @@ const Index = () => {
       setMessages((prev) => [...prev, agentMessage]);
       
       if (data.success) {
-        toast.success('Чек успешно создан!');
+        toast.success(`Чек успешно создан! Тип: ${typeName}`);
       } else {
         toast.error('Произошла ошибка при создании чека');
       }

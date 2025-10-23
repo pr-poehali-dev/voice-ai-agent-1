@@ -37,7 +37,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     body_data = json.loads(event.get('body', '{}'))
     user_message: str = body_data.get('message', '')
-    operation_type: str = body_data.get('operation_type', 'sell')
+    operation_type: str = body_data.get('operation_type', '')
     
     if not user_message:
         return {
@@ -48,6 +48,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             },
             'body': json.dumps({'error': 'Message is required'})
         }
+    
+    if not operation_type:
+        operation_type = detect_operation_type(user_message)
     
     parsed_receipt = parse_receipt_from_text(user_message)
     
@@ -62,6 +65,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'success': True,
             'message': 'Чек обработан (демо-режим без учетных данных)',
             'receipt': parsed_receipt,
+            'operation_type': operation_type,
             'demo': True
         }
         save_receipt_to_db(external_id, user_message, parsed_receipt, operation_type, None, True)
@@ -81,6 +85,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'success': False,
             'message': 'Не удалось авторизоваться в екомкасса',
             'receipt': parsed_receipt,
+            'operation_type': operation_type,
             'demo': True
         }
         save_receipt_to_db(external_id, user_message, parsed_receipt, operation_type, None, True)
@@ -142,6 +147,45 @@ def get_ecomkassa_token(login: str, password: str) -> Optional[str]:
     
     except Exception:
         return None
+
+
+def detect_operation_type(text: str) -> str:
+    text_lower = text.lower()
+    
+    refund_keywords = [
+        'возврат', 'верни', 'вернуть', 'refund', 'отмен',
+        'верну', 'возвращ', 'отказ'
+    ]
+    
+    correction_keywords = [
+        'коррекция', 'исправ', 'корректир', 'ошибк'
+    ]
+    
+    refund_correction_keywords = [
+        'коррекция расход', 'исправить расход', 'под отчет'
+    ]
+    
+    sell_correction_keywords = [
+        'коррекция прихода', 'исправить приход', 'коррекция продаж'
+    ]
+    
+    for keyword in refund_correction_keywords:
+        if keyword in text_lower:
+            return 'refund_correction'
+    
+    for keyword in sell_correction_keywords:
+        if keyword in text_lower:
+            return 'sell_correction'
+    
+    for keyword in refund_keywords:
+        if keyword in text_lower:
+            return 'refund'
+    
+    for keyword in correction_keywords:
+        if keyword in text_lower:
+            return 'sell_correction'
+    
+    return 'sell'
 
 
 def parse_receipt_from_text(text: str) -> Dict[str, Any]:
