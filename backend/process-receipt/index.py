@@ -303,9 +303,13 @@ def parse_receipt_from_text(text: str) -> Dict[str, Any]:
         
         ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
         
+        print(f"[DEBUG] GigaChat response: {ai_response}")
+        
         json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
         if json_match:
             parsed_data = json.loads(json_match.group(0))
+            
+            print(f"[DEBUG] Parsed data: {parsed_data}")
             
             total = sum(item.get('price', 0) * item.get('quantity', 1) for item in parsed_data.get('items', []))
             
@@ -325,9 +329,11 @@ def parse_receipt_from_text(text: str) -> Dict[str, Any]:
                 }
             }
         
+        print(f"[DEBUG] No JSON found in response, using fallback")
         return fallback_parse_receipt(text)
         
     except Exception as e:
+        print(f"[DEBUG] Exception: {str(e)}")
         return fallback_parse_receipt(text)
 
 
