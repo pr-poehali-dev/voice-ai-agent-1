@@ -73,12 +73,16 @@ const Settings = () => {
 
     setIsLoadingShops(true);
     try {
-      const auth = btoa(`${settings.ecomkassa_login}:${settings.ecomkassa_password}`);
-      const response = await fetch('https://api.ecomkassa.ru/api/mobile/v1/profile/firm', {
+      const response = await fetch('https://functions.poehali.dev/43959fb6-01cc-48d6-83ce-8160cf016d09', {
+        method: 'POST',
         headers: {
-          'Authorization': `Basic ${auth}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+          login: settings.ecomkassa_login,
+          password: settings.ecomkassa_password,
+          endpoint: '/api/mobile/v1/profile/firm'
+        })
       });
 
       if (!response.ok) {

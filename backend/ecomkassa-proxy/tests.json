@@ -1,0 +1,27 @@
+{
+  "tests": [
+    {
+      "name": "Test proxy endpoint with valid credentials",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "login": "test_login",
+        "password": "test_password",
+        "endpoint": "/api/mobile/v1/profile/firm"
+      },
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test missing credentials",
+      "method": "POST",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

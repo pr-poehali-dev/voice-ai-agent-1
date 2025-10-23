@@ -1,4 +1,5 @@
 {
+  "ecomkassa-proxy": "https://functions.poehali.dev/43959fb6-01cc-48d6-83ce-8160cf016d09",
   "get-receipts": "https://functions.poehali.dev/1e30d22a-a25c-46a5-b05a-ccc647ed9bb6",
   "process-receipt": "https://functions.poehali.dev/734da785-2867-4c5d-b20c-90fc6d86b11c"
 }
