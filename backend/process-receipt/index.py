@@ -73,9 +73,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             })
         }
     
-    login = os.environ.get('ECOMKASSA_LOGIN', '')
-    password = os.environ.get('ECOMKASSA_PASSWORD', '')
-    group_code = os.environ.get('ECOMKASSA_GROUP_CODE', '')
+    login = settings.get('ecomkassa_login') or os.environ.get('ECOMKASSA_LOGIN', '')
+    password = settings.get('ecomkassa_password') or os.environ.get('ECOMKASSA_PASSWORD', '')
+    group_code = settings.get('group_code') or os.environ.get('ECOMKASSA_GROUP_CODE', '')
     
     external_id = f'receipt_{abs(hash(user_message + str(parsed_receipt)))}'
     
