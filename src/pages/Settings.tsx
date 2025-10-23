@@ -18,12 +18,6 @@ interface IntegrationSettings {
   payment_address: string;
 }
 
-interface ApiSettings {
-  ecomkassa_login: string;
-  ecomkassa_password: string;
-  gigachat_auth_key: string;
-}
-
 const Settings = () => {
   const navigate = useNavigate();
   const [settings, setSettings] = useState<IntegrationSettings>({
@@ -35,27 +29,15 @@ const Settings = () => {
     payment_address: ''
   });
 
-  const [apiSettings, setApiSettings] = useState<ApiSettings>({
-    ecomkassa_login: '',
-    ecomkassa_password: '',
-    gigachat_auth_key: ''
-  });
-
   useEffect(() => {
     const saved = localStorage.getItem('ecomkassa_settings');
     if (saved) {
       setSettings(JSON.parse(saved));
     }
-    
-    const savedApi = localStorage.getItem('api_settings');
-    if (savedApi) {
-      setApiSettings(JSON.parse(savedApi));
-    }
   }, []);
 
   const handleSave = () => {
     localStorage.setItem('ecomkassa_settings', JSON.stringify(settings));
-    localStorage.setItem('api_settings', JSON.stringify(apiSettings));
     toast.success('Настройки сохранены');
     navigate('/');
   };
@@ -79,36 +61,28 @@ const Settings = () => {
             <CardHeader>
               <CardTitle>Интеграция с ИИ</CardTitle>
               <CardDescription>
-                Настройка подключения к GigaChat для обработки текста
+                Ключи API хранятся безопасно на сервере
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="gigachat_auth_key">GigaChat Authorization Key</Label>
-                <Input
-                  id="gigachat_auth_key"
-                  type="password"
-                  value={apiSettings.gigachat_auth_key}
-                  onChange={(e) => setApiSettings({ ...apiSettings, gigachat_auth_key: e.target.value })}
-                  placeholder="Введите Authorization Key (base64)"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Формат: base64(Client_ID:Client_Secret)
-                </p>
-              </div>
-              
               <Alert>
-                <AlertDescription className="flex items-center gap-2">
-                  <span>Получить ключи можно в</span>
-                  <a 
-                    href="https://developers.sber.ru/studio/workspaces" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline inline-flex items-center gap-1"
-                  >
-                    GigaChat Studio
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                <AlertDescription className="space-y-2">
+                  <p className="font-medium">GigaChat Authorization Key</p>
+                  <p className="text-sm">
+                    Секрет <code className="bg-muted px-1 py-0.5 rounded">GIGACHAT_AUTH_KEY</code> уже настроен на сервере.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Формат: base64(Client_ID:Client_Secret). Получить ключи можно в{' '}
+                    <a 
+                      href="https://developers.sber.ru/studio/workspaces" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline inline-flex items-center gap-1"
+                    >
+                      GigaChat Studio
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </p>
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -118,30 +92,19 @@ const Settings = () => {
             <CardHeader>
               <CardTitle>Параметры Екомкасса</CardTitle>
               <CardDescription>
-                Настройки API и параметры организации для создания чеков
+                API ключи хранятся на сервере, настройки организации — локально
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="ecomkassa_login">Логин API Екомкасса</Label>
-                <Input
-                  id="ecomkassa_login"
-                  value={apiSettings.ecomkassa_login}
-                  onChange={(e) => setApiSettings({ ...apiSettings, ecomkassa_login: e.target.value })}
-                  placeholder="Введите логин"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="ecomkassa_password">Пароль API Екомкасса</Label>
-                <Input
-                  id="ecomkassa_password"
-                  type="password"
-                  value={apiSettings.ecomkassa_password}
-                  onChange={(e) => setApiSettings({ ...apiSettings, ecomkassa_password: e.target.value })}
-                  placeholder="Введите пароль"
-                />
-              </div>
+              <Alert>
+                <AlertDescription className="space-y-2">
+                  <p className="font-medium">API Credentials</p>
+                  <p className="text-sm">
+                    Секреты <code className="bg-muted px-1 py-0.5 rounded">ECOMKASSA_LOGIN</code> и{' '}
+                    <code className="bg-muted px-1 py-0.5 rounded">ECOMKASSA_PASSWORD</code> настроены на сервере.
+                  </p>
+                </AlertDescription>
+              </Alert>
 
               <div className="space-y-2">
                 <Label htmlFor="group_code">ID магазина (Group Code)</Label>
