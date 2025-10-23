@@ -387,11 +387,21 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
             
             total = sum(item.get('price', 0) * item.get('quantity', 1) for item in items)
             
+            payment_type_raw = parsed_data.get('payment_type', 'electronically')
+            payment_type_map = {
+                'cash': '0',
+                'electronically': '1',
+                'prepaid': '2',
+                'credit': '3',
+                'other': '4'
+            }
+            payment_type = payment_type_map.get(payment_type_raw, '1')
+            
             return {
                 'items': items,
                 'total': round(total, 2),
                 'payments': [{
-                    'type': parsed_data.get('payment_type', 'electronically'),
+                    'type': payment_type,
                     'sum': round(total, 2)
                 }],
                 'client': {'email': client_email, 'phone': client_data.get('phone')},
@@ -456,9 +466,15 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
         })
         total = 100.00
     
-    payment_type = 'electronically'
+    payment_type_raw = 'electronically'
     if 'налич' in text.lower() or 'наличные' in text.lower():
-        payment_type = 'cash'
+        payment_type_raw = 'cash'
+    
+    payment_type_map = {
+        'cash': '0',
+        'electronically': '1'
+    }
+    payment_type = payment_type_map.get(payment_type_raw, '1')
     
     return {
         'items': items,
