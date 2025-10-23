@@ -193,16 +193,30 @@ const Index = () => {
 
   const updateEditedField = (path: string, value: any) => {
     setEditedData((prev: any) => {
-      const newData = { ...prev };
+      const newData = JSON.parse(JSON.stringify(prev));
       const keys = path.split('.');
       let current = newData;
       
       for (let i = 0; i < keys.length - 1; i++) {
-        if (!current[keys[i]]) current[keys[i]] = {};
-        current = current[keys[i]];
+        const key = keys[i];
+        const isArrayIndex = !isNaN(Number(key));
+        
+        if (isArrayIndex) {
+          const index = Number(key);
+          if (!Array.isArray(current)) current = [];
+          if (!current[index]) current[index] = {};
+          current = current[index];
+        } else {
+          if (!current[key]) {
+            const nextKey = keys[i + 1];
+            current[key] = !isNaN(Number(nextKey)) ? [] : {};
+          }
+          current = current[key];
+        }
       }
       
-      current[keys[keys.length - 1]] = value;
+      const lastKey = keys[keys.length - 1];
+      current[lastKey] = value;
       return newData;
     });
   };
