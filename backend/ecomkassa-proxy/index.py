@@ -8,7 +8,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Proxy requests to Ecomkassa API to avoid CORS issues
+    Business: Proxy requests to Ecomkassa API with JWT token authentication
     Args: event with httpMethod, body (login, password, endpoint)
     Returns: HTTP response with data from Ecomkassa API
     '''
@@ -54,6 +54,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Invalid JSON'}),
                 'isBase64Encoded': False
             }
+    
     login = body_data.get('login', '')
     password = body_data.get('password', '')
     endpoint = body_data.get('endpoint', '/api/mobile/v1/profile/firm')
@@ -70,11 +71,69 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
+        token_url = 'https://app.ecomkassa.ru/fiscalorder/v5/getToken'
+        token_payload = {
+            'login': login,
+            'pass': password
+        }
+        headers = {
+            'Content-Type': 'application/json; charset=utf-8'
+        }
+        
+        print(f"Getting token from: {token_url}")
+        token_response = requests.post(
+            token_url, 
+            json=token_payload, 
+            headers=headers,
+            timeout=10, 
+            verify=False
+        )
+        print(f"Token response status: {token_response.status_code}")
+        print(f"Token response body: {token_response.text[:200]}")
+        
+        if token_response.status_code != 200:
+            return {
+                'statusCode': token_response.status_code,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': token_response.text,
+                'isBase64Encoded': False
+            }
+        
+        token_data = token_response.json()
+        if token_data.get('code') != 0:
+            return {
+                'statusCode': 401,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': token_data.get('text', 'Failed to get token')}),
+                'isBase64Encoded': False
+            }
+        
+        token = token_data.get('token')
+        if not token:
+            return {
+                'statusCode': 500,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': 'No token in response'}),
+                'isBase64Encoded': False
+            }
+        
         url = f'https://app.ecomkassa.ru{endpoint}'
-        auth = (login, password)
+        api_headers = {
+            'Content-Type': 'application/json; charset=utf-8',
+            'X-Auth-Token': token
+        }
         
         print(f"Requesting: {url}")
-        response = requests.get(url, auth=auth, timeout=10, verify=False)
+        response = requests.get(url, headers=api_headers, timeout=10, verify=False)
         print(f"Response status: {response.status_code}")
         print(f"Response body: {response.text[:500]}")
         
