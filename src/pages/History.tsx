@@ -49,10 +49,10 @@ const History = () => {
 
   const getOperationTypeName = (type: string) => {
     const types: Record<string, string> = {
-      sell: 'Продажа',
-      sell_refund: 'Возврат прихода',
-      buy: 'Расход',
-      buy_refund: 'Возврат расхода',
+      sell: 'Продажа товаров/услуг',
+      refund: 'Возврат средств',
+      sell_correction: 'Коррекция прихода',
+      refund_correction: 'Коррекция расхода',
     };
     return types[type] || type;
   };

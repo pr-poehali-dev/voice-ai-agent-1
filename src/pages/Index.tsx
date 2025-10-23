@@ -28,6 +28,7 @@ const Index = () => {
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [operationType, setOperationType] = useState('sell');
 
   const handleSendMessage = async () => {
     if (!input.trim() || isProcessing) return;
@@ -50,7 +51,7 @@ const Index = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: userInput }),
+        body: JSON.stringify({ message: userInput, operation_type: operationType }),
       });
 
       const data = await response.json();
@@ -241,7 +242,44 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-6 mt-4 text-xs text-muted-foreground">
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex gap-2">
+              <Button
+                variant={operationType === 'sell' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setOperationType('sell')}
+                className="text-xs"
+              >
+                Продажа
+              </Button>
+              <Button
+                variant={operationType === 'refund' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setOperationType('refund')}
+                className="text-xs"
+              >
+                Возврат
+              </Button>
+              <Button
+                variant={operationType === 'sell_correction' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setOperationType('sell_correction')}
+                className="text-xs"
+              >
+                Коррекция прихода
+              </Button>
+              <Button
+                variant={operationType === 'refund_correction' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setOperationType('refund_correction')}
+                className="text-xs"
+              >
+                Коррекция расхода
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-center gap-6 mt-2 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
               <Icon name="Mic" size={14} />
               <span>Голос</span>

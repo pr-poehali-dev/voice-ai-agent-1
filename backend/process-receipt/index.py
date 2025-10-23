@@ -197,16 +197,16 @@ def create_ecomkassa_receipt(
     operation_type: str = 'sell'
 ) -> Dict[str, Any]:
     
-    valid_operations = {
-        'sell', 'sell_refund', 'buy', 'buy_refund',
-        'sell_correction', 'buy_correction',
-        'sell_refund_correction', 'buy_refund_correction'
+    operation_mapping = {
+        'sell': 'sell',
+        'refund': 'sell_refund',
+        'sell_correction': 'sell_correction',
+        'refund_correction': 'buy_refund_correction'
     }
     
-    if operation_type not in valid_operations:
-        operation_type = 'sell'
+    api_operation_type = operation_mapping.get(operation_type, 'sell')
     
-    api_url = f'https://app.ecomkassa.ru/fiscalorder/v5/{group_code}/{operation_type}'
+    api_url = f'https://app.ecomkassa.ru/fiscalorder/v5/{group_code}/{api_operation_type}'
     
     ecomkassa_payload = {
         'external_id': f'receipt_{abs(hash(str(receipt_data)))}',
