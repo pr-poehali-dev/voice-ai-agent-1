@@ -205,7 +205,7 @@ const Settings = () => {
                 <p className="text-sm text-muted-foreground">
                   API endpoint:{' '}
                   <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                    GET https://api.ecomkassa.ru/api/mobile/v1/profile/firm
+                    GET https://app.ecomkassa.ru/api/mobile/v1/profile/firm
                   </code>
                 </p>
               </div>

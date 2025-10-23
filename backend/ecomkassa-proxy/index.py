@@ -70,10 +70,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
-        url = f'https://api.ecomkassa.ru{endpoint}'
+        url = f'https://app.ecomkassa.ru{endpoint}'
         auth = (login, password)
         
+        print(f"Requesting: {url}")
         response = requests.get(url, auth=auth, timeout=10, verify=False)
+        print(f"Response status: {response.status_code}")
+        print(f"Response body: {response.text[:500]}")
         
         return {
             'statusCode': response.status_code,
