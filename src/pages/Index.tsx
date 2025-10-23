@@ -31,6 +31,8 @@ const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [operationType, setOperationType] = useState('sell');
   const [pendingReceipt, setPendingReceipt] = useState<any>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editedData, setEditedData] = useState<any>(null);
 
   const handleSendMessage = async () => {
     if (!input.trim() || isProcessing) return;
@@ -78,6 +80,7 @@ const Index = () => {
 
       setMessages((prev) => [...prev, previewMessage]);
       setPendingReceipt({ userInput, operationType: detectedType });
+      setEditedData({ ...data.receipt, operation_type: detectedType, typeName });
       toast.info('Проверь данные и подтверди отправку');
     } catch (error) {
       const errorMessage: Message = {
@@ -106,7 +109,8 @@ const Index = () => {
         body: JSON.stringify({ 
           message: pendingReceipt.userInput, 
           operation_type: pendingReceipt.operationType,
-          preview_only: false 
+          preview_only: false,
+          edited_data: editMode ? editedData : null
         }),
       });
 
@@ -131,6 +135,8 @@ const Index = () => {
 
       setMessages((prev) => [...prev, agentMessage]);
       setPendingReceipt(null);
+      setEditMode(false);
+      setEditedData(null);
       
       if (data.success) {
         toast.success(`Чек успешно создан! Тип: ${typeName}`);
@@ -146,7 +152,29 @@ const Index = () => {
 
   const handleCancelReceipt = () => {
     setPendingReceipt(null);
+    setEditMode(false);
+    setEditedData(null);
     toast.info('Отменено');
+  };
+
+  const handleEditToggle = () => {
+    setEditMode(!editMode);
+  };
+
+  const updateEditedField = (path: string, value: any) => {
+    setEditedData((prev: any) => {
+      const newData = { ...prev };
+      const keys = path.split('.');
+      let current = newData;
+      
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (!current[keys[i]]) current[keys[i]] = {};
+        current = current[keys[i]];
+      }
+      
+      current[keys[keys.length - 1]] = value;
+      return newData;
+    });
   };
 
   const handleVoiceInput = () => {
@@ -244,40 +272,117 @@ const Index = () => {
                   }`}
                 >
                   <p className="text-sm leading-relaxed">{message.content}</p>
-                  {message.previewData && (
+                  {message.previewData && editedData && (
                     <div className="mt-4 space-y-3">
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="bg-background/50 p-2 rounded">
                           <div className="text-xs text-muted-foreground">Тип операции</div>
-                          <div className="font-medium">{message.previewData.typeName}</div>
+                          {editMode ? (
+                            <select 
+                              value={editedData.operation_type}
+                              onChange={(e) => updateEditedField('operation_type', e.target.value)}
+                              className="w-full bg-background border rounded px-2 py-1 text-sm"
+                            >
+                              <option value="sell">Продажа</option>
+                              <option value="refund">Возврат</option>
+                              <option value="sell_correction">Коррекция прихода</option>
+                              <option value="refund_correction">Коррекция расхода</option>
+                            </select>
+                          ) : (
+                            <div className="font-medium">{editedData.typeName}</div>
+                          )}
                         </div>
                         <div className="bg-background/50 p-2 rounded">
                           <div className="text-xs text-muted-foreground">Email клиента</div>
-                          <div className="font-medium">{message.previewData.buyer?.email || 'Не указан'}</div>
+                          {editMode ? (
+                            <Input 
+                              value={editedData.buyer?.email || ''}
+                              onChange={(e) => updateEditedField('buyer.email', e.target.value)}
+                              className="h-7 text-sm"
+                              placeholder="email@example.com"
+                            />
+                          ) : (
+                            <div className="font-medium">{editedData.buyer?.email || 'Не указан'}</div>
+                          )}
                         </div>
                         <div className="bg-background/50 p-2 rounded">
                           <div className="text-xs text-muted-foreground">ИНН продавца</div>
-                          <div className="font-medium">{message.previewData.seller?.inn || 'Не указан'}</div>
+                          {editMode ? (
+                            <Input 
+                              value={editedData.seller?.inn || ''}
+                              onChange={(e) => updateEditedField('seller.inn', e.target.value)}
+                              className="h-7 text-sm"
+                              placeholder="1234567890"
+                            />
+                          ) : (
+                            <div className="font-medium">{editedData.seller?.inn || 'Не указан'}</div>
+                          )}
                         </div>
                         <div className="bg-background/50 p-2 rounded">
                           <div className="text-xs text-muted-foreground">Адрес расчетов</div>
-                          <div className="font-medium text-xs truncate">{message.previewData.seller?.payment_address || 'Не указан'}</div>
+                          {editMode ? (
+                            <Input 
+                              value={editedData.seller?.payment_address || ''}
+                              onChange={(e) => updateEditedField('seller.payment_address', e.target.value)}
+                              className="h-7 text-sm"
+                              placeholder="site.ru"
+                            />
+                          ) : (
+                            <div className="font-medium text-xs truncate">{editedData.seller?.payment_address || 'Не указан'}</div>
+                          )}
                         </div>
                       </div>
                       <div className="bg-background/50 p-3 rounded space-y-2">
                         <div className="text-xs font-medium text-muted-foreground">Товары</div>
-                        {message.previewData.items?.map((item: any, idx: number) => (
-                          <div key={idx} className="flex justify-between text-sm border-b border-border/50 pb-1">
-                            <span>{item.name} x{item.quantity} {item.measure || 'шт'}</span>
-                            <span className="font-medium">{item.price}₽</span>
+                        {editedData.items?.map((item: any, idx: number) => (
+                          <div key={idx} className="space-y-1 pb-2 border-b border-border/50">
+                            {editMode ? (
+                              <div className="grid grid-cols-3 gap-1">
+                                <Input 
+                                  value={item.name}
+                                  onChange={(e) => {
+                                    const newItems = [...editedData.items];
+                                    newItems[idx].name = e.target.value;
+                                    updateEditedField('items', newItems);
+                                  }}
+                                  className="h-7 text-sm col-span-2"
+                                  placeholder="Название"
+                                />
+                                <Input 
+                                  type="number"
+                                  value={item.price}
+                                  onChange={(e) => {
+                                    const newItems = [...editedData.items];
+                                    newItems[idx].price = parseFloat(e.target.value);
+                                    updateEditedField('items', newItems);
+                                  }}
+                                  className="h-7 text-sm"
+                                  placeholder="Цена"
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex justify-between text-sm">
+                                <span>{item.name} x{item.quantity} {item.measure || 'шт'}</span>
+                                <span className="font-medium">{item.price}₽</span>
+                              </div>
+                            )}
                           </div>
                         ))}
                         <div className="flex justify-between text-base font-bold pt-2 border-t border-border">
                           <span>Итого</span>
-                          <span>{message.previewData.total}₽</span>
+                          <span>{editedData.total}₽</span>
                         </div>
                       </div>
                       <div className="flex gap-2 pt-2">
+                        <Button 
+                          onClick={handleEditToggle}
+                          variant="outline"
+                          size="sm"
+                          disabled={isProcessing}
+                        >
+                          <Icon name={editMode ? "Save" : "Edit"} size={16} className="mr-2" />
+                          {editMode ? 'Готово' : 'Редактировать'}
+                        </Button>
                         <Button 
                           onClick={handleConfirmReceipt} 
                           disabled={isProcessing}
