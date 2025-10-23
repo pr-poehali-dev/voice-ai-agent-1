@@ -434,26 +434,46 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
     phone_match = re.search(r'\+?[78][\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}', text)
     customer_phone = phone_match.group(0) if phone_match else None
     
-    price_matches = re.findall(r'(\d+)\s*(?:руб|₽|рублей)', text.lower())
+    # Извлекаем цену и название товара
+    # Паттерны: "батон 444", "кофе 200 руб", "круассан 150₽"
+    item_pattern = re.search(r'([а-яА-ЯёЁa-zA-Z\s]+?)\s+(\d+)\s*(?:руб|₽|рублей)?', text)
     
     items = []
     total = 0
     
     default_vat = settings.get('default_vat', 'none')
     
-    if price_matches:
-        for price_str in price_matches:
-            price_val = float(price_str)
-            items.append({
-                'name': 'Товар', 
-                'price': price_val, 
-                'quantity': 1,
-                'measure': 'шт',
-                'vat': default_vat,
-                'payment_method': 'full_payment',
-                'payment_object': 'commodity'
-            })
-            total += price_val
+    if item_pattern:
+        item_name = item_pattern.group(1).strip()
+        price_val = float(item_pattern.group(2))
+        
+        items.append({
+            'name': item_name.capitalize(), 
+            'price': price_val, 
+            'quantity': 1,
+            'measure': 'шт',
+            'vat': default_vat,
+            'payment_method': 'full_payment',
+            'payment_object': 'commodity'
+        })
+        total = price_val
+    else:
+        # Fallback: ищем просто цену
+        price_matches = re.findall(r'(\d+)\s*(?:руб|₽|рублей)', text.lower())
+        
+        if price_matches:
+            for price_str in price_matches:
+                price_val = float(price_str)
+                items.append({
+                    'name': 'Товар', 
+                    'price': price_val, 
+                    'quantity': 1,
+                    'measure': 'шт',
+                    'vat': default_vat,
+                    'payment_method': 'full_payment',
+                    'payment_object': 'commodity'
+                })
+                total += price_val
     
     if not items:
         items.append({
