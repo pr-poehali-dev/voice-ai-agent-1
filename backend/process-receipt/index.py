@@ -145,26 +145,35 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 
 def get_ecomkassa_token(login: str, password: str) -> Optional[str]:
-    auth_url = 'https://app.ecomkassa.ru/api/v2/auth/login'
+    auth_url = 'https://app.ecomkassa.ru/fiscalorder/v5/getToken'
     
     payload = {
         'login': login,
-        'password': password
+        'pass': password
     }
     
     try:
         req = urllib.request.Request(
             auth_url,
             data=json.dumps(payload).encode('utf-8'),
-            headers={'Content-Type': 'application/json'},
+            headers={'Content-Type': 'application/json; charset=utf-8'},
             method='POST'
         )
         
+        print(f"[DEBUG] Getting token for login: {login[:3]}***")
         with urllib.request.urlopen(req, timeout=10) as response:
             response_data = json.loads(response.read().decode('utf-8'))
-            return response_data.get('token')
+            print(f"[DEBUG] Token response code: {response_data.get('code')}")
+            if response_data.get('code') == 0:
+                token = response_data.get('token')
+                print(f"[DEBUG] Token received: {token[:50] if token else 'None'}...")
+                return token
+            else:
+                print(f"[DEBUG] Token error: {response_data.get('text')}")
+                return None
     
-    except Exception:
+    except Exception as e:
+        print(f"[DEBUG] Exception getting token: {str(e)}")
         return None
 
 
@@ -501,7 +510,7 @@ def create_ecomkassa_receipt(
             data=json.dumps(ecomkassa_payload).encode('utf-8'),
             headers={
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer {token}'
+                'Token': token
             },
             method='POST'
         )
