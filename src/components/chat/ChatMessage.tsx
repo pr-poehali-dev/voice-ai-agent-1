@@ -10,6 +10,7 @@ interface Message {
   timestamp: Date;
   receiptData?: any;
   previewData?: any;
+  hasError?: boolean;
 }
 
 interface ChatMessageProps {
@@ -61,7 +62,9 @@ export const ChatMessage = ({
         <Card
           className={`p-4 ${
             message.type === 'agent'
-              ? 'bg-card border-primary/20'
+              ? message.hasError 
+                ? 'bg-card border-destructive/30'
+                : 'bg-card border-primary/20'
               : message.type === 'preview'
               ? 'bg-accent/10 border-accent'
               : 'bg-primary text-primary-foreground border-primary'

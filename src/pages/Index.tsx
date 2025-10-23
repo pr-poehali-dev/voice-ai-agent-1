@@ -12,6 +12,7 @@ interface Message {
   timestamp: Date;
   receiptData?: any;
   previewData?: any;
+  hasError?: boolean;
 }
 
 const Index = () => {
@@ -161,6 +162,7 @@ const Index = () => {
         content: `${data.message || 'Чек отправлен'} (${typeName})`,
         timestamp: new Date(),
         receiptData: data.receipt,
+        hasError: !data.success,
       };
 
       setMessages((prev) => [...prev, agentMessage]);
