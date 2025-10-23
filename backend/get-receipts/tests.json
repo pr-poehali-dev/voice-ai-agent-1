@@ -1,0 +1,18 @@
+{
+  "tests": [
+    {
+      "name": "Test get receipts",
+      "method": "GET",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test OPTIONS for CORS",
+      "method": "OPTIONS",
+      "expectedStatus": 200
+    }
+  ]
+}

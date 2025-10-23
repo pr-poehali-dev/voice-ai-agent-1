@@ -1,3 +1,4 @@
 {
+  "get-receipts": "https://functions.poehali.dev/1e30d22a-a25c-46a5-b05a-ccc647ed9bb6",
   "process-receipt": "https://functions.poehali.dev/734da785-2867-4c5d-b20c-90fc6d86b11c"
 }

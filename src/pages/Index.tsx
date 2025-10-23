@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,7 @@ interface Message {
 }
 
 const Index = () => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -131,6 +133,9 @@ const Index = () => {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="icon" className="rounded-xl" onClick={() => navigate('/history')}>
+              <Icon name="History" size={20} />
+            </Button>
             <Button variant="outline" size="icon" className="rounded-xl">
               <Icon name="Settings" size={20} />
             </Button>
