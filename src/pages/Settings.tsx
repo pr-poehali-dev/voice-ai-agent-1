@@ -38,6 +38,7 @@ const Settings = () => {
   const handleSave = () => {
     localStorage.setItem('ecomkassa_settings', JSON.stringify(settings));
     toast.success('Настройки сохранены');
+    navigate('/');
   };
 
   return (
