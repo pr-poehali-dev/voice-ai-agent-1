@@ -25,9 +25,10 @@ const Index = () => {
   ]);
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isProcessing) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -37,21 +38,48 @@ const Index = () => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const userInput = input;
     setInput('');
+    setIsProcessing(true);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/734da785-2867-4c5d-b20c-90fc6d86b11c', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: userInput }),
+      });
+
+      const data = await response.json();
+
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'agent',
-        content: 'Обрабатываю запрос и создаю чек...',
+        content: data.message || 'Чек обработан',
         timestamp: new Date(),
-        receiptData: {
-          items: ['Товар 1', 'Товар 2'],
-          total: 1500,
-        },
+        receiptData: data.receipt,
       };
+
       setMessages((prev) => [...prev, agentMessage]);
-    }, 1000);
+      
+      if (data.success) {
+        toast.success('Чек успешно создан!');
+      } else {
+        toast.error('Произошла ошибка при создании чека');
+      }
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        type: 'agent',
+        content: 'Произошла ошибка при обработке запроса. Попробуй еще раз.',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      toast.error('Ошибка соединения с сервером');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleVoiceInput = () => {
@@ -150,8 +178,16 @@ const Index = () => {
                         <Icon name="FileText" size={16} />
                         <span>Чек создан</span>
                       </div>
-                      <div className="text-xs opacity-70">
-                        Товаров: {message.receiptData.items.length} | Сумма: {message.receiptData.total}₽
+                      <div className="text-xs opacity-70 space-y-1">
+                        {message.receiptData.items?.map((item: any, idx: number) => (
+                          <div key={idx} className="flex justify-between">
+                            <span>{item.name} x{item.quantity}</span>
+                            <span>{item.price}₽</span>
+                          </div>
+                        ))}
+                        <div className="pt-1 border-t border-primary/10 font-semibold">
+                          Итого: {message.receiptData.total}₽
+                        </div>
                       </div>
                     </div>
                   )}

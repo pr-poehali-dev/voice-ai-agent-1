@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "name": "Test receipt parsing from text",
+      "method": "POST",
+      "body": {
+        "message": "Создай чек на хлеб за 50 рублей и молоко за 80 рублей"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test OPTIONS for CORS",
+      "method": "OPTIONS",
+      "expectedStatus": 200
+    }
+  ]
+}
