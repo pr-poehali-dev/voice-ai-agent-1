@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import { ChatHeader } from '@/components/chat/ChatHeader';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInput } from '@/components/chat/ChatInput';
@@ -14,6 +15,7 @@ interface Message {
 }
 
 const Index = () => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -63,6 +65,23 @@ const Index = () => {
       });
 
       const data = await response.json();
+
+      if (data.error && data.missing_field === 'email') {
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'agent',
+          content: `❌ ${data.message}\n\nПерейди в настройки и заполни поле "Email компании" или укажи email клиента в сообщении.`,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+        toast.error('Не указан email', {
+          action: {
+            label: 'Настройки',
+            onClick: () => navigate('/settings')
+          }
+        });
+        return;
+      }
 
       const operationNames: Record<string, string> = {
         sell: 'Продажа',
