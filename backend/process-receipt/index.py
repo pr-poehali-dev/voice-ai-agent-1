@@ -498,9 +498,12 @@ def create_ecomkassa_receipt(
     
     api_url = f'https://app.ecomkassa.ru/fiscalorder/v5/{group_code}/{api_operation_type}'
     
+    from datetime import datetime
+    
     ecomkassa_payload = {
         'external_id': f'receipt_{abs(hash(str(receipt_data)))}',
         'print': True,
+        'timestamp': datetime.now().strftime('%d.%m.%Y %H:%M:%S'),
         'client': {
             'email': receipt_data.get('customer_email', '')
         },
