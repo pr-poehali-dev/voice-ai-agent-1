@@ -96,9 +96,15 @@ const Settings = () => {
         return;
       }
 
-      const taxIdentity = data.taxIdentity || '';
-      const taxVariant = data.taxVariant || 'usn_income';
-      const stores = data.stores || [];
+      if (data.errorCode !== 0) {
+        toast.error(`API Екомкасса: ${data.error || 'Неизвестная ошибка'}`);
+        return;
+      }
+
+      const payload = data.payload || {};
+      const taxIdentity = payload.taxIdentity || '';
+      const taxVariant = payload.taxVariant || 'usn_income';
+      const stores = payload.stores || [];
 
       const shops: Shop[] = stores.map((shop: any) => ({
         storeId: shop.storeId || '',
