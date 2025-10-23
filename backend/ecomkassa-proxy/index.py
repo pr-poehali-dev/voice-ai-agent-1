@@ -58,6 +58,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     login = body_data.get('login', '')
     password = body_data.get('password', '')
     endpoint = body_data.get('endpoint', '/api/mobile/v1/profile/firm')
+    api_method = body_data.get('method', 'GET').upper()
+    api_payload = body_data.get('payload')
     
     if not login or not password:
         return {
@@ -128,13 +130,31 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         url = f'https://app.ecomkassa.ru{endpoint}'
         api_headers = {
-            'Token': token
+            'Token': token,
+            'Content-Type': 'application/json'
         }
         
-        print(f"Requesting: {url}")
-        response = requests.get(url, headers=api_headers, timeout=10, verify=False)
+        print(f"Requesting {api_method}: {url}")
+        if api_payload:
+            print(f"Payload: {json.dumps(api_payload, ensure_ascii=False)}")
+        
+        if api_method == 'POST' and api_payload:
+            response = requests.post(url, json=api_payload, headers=api_headers, timeout=10, verify=False)
+        elif api_method == 'GET':
+            response = requests.get(url, headers=api_headers, timeout=10, verify=False)
+        else:
+            return {
+                'statusCode': 400,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': f'Unsupported method: {api_method}'}),
+                'isBase64Encoded': False
+            }
+        
         print(f"Response status: {response.status_code}")
-        print(f"Response body: {response.text[:500]}")
+        print(f"Response body: {response.text[:1000]}")
         
         return {
             'statusCode': response.status_code,
