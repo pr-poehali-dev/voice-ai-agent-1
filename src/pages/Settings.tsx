@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Save, ExternalLink, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -150,15 +150,25 @@ const Settings = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white p-4">
       <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/')}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-2xl font-bold">Настройки интеграции</h1>
+          </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate('/')}
+            className="hover:bg-gray-100"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <X className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-bold">Настройки интеграции</h1>
         </div>
 
         <div className="space-y-6">
