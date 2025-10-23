@@ -5,7 +5,10 @@
       "method": "POST",
       "body": {
         "message": "Создай чек на хлеб за 50 рублей и молоко за 80 рублей",
-        "preview_only": true
+        "preview_only": true,
+        "settings": {
+          "company_email": "test@example.com"
+        }
       },
       "expectedStatus": 200,
       "expectedBody": {
