@@ -38,7 +38,18 @@ const Settings = () => {
   useEffect(() => {
     const saved = localStorage.getItem('ecomkassa_settings');
     if (saved) {
-      setSettings(JSON.parse(saved));
+      const parsed = JSON.parse(saved);
+      setSettings({
+        group_code: parsed.group_code || '',
+        inn: parsed.inn || '',
+        sno: parsed.sno || 'usn_income',
+        default_vat: parsed.default_vat || 'none',
+        company_email: parsed.company_email || '',
+        payment_address: parsed.payment_address || '',
+        gigachat_auth_key: parsed.gigachat_auth_key || '',
+        ecomkassa_login: parsed.ecomkassa_login || '',
+        ecomkassa_password: parsed.ecomkassa_password || ''
+      });
     }
   }, []);
 
