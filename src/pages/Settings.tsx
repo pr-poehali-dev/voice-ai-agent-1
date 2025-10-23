@@ -108,81 +108,80 @@ const Settings = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="group_code">ID магазина (Group Code)</Label>
-              <Input
-                id="group_code"
-                value={settings.group_code}
-                onChange={(e) => setSettings({ ...settings, group_code: e.target.value })}
-                placeholder="Введите ID магазина"
-              />
-            </div>
+                <Input
+                  id="group_code"
+                  value={settings.group_code}
+                  onChange={(e) => setSettings({ ...settings, group_code: e.target.value })}
+                  placeholder="Введите ID магазина"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="inn">ИНН организации</Label>
-              <Input
-                id="inn"
-                value={settings.inn}
-                onChange={(e) => setSettings({ ...settings, inn: e.target.value })}
-                placeholder="1234567890"
-                maxLength={12}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="inn">ИНН организации</Label>
+                <Input
+                  id="inn"
+                  value={settings.inn}
+                  onChange={(e) => setSettings({ ...settings, inn: e.target.value })}
+                  placeholder="1234567890"
+                  maxLength={12}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="sno">Система налогообложения (СНО)</Label>
-              <Select value={settings.sno} onValueChange={(value) => setSettings({ ...settings, sno: value })}>
-                <SelectTrigger id="sno">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="osn">ОСН - Общая</SelectItem>
-                  <SelectItem value="usn_income">УСН доход</SelectItem>
-                  <SelectItem value="usn_income_outcome">УСН доход-расход</SelectItem>
-                  <SelectItem value="envd">ЕНВД</SelectItem>
-                  <SelectItem value="esn">ЕСН</SelectItem>
-                  <SelectItem value="patent">Патент</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="sno">Система налогообложения (СНО)</Label>
+                <Select value={settings.sno} onValueChange={(value) => setSettings({ ...settings, sno: value })}>
+                  <SelectTrigger id="sno">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="osn">ОСН - Общая</SelectItem>
+                    <SelectItem value="usn_income">УСН доход</SelectItem>
+                    <SelectItem value="usn_income_outcome">УСН доход-расход</SelectItem>
+                    <SelectItem value="envd">ЕНВД</SelectItem>
+                    <SelectItem value="esn">ЕСН</SelectItem>
+                    <SelectItem value="patent">Патент</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="default_vat">НДС по умолчанию</Label>
-              <Select value={settings.default_vat} onValueChange={(value) => setSettings({ ...settings, default_vat: value })}>
-                <SelectTrigger id="default_vat">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Без НДС</SelectItem>
-                  <SelectItem value="vat0">НДС 0%</SelectItem>
-                  <SelectItem value="vat10">НДС 10%</SelectItem>
-                  <SelectItem value="vat20">НДС 20%</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="default_vat">НДС по умолчанию</Label>
+                <Select value={settings.default_vat} onValueChange={(value) => setSettings({ ...settings, default_vat: value })}>
+                  <SelectTrigger id="default_vat">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Без НДС</SelectItem>
+                    <SelectItem value="vat0">НДС 0%</SelectItem>
+                    <SelectItem value="vat10">НДС 10%</SelectItem>
+                    <SelectItem value="vat20">НДС 20%</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="company_email">Email компании (по умолчанию)</Label>
-              <Input
-                id="company_email"
-                type="email"
-                value={settings.company_email}
-                onChange={(e) => setSettings({ ...settings, company_email: e.target.value })}
-                placeholder="company@example.com"
-              />
-              <p className="text-sm text-muted-foreground">
-                Используется если клиент не указал свой email
-              </p>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="company_email">Email компании (по умолчанию)</Label>
+                <Input
+                  id="company_email"
+                  type="email"
+                  value={settings.company_email}
+                  onChange={(e) => setSettings({ ...settings, company_email: e.target.value })}
+                  placeholder="company@example.com"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Используется если клиент не указал свой email
+                </p>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="payment_address">Адрес сайта (payment_address)</Label>
-              <Input
-                id="payment_address"
-                value={settings.payment_address}
-                onChange={(e) => setSettings({ ...settings, payment_address: e.target.value })}
-                placeholder="example.com"
-              />
-            </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="payment_address">Адрес сайта (payment_address)</Label>
+                <Input
+                  id="payment_address"
+                  value={settings.payment_address}
+                  onChange={(e) => setSettings({ ...settings, payment_address: e.target.value })}
+                  placeholder="example.com"
+                />
+              </div>
             </CardContent>
           </Card>
 
