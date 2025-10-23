@@ -128,8 +128,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         url = f'https://app.ecomkassa.ru{endpoint}'
         api_headers = {
-            'Content-Type': 'application/json; charset=utf-8',
-            'X-Auth-Token': token
+            'Token': token
         }
         
         print(f"Requesting: {url}")
