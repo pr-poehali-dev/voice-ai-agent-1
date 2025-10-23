@@ -246,35 +246,37 @@ export const ReceiptPreview = ({
                     className="h-7 text-sm bg-background border rounded px-1"
                     title="Предмет расчета (тег 1212)"
                   >
-                    <option value="commodity">1. Товар</option>
-                    <option value="excise">2. Подакцизный товар</option>
+                    <option value="commodity">1. Товар (кроме подакцизного и маркированного)</option>
+                    <option value="excise">2. Подакцизный товар (кроме маркированного)</option>
                     <option value="job">3. Работа</option>
                     <option value="service">4. Услуга</option>
-                    <option value="gambling_bet">5. Ставка азартной игры</option>
-                    <option value="gambling_prize">6. Выигрыш азартной игры</option>
-                    <option value="lottery">7. Лотерейный билет</option>
-                    <option value="lottery_prize">8. Выигрыш лотереи</option>
-                    <option value="intellectual_activity">9. РИД</option>
-                    <option value="payment">10. Платеж</option>
-                    <option value="agent_commission">11. Агентское вознаграждение</option>
-                    <option value="composite">12. Составной</option>
-                    <option value="another">13. Иной</option>
-                    <option value="property_right">14. Имущественное право</option>
+                    <option value="gambling_bet">5. Прием ставок азартных игр</option>
+                    <option value="gambling_prize">6. Выплата выигрыша азартных игр</option>
+                    <option value="lottery">7. Прием денежных средств лотерей</option>
+                    <option value="lottery_prize">8. Выплата выигрыша лотерей</option>
+                    <option value="intellectual_activity">9. Предоставление прав на РИД</option>
+                    <option value="payment">10. Аванс, задаток, предоплата, кредит</option>
+                    <option value="agent_commission">11. Вознаграждение агента</option>
+                    <option value="composite">12. Взнос, пеня, штраф, вознаграждение, бонус</option>
+                    <option value="another">13. Иной предмет расчета</option>
+                    <option value="property_right">14. Передача имущественных прав</option>
                     <option value="non_operating_gain">15. Внереализационный доход</option>
-                    <option value="insurance_premium">16. Страховые взносы</option>
+                    <option value="insurance_premium">16. Расходы, уменьшающие налог</option>
                     <option value="sales_tax">17. Торговый сбор</option>
-                    <option value="resort_fee">18. Курортный сбор</option>
+                    <option value="resort_fee">18. Туристический налог</option>
                     <option value="deposit">19. Залог</option>
-                    <option value="expense">20. Расход (ФФД 1.2)</option>
-                    <option value="pension_insurance">21. Пенсионное страхование ИП (ФФД 1.2)</option>
-                    <option value="health_insurance">22. Медицинское страхование ИП (ФФД 1.2)</option>
-                    <option value="social_insurance">23. Социальное страхование ИП (ФФД 1.2)</option>
-                    <option value="casino_payment">24. Выплата казино (ФФД 1.2)</option>
-                    <option value="vendor_commission">25. Вознаграждение оператора (ФФД 1.2)</option>
-                    <option value="marked_commodity">30. Товар с маркировкой (ФФД 1.2)</option>
-                    <option value="marked_excise">31. Подакцизный с маркировкой (ФФД 1.2)</option>
-                    <option value="unmarked_commodity">32. Товар без маркировки (ФФД 1.2)</option>
-                    <option value="unmarked_excise">33. Подакцизный без маркировки (ФФД 1.2)</option>
+                    <option value="expense">20. Расходы по ст. 346.16 НК РФ</option>
+                    <option value="pension_insurance_ip">21. Пенсионное страхование ИП (без выплат)</option>
+                    <option value="pension_insurance_org">22. Пенсионное страхование (с выплатами)</option>
+                    <option value="health_insurance_ip">23. Медицинское страхование ИП (без выплат)</option>
+                    <option value="health_insurance_org">24. Медицинское страхование (с выплатами)</option>
+                    <option value="social_insurance">25. Социальное страхование</option>
+                    <option value="casino_payment">26. Прием/выплата казино</option>
+                    <option value="agent_payment">27. Выдача денег банковским агентом</option>
+                    <option value="marked_excise_no_code">30. Подакцизный маркир. без кода</option>
+                    <option value="marked_excise_with_code">31. Подакцизный маркир. с кодом</option>
+                    <option value="marked_commodity_no_code">32. Товар маркир. без кода</option>
+                    <option value="marked_commodity_with_code">33. Товар маркир. с кодом</option>
                   </select>
                 </div>
                 <select 
@@ -312,38 +314,40 @@ export const ReceiptPreview = ({
                     item.payment_object === 'excise' ? 'Подакцизный' :
                     item.payment_object === 'job' ? 'Работа' :
                     item.payment_object === 'service' ? 'Услуга' :
-                    item.payment_object === 'gambling_bet' ? 'Ставка' :
+                    item.payment_object === 'gambling_bet' ? 'Ставки' :
                     item.payment_object === 'gambling_prize' ? 'Выигрыш' :
                     item.payment_object === 'lottery' ? 'Лотерея' :
                     item.payment_object === 'lottery_prize' ? 'Приз' :
                     item.payment_object === 'intellectual_activity' ? 'РИД' :
-                    item.payment_object === 'payment' ? 'Платеж' :
-                    item.payment_object === 'agent_commission' ? 'Агентское' :
-                    item.payment_object === 'composite' ? 'Составной' :
+                    item.payment_object === 'payment' ? 'Аванс/кредит' :
+                    item.payment_object === 'agent_commission' ? 'Вознагр. агента' :
+                    item.payment_object === 'composite' ? 'Взнос/штраф' :
                     item.payment_object === 'another' ? 'Иной' :
-                    item.payment_object === 'property_right' ? 'Имущество' :
+                    item.payment_object === 'property_right' ? 'Имущ. право' :
                     item.payment_object === 'non_operating_gain' ? 'Внереализ.' :
-                    item.payment_object === 'insurance_premium' ? 'Страховка' :
+                    item.payment_object === 'insurance_premium' ? 'Расходы↓налог' :
                     item.payment_object === 'sales_tax' ? 'Торг. сбор' :
-                    item.payment_object === 'resort_fee' ? 'Курорт. сбор' :
+                    item.payment_object === 'resort_fee' ? 'Турист. налог' :
                     item.payment_object === 'deposit' ? 'Залог' :
-                    item.payment_object === 'expense' ? 'Расход' :
-                    item.payment_object === 'pension_insurance' ? 'Пенсионное' :
-                    item.payment_object === 'health_insurance' ? 'Медицинское' :
-                    item.payment_object === 'social_insurance' ? 'Социальное' :
-                    item.payment_object === 'casino_payment' ? 'Выплата казино' :
-                    item.payment_object === 'vendor_commission' ? 'Комиссия' :
-                    item.payment_object === 'marked_commodity' ? 'Товар (марк.)' :
-                    item.payment_object === 'marked_excise' ? 'Подакциз (марк.)' :
-                    item.payment_object === 'unmarked_commodity' ? 'Товар (без марк.)' :
-                    item.payment_object === 'unmarked_excise' ? 'Подакциз (без марк.)' : 'Товар'
+                    item.payment_object === 'expense' ? 'Расходы 346.16' :
+                    item.payment_object === 'pension_insurance_ip' ? 'Пенс. ИП' :
+                    item.payment_object === 'pension_insurance_org' ? 'Пенс. орг' :
+                    item.payment_object === 'health_insurance_ip' ? 'Мед. ИП' :
+                    item.payment_object === 'health_insurance_org' ? 'Мед. орг' :
+                    item.payment_object === 'social_insurance' ? 'Соц. страх.' :
+                    item.payment_object === 'casino_payment' ? 'Казино' :
+                    item.payment_object === 'agent_payment' ? 'Выдача БПА' :
+                    item.payment_object === 'marked_excise_no_code' ? 'Подакциз марк. без кода' :
+                    item.payment_object === 'marked_excise_with_code' ? 'Подакциз марк. с кодом' :
+                    item.payment_object === 'marked_commodity_no_code' ? 'Товар марк. без кода' :
+                    item.payment_object === 'marked_commodity_with_code' ? 'Товар марк. с кодом' : 'Товар'
                   } • Метод: {
                     item.payment_method === 'full_prepayment' ? 'Предоплата 100%' :
                     item.payment_method === 'prepayment' ? 'Предоплата' :
                     item.payment_method === 'advance' ? 'Аванс' :
                     item.payment_method === 'full_payment' ? 'Полный расчет' :
-                    item.payment_method === 'partial_payment' ? 'Частичный' :
-                    item.payment_method === 'credit' ? 'Кредит' :
+                    item.payment_method === 'partial_payment' ? 'Частичный + кредит' :
+                    item.payment_method === 'credit' ? 'Передача в кредит' :
                     item.payment_method === 'credit_payment' ? 'Оплата кредита' : 'Полный расчет'
                   }
                 </div>
