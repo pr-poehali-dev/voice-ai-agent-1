@@ -529,6 +529,9 @@ def create_ecomkassa_receipt(
         'total': receipt_data['total']
     }
     
+    print(f"[DEBUG] Sending to ecomkassa: {api_url}")
+    print(f"[DEBUG] Payload: {json.dumps(ecomkassa_payload, ensure_ascii=False, indent=2)}")
+    
     try:
         req = urllib.request.Request(
             api_url,
@@ -542,6 +545,7 @@ def create_ecomkassa_receipt(
         
         with urllib.request.urlopen(req, timeout=15) as response:
             response_data = json.loads(response.read().decode('utf-8'))
+            print(f"[DEBUG] Ecomkassa success response: {json.dumps(response_data, ensure_ascii=False)}")
             
             return {
                 'success': True,
@@ -553,6 +557,7 @@ def create_ecomkassa_receipt(
     
     except urllib.error.HTTPError as e:
         error_body = e.read().decode('utf-8')
+        print(f"[DEBUG] Ecomkassa HTTP error {e.code}: {error_body}")
         return {
             'success': False,
             'message': f'Ошибка API екомкасса: {e.code}',
