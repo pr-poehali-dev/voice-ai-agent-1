@@ -112,12 +112,15 @@ const Settings = () => {
         storeAddress: shop.storeAddress || ''
       }));
 
-      setSettings({ 
+      const updatedSettings = { 
         ...settings, 
         inn: taxIdentity,
         sno: taxVariant,
         available_shops: shops 
-      });
+      };
+      
+      setSettings(updatedSettings);
+      localStorage.setItem('ecomkassa_settings', JSON.stringify(updatedSettings));
       toast.success(`Загружен профиль. Магазинов: ${shops.length}`);
     } catch (error) {
       toast.error('Ошибка соединения с сервером');
