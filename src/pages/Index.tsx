@@ -108,6 +108,8 @@ const Index = () => {
       const savedSettings = localStorage.getItem('ecomkassa_settings');
       const settings = savedSettings ? JSON.parse(savedSettings) : {};
       
+      const externalId = `AI${Date.now()}${Math.random().toString(36).substring(2, 9)}`;
+      
       const response = await fetch('https://functions.poehali.dev/734da785-2867-4c5d-b20c-90fc6d86b11c', {
         method: 'POST',
         headers: {
@@ -118,6 +120,7 @@ const Index = () => {
           operation_type: pendingReceipt.operationType,
           preview_only: false,
           edited_data: editMode ? editedData : null,
+          external_id: externalId,
           settings
         }),
       });
