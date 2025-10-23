@@ -46,12 +46,20 @@ const Index = () => {
     setIsProcessing(true);
 
     try {
+      const savedSettings = localStorage.getItem('ecomkassa_settings');
+      const settings = savedSettings ? JSON.parse(savedSettings) : {};
+      
       const response = await fetch('https://functions.poehali.dev/734da785-2867-4c5d-b20c-90fc6d86b11c', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: userInput, operation_type: operationType, preview_only: true }),
+        body: JSON.stringify({ 
+          message: userInput, 
+          operation_type: operationType, 
+          preview_only: true,
+          settings 
+        }),
       });
 
       const data = await response.json();
@@ -97,6 +105,9 @@ const Index = () => {
     
     setIsProcessing(true);
     try {
+      const savedSettings = localStorage.getItem('ecomkassa_settings');
+      const settings = savedSettings ? JSON.parse(savedSettings) : {};
+      
       const response = await fetch('https://functions.poehali.dev/734da785-2867-4c5d-b20c-90fc6d86b11c', {
         method: 'POST',
         headers: {
@@ -106,7 +117,8 @@ const Index = () => {
           message: pendingReceipt.userInput, 
           operation_type: pendingReceipt.operationType,
           preview_only: false,
-          edited_data: editMode ? editedData : null
+          edited_data: editMode ? editedData : null,
+          settings
         }),
       });
 

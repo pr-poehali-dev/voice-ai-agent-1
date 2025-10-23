@@ -22,7 +22,7 @@ export const ChatHeader = () => {
         <Button variant="outline" size="icon" className="rounded-xl" onClick={() => navigate('/history')}>
           <Icon name="History" size={20} />
         </Button>
-        <Button variant="outline" size="icon" className="rounded-xl">
+        <Button variant="outline" size="icon" className="rounded-xl" onClick={() => navigate('/settings')}>
           <Icon name="Settings" size={20} />
         </Button>
       </div>

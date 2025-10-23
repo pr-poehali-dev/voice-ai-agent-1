@@ -40,6 +40,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     user_message: str = body_data.get('message', '')
     operation_type: str = body_data.get('operation_type', '')
     preview_only: bool = body_data.get('preview_only', False)
+    settings: dict = body_data.get('settings', {})
     
     if not user_message:
         return {
@@ -54,7 +55,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if not operation_type:
         operation_type = detect_operation_type(user_message)
     
-    parsed_receipt = parse_receipt_from_text(user_message)
+    parsed_receipt = parse_receipt_from_text(user_message, settings)
     
     if preview_only:
         return {
@@ -229,20 +230,23 @@ def get_gigachat_token(auth_key: str) -> Optional[str]:
         return None
 
 
-def parse_receipt_from_text(text: str) -> Dict[str, Any]:
+def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
     import re
     import requests
     import uuid
     
+    if settings is None:
+        settings = {}
+    
     auth_key = os.environ.get('GIGACHAT_AUTH_KEY', '')
     
     if not auth_key:
-        return fallback_parse_receipt(text)
+        return fallback_parse_receipt(text, settings)
     
     access_token = get_gigachat_token(auth_key)
     
     if not access_token:
-        return fallback_parse_receipt(text)
+        return fallback_parse_receipt(text, settings)
     
     prompt = f"""Извлеки из текста данные для чека и верни ТОЛЬКО валидный JSON без дополнительного текста.
 
@@ -335,37 +339,52 @@ def parse_receipt_from_text(text: str) -> Dict[str, Any]:
                     })
                 }
             
-            total = sum(item.get('price', 0) * item.get('quantity', 1) for item in parsed_data.get('items', []))
+            client_data = parsed_data.get('client', {})
+            client_email = client_data.get('email', '')
+            
+            if not client_email or client_email == 'customer@example.com':
+                client_email = settings.get('company_email', 'customer@example.com')
+            
+            items = parsed_data.get('items', [])
+            default_vat = settings.get('default_vat', 'none')
+            for item in items:
+                if 'vat' not in item or item['vat'] == 'none':
+                    item['vat'] = default_vat
+            
+            total = sum(item.get('price', 0) * item.get('quantity', 1) for item in items)
             
             return {
-                'items': parsed_data.get('items', []),
+                'items': items,
                 'total': round(total, 2),
                 'payments': [{
                     'type': parsed_data.get('payment_type', 'electronically'),
                     'sum': round(total, 2)
                 }],
-                'client': parsed_data.get('client', {'email': 'customer@example.com', 'phone': None}),
+                'client': {'email': client_email, 'phone': client_data.get('phone')},
                 'company': {
-                    'email': 'company@example.com',
-                    'sno': 'usn_income',
-                    'inn': '1234567890',
-                    'payment_address': 'example.com'
+                    'email': settings.get('company_email', 'company@example.com'),
+                    'sno': settings.get('sno', 'usn_income'),
+                    'inn': settings.get('inn', '1234567890'),
+                    'payment_address': settings.get('payment_address', 'example.com')
                 }
             }
         
         print(f"[DEBUG] No JSON found in response, using fallback")
-        return fallback_parse_receipt(text)
+        return fallback_parse_receipt(text, settings)
         
     except Exception as e:
         print(f"[DEBUG] Exception: {str(e)}")
-        return fallback_parse_receipt(text)
+        return fallback_parse_receipt(text, settings)
 
 
-def fallback_parse_receipt(text: str) -> Dict[str, Any]:
+def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
     import re
     
+    if settings is None:
+        settings = {}
+    
     email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
-    customer_email = email_match.group(0) if email_match else 'customer@example.com'
+    customer_email = email_match.group(0) if email_match else settings.get('company_email', 'customer@example.com')
     
     phone_match = re.search(r'\+?[78][\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}', text)
     customer_phone = phone_match.group(0) if phone_match else None
@@ -375,6 +394,8 @@ def fallback_parse_receipt(text: str) -> Dict[str, Any]:
     items = []
     total = 0
     
+    default_vat = settings.get('default_vat', 'none')
+    
     if price_matches:
         for price_str in price_matches:
             price_val = float(price_str)
@@ -383,7 +404,7 @@ def fallback_parse_receipt(text: str) -> Dict[str, Any]:
                 'price': price_val, 
                 'quantity': 1,
                 'measure': 'шт',
-                'vat': 'none',
+                'vat': default_vat,
                 'payment_method': 'full_payment',
                 'payment_object': 'commodity'
             })
@@ -395,7 +416,7 @@ def fallback_parse_receipt(text: str) -> Dict[str, Any]:
             'price': 100.00, 
             'quantity': 1,
             'measure': 'шт',
-            'vat': 'none',
+            'vat': default_vat,
             'payment_method': 'full_payment',
             'payment_object': 'commodity'
         })
@@ -417,10 +438,10 @@ def fallback_parse_receipt(text: str) -> Dict[str, Any]:
             'phone': customer_phone
         },
         'company': {
-            'email': 'company@example.com',
-            'sno': 'usn_income',
-            'inn': '1234567890',
-            'payment_address': 'example.com'
+            'email': settings.get('company_email', 'company@example.com'),
+            'sno': settings.get('sno', 'usn_income'),
+            'inn': settings.get('inn', '1234567890'),
+            'payment_address': settings.get('payment_address', 'example.com')
         }
     }
 
