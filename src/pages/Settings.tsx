@@ -204,6 +204,12 @@ const Settings = () => {
                   onChange={(e) => setSettings({ ...settings, ecomkassa_login: e.target.value })}
                   placeholder="Введите логин или оставьте пустым для использования серверного"
                 />
+                <p className="text-sm text-muted-foreground">
+                  API endpoint:{' '}
+                  <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                    GET https://api.ecomkassa.ru/api/mobile/v1/profile/firm
+                  </code>
+                </p>
               </div>
 
               <div className="space-y-2">
