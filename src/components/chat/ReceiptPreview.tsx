@@ -47,7 +47,7 @@ export const ReceiptPreview = ({
           <div className="text-xs text-muted-foreground">Тип оплаты</div>
           {editMode ? (
             <select 
-              value={editedData.payments?.[0]?.type || 'electronically'}
+              value={editedData.payments?.[0]?.type || '1'}
               onChange={(e) => updateEditedField('payments.0.type', e.target.value)}
               className="w-full bg-background border rounded px-2 py-1 text-sm"
             >
@@ -61,7 +61,13 @@ export const ReceiptPreview = ({
             </select>
           ) : (
             <div className="font-medium">
-              {editedData.payments?.[0]?.type === 'cash' ? 'Наличные' : 'Безналичный'}
+              {editedData.payments?.[0]?.type === '0' ? 'Наличные' : 
+               editedData.payments?.[0]?.type === '1' ? 'Безналичный' :
+               editedData.payments?.[0]?.type === '2' ? 'Аванс' :
+               editedData.payments?.[0]?.type === '3' ? 'Кредит' :
+               editedData.payments?.[0]?.type === '4' ? 'Иная форма' :
+               editedData.payments?.[0]?.type === '5' ? 'Расширенный аванс' :
+               editedData.payments?.[0]?.type === '6' ? 'Расширенный кредит' : 'Безналичный'}
             </div>
           )}
         </div>
