@@ -82,7 +82,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     client_email = parsed_receipt.get('client', {}).get('email', '')
-    if not client_email or client_email == 'customer@example.com' or '@' not in client_email or '.' not in client_email:
+    
+    invalid_emails = ['customer@example.com', 'НЕ УКАЗАН email', 'email@example.com', '']
+    if not client_email or client_email in invalid_emails or '@' not in client_email or '.' not in client_email:
         return {
             'statusCode': 400,
             'headers': {
