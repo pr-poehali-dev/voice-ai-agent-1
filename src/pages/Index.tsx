@@ -84,7 +84,8 @@ const Index = () => {
             receiptPermalink: msg.receiptPermalink,
             hasError: msg.hasError,
             errorMessage: msg.errorMessage,
-            previewData: msg.previewData
+            previewData: msg.previewData,
+            receiptData: msg.receiptData
           }));
         localStorage.setItem('chat_messages', JSON.stringify(toSave));
       } catch (e) {
