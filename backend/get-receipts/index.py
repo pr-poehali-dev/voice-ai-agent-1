@@ -58,7 +58,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         cursor.execute(
             'SELECT id, external_id, user_message, operation_type, items, total, '
-            'payment_type, customer_email, status, demo_mode, created_at '
+            'payment_type, customer_email, status, demo_mode, created_at, uuid '
             'FROM receipts ORDER BY created_at DESC LIMIT %s OFFSET %s',
             (limit, offset)
         )
@@ -84,7 +84,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'customer_email': receipt['customer_email'],
                 'status': receipt['status'],
                 'demo_mode': receipt['demo_mode'],
-                'created_at': receipt['created_at'].isoformat() if receipt['created_at'] else None
+                'created_at': receipt['created_at'].isoformat() if receipt['created_at'] else None,
+                'uuid': receipt.get('uuid')
             })
         
         return {
