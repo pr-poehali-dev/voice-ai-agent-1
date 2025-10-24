@@ -54,6 +54,37 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Message is required'})
         }
     
+    has_ecomkassa = settings.get('username') and settings.get('password') and settings.get('group_code')
+    has_gigachat = settings.get('gigachat_auth_key')
+    
+    if not has_ecomkassa and not preview_only:
+        return {
+            'statusCode': 400,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'error': 'Настройки ЕкомКасса не заполнены',
+                'message': 'Перейди в Настройки и заполни: логин, пароль и код группы касс ЕкомКасса',
+                'missing_integration': 'ecomkassa'
+            })
+        }
+    
+    if not has_gigachat and not preview_only:
+        return {
+            'statusCode': 400,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'error': 'Настройки GigaChat не заполнены',
+                'message': 'Перейди в Настройки и заполни ключ авторизации GigaChat для распознавания запросов',
+                'missing_integration': 'gigachat'
+            })
+        }
+    
     repeat_uuid = detect_repeat_command(user_message)
     
     if not operation_type:

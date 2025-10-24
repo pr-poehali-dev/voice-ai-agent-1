@@ -22,6 +22,21 @@ const Index = () => {
   const navigate = useNavigate();
   
   const getInitialMessages = (): Message[] => {
+    const savedSettings = localStorage.getItem('ecomkassa_settings');
+    const settings = savedSettings ? JSON.parse(savedSettings) : {};
+    
+    const hasEcomkassaSettings = settings.username && settings.password && settings.group_code;
+    const hasGigachatSettings = settings.gigachat_auth_key;
+    
+    if (!hasEcomkassaSettings || !hasGigachatSettings) {
+      return [{
+        id: '1',
+        type: 'agent',
+        content: '👋 Привет! Я твой ИИ Кассир.\n\nДля начала работы нужно настроить интеграции:\n\n🔧 **Обязательные настройки:**\n\n1. **ЕкомКасса** — для отправки чеков в налоговую\n   • Логин и пароль от личного кабинета\n   • Код группы касс\n\n2. **GigaChat** — для распознавания запросов на русском\n   • Ключ авторизации API\n\n📝 **Дополнительные данные:**\n   • ИНН компании\n   • Email компании\n   • Адрес расчетов\n   • СНО (система налогообложения)\n\n👉 Перейди в **Настройки** (кнопка справа вверху) и заполни все поля.\n\nПосле настройки ты сможешь создавать чеки голосом или текстом, например:\n*"Консультация по бизнесу 5000 рублей для ivan@mail.ru"*',
+        timestamp: new Date(),
+      }];
+    }
+    
     return [{
       id: '1',
       type: 'agent',
@@ -167,6 +182,26 @@ const Index = () => {
       });
 
       const data = await response.json();
+
+      if (data.error && data.missing_integration) {
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'agent',
+          content: `❌ ${data.message}`,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => {
+          const filtered = prev.filter(m => m.content !== 'Работаю, минуту...');
+          return [...filtered, errorMessage];
+        });
+        toast.error(data.error, {
+          action: {
+            label: 'Настройки',
+            onClick: () => navigate('/settings')
+          }
+        });
+        return;
+      }
 
       if (data.error && data.missing_field === 'email') {
         const errorMessage: Message = {
