@@ -13,6 +13,7 @@ interface Message {
   receiptPermalink?: string;
   previewData?: any;
   hasError?: boolean;
+  errorMessage?: string;
 }
 
 interface ChatMessageProps {
@@ -84,7 +85,15 @@ export const ChatMessage = ({
               handleCancelReceipt={handleCancelReceipt}
             />
           )}
-          {message.receiptData && (
+          {message.hasError && message.errorMessage && (
+            <div className="mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
+                <Icon name="AlertCircle" size={16} className="mt-0.5 flex-shrink-0" />
+                <span>{message.errorMessage}</span>
+              </div>
+            </div>
+          )}
+          {message.receiptData && !message.hasError && (
             <div className="mt-3 pt-3 border-t border-primary/20 space-y-2">
               <div className="flex items-center gap-2 text-xs text-accent">
                 <Icon name="FileText" size={16} />

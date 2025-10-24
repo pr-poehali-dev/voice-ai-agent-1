@@ -15,6 +15,7 @@ interface Message {
   receiptPermalink?: string;
   previewData?: any;
   hasError?: boolean;
+  errorMessage?: string;
 }
 
 const Index = () => {
@@ -166,17 +167,18 @@ const Index = () => {
 
       const typeName = operationNames[pendingReceipt.operationType] || pendingReceipt.operationType;
 
-      const messageContent = 'Запрос отправлен';
+      const messageContent = data.success ? 'Чек создан' : 'Ошибка';
       
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'agent',
         content: messageContent,
         timestamp: new Date(),
-        receiptData: data.receipt,
+        receiptData: data.success ? data.receipt : null,
         receiptUuid: data.uuid,
         receiptPermalink: data.permalink,
         hasError: !data.success,
+        errorMessage: !data.success ? (data.message || data.error || 'Неизвестная ошибка') : undefined,
       };
 
       setMessages((prev) => [...prev, agentMessage]);
