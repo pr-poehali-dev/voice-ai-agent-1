@@ -436,7 +436,7 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
     
     # Извлекаем цену и название товара
     # Паттерны: "батон 444", "кофе 200 руб", "круассан 150₽"
-    item_pattern = re.search(r'([а-яА-ЯёЁa-zA-Z\s]+?)\s+(\d+)\s*(?:руб|₽|рублей)?', text)
+    item_pattern = re.search(r'([а-яА-ЯёЁa-zA-Z]+(?:\s+[а-яА-ЯёЁa-zA-Z]+)*)\s+(\d+)\s*(?:руб|₽|рублей)?', text, re.IGNORECASE)
     
     items = []
     total = 0
