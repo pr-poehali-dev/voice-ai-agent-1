@@ -54,6 +54,41 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Message is required'})
         }
     
+    repeat_external_id = detect_repeat_command(user_message)
+    if repeat_external_id:
+        existing_receipt = get_receipt_from_db(repeat_external_id)
+        if existing_receipt:
+            parsed_receipt = existing_receipt
+            operation_type = existing_receipt.get('operation_type', 'sell')
+            
+            if preview_only:
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({
+                        'success': True,
+                        'message': f'Найден чек {repeat_external_id}. Проверь данные перед повторной отправкой.',
+                        'receipt': parsed_receipt,
+                        'operation_type': operation_type,
+                        'preview': True,
+                        'is_repeat': True
+                    })
+                }
+        else:
+            return {
+                'statusCode': 404,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({
+                    'error': f'Чек {repeat_external_id} не найден в истории'
+                })
+            }
+    
     if not operation_type:
         operation_type = detect_operation_type(user_message)
     
@@ -224,6 +259,72 @@ def merge_receipts(previous: dict, new: dict) -> dict:
                 result['company'][key] = value
     
     return result
+
+
+def detect_repeat_command(text: str) -> Optional[str]:
+    import re
+    text_lower = text.lower()
+    
+    repeat_patterns = [
+        r'повтор[иь]\s+чек\s+([a-zA-Z0-9_-]+)',
+        r'повтор[иь]\s+([a-zA-Z0-9_-]+)',
+        r'отправ[иь]\s+снова\s+([a-zA-Z0-9_-]+)',
+        r'пересоздай\s+чек\s+([a-zA-Z0-9_-]+)',
+        r'создай\s+заново\s+([a-zA-Z0-9_-]+)'
+    ]
+    
+    for pattern in repeat_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            return match.group(1)
+    
+    return None
+
+
+def get_receipt_from_db(external_id: str) -> Optional[Dict[str, Any]]:
+    database_url = os.environ.get('DATABASE_URL', '')
+    if not database_url:
+        return None
+    
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+    
+    try:
+        conn = psycopg2.connect(database_url)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute(
+            'SELECT external_id, user_message, operation_type, items, total, '
+            'payment_type, customer_email FROM t_p7891941_voice_ai_agent_1.receipts '
+            'WHERE LOWER(external_id) = LOWER(%s) LIMIT 1',
+            (external_id,)
+        )
+        
+        receipt = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if receipt:
+            return {
+                'external_id': receipt['external_id'],
+                'user_message': receipt['user_message'],
+                'operation_type': receipt['operation_type'],
+                'items': receipt['items'],
+                'total': float(receipt['total']),
+                'payment_type': receipt['payment_type'],
+                'client': {
+                    'email': receipt['customer_email']
+                },
+                'payments': [{
+                    'type': '0' if receipt['payment_type'] == 'cash' else '1',
+                    'sum': float(receipt['total'])
+                }]
+            }
+        
+        return None
+    except Exception as e:
+        print(f"[DEBUG] Error getting receipt from DB: {str(e)}")
+        return None
 
 
 def detect_operation_type(text: str) -> str:
