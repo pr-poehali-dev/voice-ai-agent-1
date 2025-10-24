@@ -473,36 +473,37 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
     for word in skip_words:
         text_clean = text_clean.replace(word, '')
     
-    item_pattern = re.search(r'([а-яА-ЯёЁa-zA-Z]+(?:\s+[а-яА-ЯёЁa-zA-Z]+)*)\s+(\d+)\s*(?:руб|₽|рублей)?', text_clean, re.IGNORECASE)
+    item_patterns = re.findall(r'([а-яА-ЯёЁa-zA-Z]+(?:\s+[а-яА-ЯёЁa-zA-Z]+)*)\s+(\d+)\s*(?:руб|₽|рублей)?', text_clean, re.IGNORECASE)
     
     items = []
     total = 0
     
     default_vat = settings.get('default_vat', 'none')
     
-    if item_pattern:
-        item_name = item_pattern.group(1).strip()
-        price_val = float(item_pattern.group(2))
-        
-        service_keywords = [
-            'консультация', 'стрижка', 'доставка', 'ремонт', 'услуга',
-            'обучение', 'тренинг', 'коучинг', 'массаж', 'сервис',
-            'поддержка', 'настройка', 'установка', 'монтаж'
-        ]
-        
-        item_lower = item_name.lower()
-        payment_object = 'service' if any(kw in item_lower for kw in service_keywords) else 'commodity'
-        
-        items.append({
-            'name': item_name.capitalize(), 
-            'price': price_val, 
-            'quantity': 1,
-            'measure': 'шт',
-            'vat': default_vat,
-            'payment_method': 'full_payment',
-            'payment_object': payment_object
-        })
-        total = price_val
+    service_keywords = [
+        'консультация', 'стрижка', 'доставка', 'ремонт', 'услуга',
+        'обучение', 'тренинг', 'коучинг', 'массаж', 'сервис',
+        'поддержка', 'настройка', 'установка', 'монтаж'
+    ]
+    
+    if item_patterns:
+        for item_name_raw, price_str in item_patterns:
+            item_name = item_name_raw.strip()
+            price_val = float(price_str)
+            
+            item_lower = item_name.lower()
+            payment_object = 'service' if any(kw in item_lower for kw in service_keywords) else 'commodity'
+            
+            items.append({
+                'name': item_name.capitalize(), 
+                'price': price_val, 
+                'quantity': 1,
+                'measure': 'шт',
+                'vat': default_vat,
+                'payment_method': 'full_payment',
+                'payment_object': payment_object
+            })
+            total += price_val
     else:
         # Fallback: ищем просто цену
         price_matches = re.findall(r'(\d+)\s*(?:руб|₽|рублей)', text.lower())
