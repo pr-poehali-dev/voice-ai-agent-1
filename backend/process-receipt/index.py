@@ -61,6 +61,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             parsed_receipt = existing_receipt
             operation_type = existing_receipt.get('operation_type', 'sell')
             
+            if 'company' not in parsed_receipt:
+                parsed_receipt['company'] = {}
+            
+            parsed_receipt['company']['email'] = settings.get('company_email', parsed_receipt.get('company', {}).get('email', ''))
+            parsed_receipt['company']['inn'] = settings.get('inn', parsed_receipt.get('company', {}).get('inn', ''))
+            parsed_receipt['company']['sno'] = settings.get('sno', parsed_receipt.get('company', {}).get('sno', 'usn_income'))
+            parsed_receipt['company']['payment_address'] = settings.get('payment_address', parsed_receipt.get('company', {}).get('payment_address', ''))
+            
             if preview_only:
                 return {
                     'statusCode': 200,
