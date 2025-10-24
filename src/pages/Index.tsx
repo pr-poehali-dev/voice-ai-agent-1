@@ -64,16 +64,19 @@ const Index = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
-        const toSave = messages.slice(-50).map(msg => ({
-          id: msg.id,
-          type: msg.type,
-          content: msg.content,
-          timestamp: msg.timestamp.toISOString(),
-          receiptUuid: msg.receiptUuid,
-          receiptPermalink: msg.receiptPermalink,
-          hasError: msg.hasError,
-          errorMessage: msg.errorMessage
-        }));
+        const toSave = messages
+          .filter(msg => msg.type !== 'preview')
+          .slice(-50)
+          .map(msg => ({
+            id: msg.id,
+            type: msg.type,
+            content: msg.content,
+            timestamp: msg.timestamp.toISOString(),
+            receiptUuid: msg.receiptUuid,
+            receiptPermalink: msg.receiptPermalink,
+            hasError: msg.hasError,
+            errorMessage: msg.errorMessage
+          }));
         localStorage.setItem('chat_messages', JSON.stringify(toSave));
       } catch (e) {
         console.error('Error saving messages:', e);

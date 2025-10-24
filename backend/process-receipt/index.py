@@ -55,7 +55,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     repeat_uuid = detect_repeat_command(user_message)
-    if repeat_uuid:
+    
+    if not operation_type:
+        operation_type = detect_operation_type(user_message)
+    
+    if edited_data:
+        parsed_receipt = edited_data
+    elif repeat_uuid:
         existing_receipt = get_receipt_from_db(repeat_uuid)
         if existing_receipt:
             parsed_receipt = existing_receipt
@@ -75,6 +81,23 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     if 'client' not in parsed_receipt:
                         parsed_receipt['client'] = {}
                     parsed_receipt['client']['email'] = company_email
+            
+            if preview_only:
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({
+                        'success': True,
+                        'message': f'Найден чек UUID {repeat_uuid}. Проверь данные перед повторной отправкой. При отправке будет создан новый external_id.',
+                        'receipt': parsed_receipt,
+                        'operation_type': operation_type,
+                        'preview': True,
+                        'is_repeat': True
+                    })
+                }
         else:
             return {
                 'statusCode': 404,
@@ -86,12 +109,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'error': f'Чек с UUID {repeat_uuid} не найден в истории'
                 })
             }
-    
-    if not operation_type:
-        operation_type = detect_operation_type(user_message)
-    
-    if edited_data:
-        parsed_receipt = edited_data
     else:
         parsed_receipt = parse_receipt_from_text(user_message, settings)
         
