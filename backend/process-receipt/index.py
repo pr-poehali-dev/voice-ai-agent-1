@@ -182,7 +182,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 })
             }
     else:
-        parsed_receipt = parse_receipt_from_text(user_message, settings)
+        try:
+            parsed_receipt = parse_receipt_from_text(user_message, settings)
+        except ValueError as e:
+            return {
+                'statusCode': 400,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({
+                    'error': str(e),
+                    'message': str(e)
+                })
+            }
         
         if previous_receipt:
             parsed_receipt = merge_receipts(previous_receipt, parsed_receipt)
@@ -538,6 +551,31 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
     if settings is None:
         settings = {}
     
+    text_lower = text.lower().strip()
+    greeting_patterns = [
+        r'^привет',
+        r'^здравствуй',
+        r'^добр[ыо]',
+        r'^hello',
+        r'^hi\b',
+        r'^hey\b',
+        r'^расскажи',
+        r'^что такое',
+        r'^как дела',
+        r'^анекдот',
+        r'^пошути',
+        r'^кто ты',
+        r'^помоги',
+        r'^спасибо'
+    ]
+    
+    for pattern in greeting_patterns:
+        if re.match(pattern, text_lower):
+            raise ValueError(
+                'Я ИИ-кассир и помогаю только с созданием чеков. '
+                'Укажи товар/услугу, цену и email клиента для создания чека.'
+            )
+    
     auth_key = settings.get('gigachat_auth_key') or os.environ.get('GIGACHAT_AUTH_KEY', '')
     
     if not auth_key:
@@ -635,7 +673,7 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
     }
     
     try:
-        response = requests.post(chat_url, headers=headers, json=payload, verify=False, timeout=20)
+        response = requests.post(chat_url, headers=headers, json=payload, verify=False, timeout=30)
         result = response.json()
         
         ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
@@ -701,6 +739,8 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
         print(f"[DEBUG] No JSON found in response, using fallback")
         return fallback_parse_receipt(text, settings)
         
+    except ValueError as e:
+        raise e
     except Exception as e:
         print(f"[DEBUG] Exception: {str(e)}")
         return fallback_parse_receipt(text, settings)
@@ -711,6 +751,28 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
     
     if settings is None:
         settings = {}
+    
+    text_lower = text.lower().strip()
+    greeting_patterns = [
+        r'^привет',
+        r'^здравствуй',
+        r'^добр[ыо]',
+        r'^hello',
+        r'^hi\b',
+        r'^hey\b',
+        r'^расскажи',
+        r'^что такое',
+        r'^как дела',
+        r'^анекдот',
+        r'^пошути'
+    ]
+    
+    for pattern in greeting_patterns:
+        if re.match(pattern, text_lower):
+            raise ValueError(
+                'Я ИИ-кассир и помогаю только с созданием чеков. '
+                'Укажи товар/услугу, цену и email клиента для создания чека.'
+            )
     
     email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
     customer_email = email_match.group(0) if email_match else settings.get('company_email', '')
