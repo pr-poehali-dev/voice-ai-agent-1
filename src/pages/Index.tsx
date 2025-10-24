@@ -52,6 +52,14 @@ const Index = () => {
     setInput('');
     setIsProcessing(true);
     
+    const processingMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      type: 'agent',
+      content: 'Работаю, минуту...',
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, processingMessage]);
+    
     // Сбрасываем предыдущие данные формы
     setPendingReceipt(null);
     setEditMode(false);
@@ -84,7 +92,10 @@ const Index = () => {
           content: `❌ ${data.message}\n\nПерейди в настройки и заполни поле "Email компании" или укажи email клиента в сообщении.`,
           timestamp: new Date(),
         };
-        setMessages((prev) => [...prev, errorMessage]);
+        setMessages((prev) => {
+          const filtered = prev.filter(m => m.content !== 'Работаю, минуту...');
+          return [...filtered, errorMessage];
+        });
         toast.error('Не указан email', {
           action: {
             label: 'Настройки',
@@ -112,7 +123,10 @@ const Index = () => {
         previewData: { ...data.receipt, operation_type: detectedType, typeName },
       };
 
-      setMessages((prev) => [...prev, previewMessage]);
+      setMessages((prev) => {
+        const filtered = prev.filter(m => m.content !== 'Работаю, минуту...');
+        return [...filtered, previewMessage];
+      });
       setPendingReceipt({ userInput, operationType: detectedType });
       setEditedData({ ...data.receipt, operation_type: detectedType, typeName });
       setLastReceiptData(data.receipt);
@@ -124,7 +138,10 @@ const Index = () => {
         content: 'Произошла ошибка при обработке запроса. Попробуй еще раз.',
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => {
+        const filtered = prev.filter(m => m.content !== 'Работаю, минуту...');
+        return [...filtered, errorMessage];
+      });
       toast.error('Ошибка соединения с сервером');
     } finally {
       setIsProcessing(false);
@@ -190,7 +207,10 @@ const Index = () => {
         errorMessage: !data.success ? (data.message || data.error || 'Неизвестная ошибка') : undefined,
       };
 
-      setMessages((prev) => [...prev, agentMessage]);
+      setMessages((prev) => {
+        const filtered = prev.filter(m => m.content !== 'Работаю, минуту...');
+        return [...filtered, agentMessage];
+      });
       setPendingReceipt(null);
       setEditMode(false);
       setEditedData(null);
