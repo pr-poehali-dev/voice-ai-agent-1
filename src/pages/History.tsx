@@ -117,7 +117,6 @@ const History = () => {
                       </Badge>
                       <Badge variant="outline">{getOperationTypeName(receipt.operation_type)}</Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">{receipt.user_message}</p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(receipt.created_at).toLocaleString('ru-RU', {
                         day: '2-digit',
