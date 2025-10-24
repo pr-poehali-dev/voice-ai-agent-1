@@ -41,6 +41,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     operation_type: str = body_data.get('operation_type', '')
     preview_only: bool = body_data.get('preview_only', False)
     settings: dict = body_data.get('settings', {})
+    previous_receipt: dict = body_data.get('previous_receipt', {})
     
     if not user_message:
         return {
@@ -56,6 +57,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         operation_type = detect_operation_type(user_message)
     
     parsed_receipt = parse_receipt_from_text(user_message, settings)
+    
+    if previous_receipt:
+        parsed_receipt = merge_receipts(previous_receipt, parsed_receipt)
     
     if preview_only:
         return {
@@ -190,6 +194,30 @@ def get_ecomkassa_token(login: str, password: str) -> Optional[str]:
     except Exception as e:
         print(f"[DEBUG] Exception getting token: {str(e)}")
         return None
+
+
+def merge_receipts(previous: dict, new: dict) -> dict:
+    result = previous.copy()
+    
+    if new.get('client', {}).get('email') and new['client']['email'] != 'customer@example.com':
+        if 'client' not in result:
+            result['client'] = {}
+        result['client']['email'] = new['client']['email']
+    
+    if new.get('items') and len(new['items']) > 0:
+        first_item = new['items'][0]
+        if first_item.get('name') != 'Товар/Услуга':
+            result['items'] = new['items']
+            result['total'] = new.get('total', result.get('total', 0))
+    
+    if new.get('company'):
+        if 'company' not in result:
+            result['company'] = {}
+        for key, value in new['company'].items():
+            if value and value not in ['example@company.ru', 'None', '']:
+                result['company'][key] = value
+    
+    return result
 
 
 def detect_operation_type(text: str) -> str:

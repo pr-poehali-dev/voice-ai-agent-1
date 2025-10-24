@@ -32,6 +32,7 @@ const Index = () => {
   const [pendingReceipt, setPendingReceipt] = useState<any>(null);
   const [editMode, setEditMode] = useState(false);
   const [editedData, setEditedData] = useState<any>(null);
+  const [lastReceiptData, setLastReceiptData] = useState<any>(null);
 
   const handleSendMessage = async () => {
     if (!input.trim() || isProcessing) return;
@@ -61,7 +62,8 @@ const Index = () => {
           message: userInput, 
           operation_type: operationType, 
           preview_only: true,
-          settings 
+          settings,
+          previous_receipt: lastReceiptData
         }),
       });
 
@@ -105,6 +107,7 @@ const Index = () => {
       setMessages((prev) => [...prev, previewMessage]);
       setPendingReceipt({ userInput, operationType: detectedType });
       setEditedData({ ...data.receipt, operation_type: detectedType, typeName });
+      setLastReceiptData(data.receipt);
       toast.info('Проверь данные и подтверди отправку');
     } catch (error) {
       const errorMessage: Message = {
@@ -169,6 +172,7 @@ const Index = () => {
       setPendingReceipt(null);
       setEditMode(false);
       setEditedData(null);
+      setLastReceiptData(null);
       
       if (data.success) {
         toast.success(`Чек успешно создан! Тип: ${typeName}`);
@@ -186,6 +190,7 @@ const Index = () => {
     setPendingReceipt(null);
     setEditMode(false);
     setEditedData(null);
+    setLastReceiptData(null);
     toast.info('Отменено');
   };
 
