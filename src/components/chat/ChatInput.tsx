@@ -25,66 +25,19 @@ export const ChatInput = ({
 }: ChatInputProps) => {
   return (
     <div className="relative pb-safe">
-      <div className="space-y-2">
-        <div className="flex gap-1.5 md:gap-2">
-          <Button
-            variant={operationType === 'sell' ? 'default' : 'outline'}
-            size="sm"
-            className="rounded-lg text-xs md:text-sm flex-1"
-            onClick={() => setOperationType('sell')}
+      <div className="flex gap-2 items-center">
+        <div className="relative flex-1">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+            placeholder="Опиши чек голосом или текстом..."
+            className="pr-14 rounded-2xl h-12 text-sm resize-none"
             disabled={isProcessing}
-          >
-            Продажа
-          </Button>
-          <Button
-            variant={operationType === 'refund' ? 'default' : 'outline'}
-            size="sm"
-            className="rounded-lg text-xs md:text-sm flex-1"
-            onClick={() => setOperationType('refund')}
-            disabled={isProcessing}
-          >
-            Возврат
-          </Button>
-          <Button
-            variant={operationType === 'sell_correction' ? 'default' : 'outline'}
-            size="sm"
-            className="rounded-lg text-xs md:text-sm flex-1"
-            onClick={() => setOperationType('sell_correction')}
-            disabled={isProcessing}
-          >
-            Коррекция
-          </Button>
-        </div>
-
-        <div className="flex gap-2 items-center">
-          <div className="relative flex-1">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-              placeholder="Опиши чек голосом или текстом..."
-              className="rounded-2xl h-12 text-sm resize-none"
-              disabled={isProcessing}
-            />
-          </div>
-          
-          <Button
-            variant="outline"
-            size="icon"
-            className="rounded-xl h-12 w-12 flex-shrink-0"
-            onClick={handleVoiceInput}
-            disabled={isProcessing}
-          >
-            <Icon
-              name={isListening ? 'MicOff' : 'Mic'}
-              size={20}
-              className={isListening ? 'text-destructive' : ''}
-            />
-          </Button>
-
+          />
           <Button
             size="icon"
-            className="rounded-xl h-12 w-12 flex-shrink-0"
+            className="absolute right-1 top-1 rounded-xl h-10 w-10"
             onClick={handleSendMessage}
             disabled={isProcessing || !input.trim()}
           >
@@ -95,6 +48,20 @@ export const ChatInput = ({
             )}
           </Button>
         </div>
+        
+        <Button
+          variant="outline"
+          size="icon"
+          className="rounded-xl h-12 w-12 flex-shrink-0"
+          onClick={handleVoiceInput}
+          disabled={isProcessing}
+        >
+          <Icon
+            name={isListening ? 'MicOff' : 'Mic'}
+            size={20}
+            className={isListening ? 'text-destructive' : ''}
+          />
+        </Button>
       </div>
     </div>
   );
