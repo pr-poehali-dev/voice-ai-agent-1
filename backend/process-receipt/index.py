@@ -60,6 +60,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         operation_type = detect_operation_type(user_message)
     
     if edited_data:
+        print(f"[DEBUG] Using edited_data: {edited_data}")
         parsed_receipt = edited_data
     elif repeat_uuid:
         existing_receipt = get_receipt_from_db(repeat_uuid)
