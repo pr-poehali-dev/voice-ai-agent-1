@@ -589,41 +589,41 @@ def create_ecomkassa_receipt(
     
     ecomkassa_payload = {
         'external_id': f'receipt_{abs(hash(str(receipt_data)))}',
-        'print': True,
         'timestamp': datetime.now().strftime('%d.%m.%Y %H:%M:%S'),
-        'client': {
-            'email': client_data.get('email', '')
-        },
-        'company': {
-            'email': company_data.get('email', ''),
-            'sno': company_data.get('sno', 'usn_income'),
-            'inn': company_data.get('inn', ''),
-            'payment_address': company_data.get('payment_address', '')
-        },
-        'items': [
-            {
-                'type': 'position',
-                'name': item['name'],
-                'price': item['price'],
-                'quantity': item.get('quantity', 1),
-                'amount': round(item['price'] * item.get('quantity', 1), 2),
-                'measurement_unit': measure_map.get(item.get('measure', 'шт'), '0'),
-                'payment_method': item.get('payment_method', 'full_payment'),
-                'payment_object': item.get('payment_object', 'commodity'),
-                'vat': {
-                    'type': item.get('vat', 'none')
+        'receipt': {
+            'client': {
+                'email': client_data.get('email', '')
+            },
+            'company': {
+                'email': company_data.get('email', ''),
+                'sno': company_data.get('sno', 'usn_income'),
+                'inn': company_data.get('inn', ''),
+                'payment_address': company_data.get('payment_address', '')
+            },
+            'items': [
+                {
+                    'name': item['name'],
+                    'price': float(item['price']),
+                    'quantity': float(item.get('quantity', 1)),
+                    'sum': round(float(item['price']) * float(item.get('quantity', 1)), 2),
+                    'measure': int(measure_map.get(item.get('measure', 'шт'), '0')),
+                    'payment_method': item.get('payment_method', 'full_payment'),
+                    'payment_object': 1 if item.get('payment_object') == 'commodity' else 4,
+                    'vat': {
+                        'type': item.get('vat', 'none')
+                    }
                 }
-            }
-            for item in receipt_data['items']
-        ],
-        'payments': [
-            {
-                'type': payment.get('type', '1'),
-                'amount': payment.get('sum', receipt_data['total'])
-            }
-            for payment in receipt_data.get('payments', [{'type': '1', 'sum': receipt_data['total']}])
-        ],
-        'total': receipt_data['total']
+                for item in receipt_data['items']
+            ],
+            'payments': [
+                {
+                    'type': int(payment.get('type', 1)) if isinstance(payment.get('type'), str) and payment.get('type').isdigit() else 1,
+                    'sum': float(payment.get('sum', receipt_data['total']))
+                }
+                for payment in receipt_data.get('payments', [{'type': 1, 'sum': receipt_data['total']}])
+            ],
+            'total': float(receipt_data['total'])
+        }
     }
     
     print(f"[DEBUG] Sending to ecomkassa: {api_url}")
