@@ -57,6 +57,20 @@ const History = () => {
     return types[type] || type;
   };
 
+  const getPaymentTypeName = (type: string) => {
+    const types: Record<string, string> = {
+      '0': 'Наличные',
+      '1': 'Безналичный',
+      '2': 'Предоплата',
+      '3': 'Постоплата',
+      '4': 'Встречное предоставление',
+      'cash': 'Наличные',
+      'card': 'Безналичный',
+      'electronically': 'Безналичный',
+    };
+    return types[type] || 'Безналичный';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-950/20">
       <div className="container max-w-5xl mx-auto p-6">
@@ -118,7 +132,7 @@ const History = () => {
                     <div className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                       {receipt.total}₽
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1 capitalize">{receipt.payment_type}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{getPaymentTypeName(receipt.payment_type)}</div>
                   </div>
                 </div>
 
