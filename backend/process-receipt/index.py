@@ -630,7 +630,7 @@ def create_ecomkassa_receipt(
     
     calculated_total = round(sum(item['sum'] for item in items_for_payload), 2)
     
-    unique_id = f'receipt_{int(time.time() * 1000000)}'
+    unique_id = f'AI_{int(time.time() * 1000000)}'
     
     ecomkassa_payload = {
         'external_id': unique_id,
