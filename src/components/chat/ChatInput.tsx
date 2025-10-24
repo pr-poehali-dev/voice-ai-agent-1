@@ -24,8 +24,8 @@ export const ChatInput = ({
   handleVoiceInput,
 }: ChatInputProps) => {
   return (
-    <div className="relative">
-      <div className="flex gap-3 items-end">
+    <div className="relative pb-safe">
+      <div className="flex gap-2 md:gap-3 items-end">
         <Button
           variant="outline"
           size="icon"
@@ -41,11 +41,11 @@ export const ChatInput = ({
         </Button>
 
         <div className="flex-1 space-y-2">
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 md:gap-2">
             <Button
               variant={operationType === 'sell' ? 'default' : 'outline'}
               size="sm"
-              className="rounded-lg"
+              className="rounded-lg text-xs md:text-sm flex-1 md:flex-initial"
               onClick={() => setOperationType('sell')}
               disabled={isProcessing}
             >
@@ -54,7 +54,7 @@ export const ChatInput = ({
             <Button
               variant={operationType === 'refund' ? 'default' : 'outline'}
               size="sm"
-              className="rounded-lg"
+              className="rounded-lg text-xs md:text-sm flex-1 md:flex-initial"
               onClick={() => setOperationType('refund')}
               disabled={isProcessing}
             >
@@ -63,7 +63,7 @@ export const ChatInput = ({
             <Button
               variant={operationType === 'sell_correction' ? 'default' : 'outline'}
               size="sm"
-              className="rounded-lg"
+              className="rounded-lg text-xs md:text-sm flex-1 md:flex-initial"
               onClick={() => setOperationType('sell_correction')}
               disabled={isProcessing}
             >

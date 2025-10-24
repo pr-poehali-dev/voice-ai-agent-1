@@ -6,16 +6,16 @@ export const ChatHeader = () => {
   const navigate = useNavigate();
 
   return (
-    <header className="flex items-center justify-between mb-8 pt-4">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-          <Icon name="Sparkles" size={24} className="text-white" />
+    <header className="flex items-center justify-between mb-4 md:mb-8">
+      <div className="flex items-center gap-2 md:gap-3">
+        <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+          <Icon name="Sparkles" size={20} className="text-white md:w-6 md:h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             AI Receipt Agent
           </h1>
-          <p className="text-sm text-muted-foreground">Екомкасса ИИ-помощник</p>
+          <p className="text-xs md:text-sm text-muted-foreground">Екомкасса ИИ-помощник</p>
         </div>
       </div>
       <div className="flex gap-2">
