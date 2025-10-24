@@ -75,23 +75,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     if 'client' not in parsed_receipt:
                         parsed_receipt['client'] = {}
                     parsed_receipt['client']['email'] = company_email
-            
-            if preview_only:
-                return {
-                    'statusCode': 200,
-                    'headers': {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    },
-                    'body': json.dumps({
-                        'success': True,
-                        'message': f'Найден чек UUID {repeat_uuid}. Проверь данные перед повторной отправкой. При отправке будет создан новый external_id.',
-                        'receipt': parsed_receipt,
-                        'operation_type': operation_type,
-                        'preview': True,
-                        'is_repeat': True
-                    })
-                }
         else:
             return {
                 'statusCode': 404,
