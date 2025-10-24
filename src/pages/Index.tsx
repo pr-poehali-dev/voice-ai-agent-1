@@ -48,17 +48,22 @@ const Index = () => {
   const loadMessages = () => {
     try {
       const saved = localStorage.getItem('chat_messages');
-      if (!saved) return getInitialMessages();
+      
+      if (!saved) {
+        return getInitialMessages();
+      }
       
       const parsed = JSON.parse(saved);
       if (!Array.isArray(parsed) || parsed.length === 0) {
         return getInitialMessages();
       }
       
-      return parsed.map((msg: any) => ({
+      const loadedMessages = parsed.map((msg: any) => ({
         ...msg,
         timestamp: new Date(msg.timestamp)
       }));
+      
+      return [...getInitialMessages(), ...loadedMessages];
     } catch (e) {
       console.error('Error loading messages:', e);
       localStorage.removeItem('chat_messages');
@@ -89,6 +94,7 @@ const Index = () => {
     const timer = setTimeout(() => {
       try {
         const toSave = messages
+          .filter(msg => msg.id !== '1')
           .slice(-50)
           .map(msg => ({
             id: msg.id,
