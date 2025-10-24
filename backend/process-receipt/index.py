@@ -57,21 +57,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     parsed_receipt = parse_receipt_from_text(user_message, settings)
     
-    client_email = parsed_receipt.get('client', {}).get('email', '')
-    if not client_email or client_email == 'customer@example.com':
-        return {
-            'statusCode': 400,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            'body': json.dumps({
-                'error': 'Не указан email клиента',
-                'message': 'Укажи email клиента в сообщении или добавь company_email в настройках',
-                'missing_field': 'email'
-            })
-        }
-    
     if preview_only:
         return {
             'statusCode': 200,
@@ -85,6 +70,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'receipt': parsed_receipt,
                 'operation_type': operation_type,
                 'preview': True
+            })
+        }
+    
+    client_email = parsed_receipt.get('client', {}).get('email', '')
+    if not client_email or client_email == 'customer@example.com':
+        return {
+            'statusCode': 400,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'error': 'Не указан email клиента',
+                'message': 'Укажи email клиента в сообщении или добавь company_email в настройках (Продажа)',
+                'missing_field': 'email'
             })
         }
     
