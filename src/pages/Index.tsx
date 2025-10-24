@@ -98,7 +98,7 @@ const Index = () => {
           <div className="flex justify-center mb-3">
             <button
               onClick={scrollToBottom}
-              className="inline-flex items-center gap-2 bg-primary/90 hover:bg-primary text-primary-foreground rounded-full pl-4 pr-3 py-1.5 shadow-md hover:shadow-lg transition-all text-sm font-medium"
+              className="inline-flex items-center gap-2 bg-background/80 hover:bg-background border border-border text-foreground rounded-full pl-4 pr-3 py-1.5 shadow-sm hover:shadow-md transition-all text-sm font-medium backdrop-blur-sm"
               aria-label="Прокрутить вниз"
             >
               Вниз
