@@ -605,6 +605,29 @@ def create_ecomkassa_receipt(
         'сутки': '24'
     }
     
+    items_for_payload = [
+        {
+            'name': item['name'],
+            'price': float(item['price']),
+            'quantity': float(item.get('quantity', 1)),
+            'sum': round(float(item['price']) * float(item.get('quantity', 1)), 2),
+            'measure': int(measure_map.get(item.get('measure', 'шт'), '0')),
+            'payment_method': item.get('payment_method', 'full_payment'),
+            'payment_object': {
+                'commodity': 1,
+                'excise': 2,
+                'job': 3,
+                'service': 4
+            }.get(item.get('payment_object'), 4),
+            'vat': {
+                'type': item.get('vat', 'none')
+            }
+        }
+        for item in receipt_data['items']
+    ]
+    
+    calculated_total = round(sum(item['sum'] for item in items_for_payload), 2)
+    
     ecomkassa_payload = {
         'external_id': f'receipt_{abs(hash(str(receipt_data)))}',
         'timestamp': datetime.now().strftime('%d.%m.%Y %H:%M:%S'),
@@ -618,34 +641,15 @@ def create_ecomkassa_receipt(
                 'inn': company_data.get('inn', ''),
                 'payment_address': company_data.get('payment_address', '')
             },
-            'items': [
-                {
-                    'name': item['name'],
-                    'price': float(item['price']),
-                    'quantity': float(item.get('quantity', 1)),
-                    'sum': round(float(item['price']) * float(item.get('quantity', 1)), 2),
-                    'measure': int(measure_map.get(item.get('measure', 'шт'), '0')),
-                    'payment_method': item.get('payment_method', 'full_payment'),
-                    'payment_object': {
-                        'commodity': 1,
-                        'excise': 2,
-                        'job': 3,
-                        'service': 4
-                    }.get(item.get('payment_object'), 4),
-                    'vat': {
-                        'type': item.get('vat', 'none')
-                    }
-                }
-                for item in receipt_data['items']
-            ],
+            'items': items_for_payload,
             'payments': [
                 {
                     'type': int(payment.get('type', 1)) if isinstance(payment.get('type'), str) and payment.get('type').isdigit() else 1,
-                    'sum': float(payment.get('sum', receipt_data['total']))
+                    'sum': calculated_total
                 }
-                for payment in receipt_data.get('payments', [{'type': 1, 'sum': receipt_data['total']}])
+                for payment in receipt_data.get('payments', [{'type': 1, 'sum': calculated_total}])
             ],
-            'total': float(receipt_data['total'])
+            'total': calculated_total
         }
     }
     
