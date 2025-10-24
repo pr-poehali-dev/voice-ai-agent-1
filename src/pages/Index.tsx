@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ChatHeader } from '@/components/chat/ChatHeader';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInput } from '@/components/chat/ChatInput';
@@ -10,6 +10,7 @@ import { useReceiptHandlers } from '@/hooks/useReceiptHandlers';
 const Index = () => {
   const [input, setInput] = useState('');
   const [operationType, setOperationType] = useState('sell');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { messages, setMessages } = useChatMessages();
   
@@ -48,6 +49,10 @@ const Index = () => {
     sendMessage(input, operationType, setInput);
   };
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   return (
     <div className="h-screen bg-gradient-to-br from-background via-background to-purple-950/20 flex flex-col">
       <div className="w-full max-w-5xl mx-auto h-full flex flex-col px-3 py-4 md:px-6 md:py-6">
@@ -67,6 +72,7 @@ const Index = () => {
               handleCancelReceipt={handleCancelReceipt}
             />
           ))}
+          <div ref={messagesEndRef} />
         </div>
 
         <ChatInput
