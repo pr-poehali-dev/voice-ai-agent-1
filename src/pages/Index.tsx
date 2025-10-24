@@ -311,6 +311,16 @@ const Index = () => {
   };
 
   const handleCancelReceipt = () => {
+    setMessages((prev) => {
+      const filtered = prev.filter(m => m.type !== 'preview');
+      const cancelMessage: Message = {
+        id: Date.now().toString(),
+        type: 'agent',
+        content: 'Проверка данных чека отменена',
+        timestamp: new Date(),
+      };
+      return [...filtered, cancelMessage];
+    });
     setPendingReceipt(null);
     setEditMode(false);
     setEditedData(null);
