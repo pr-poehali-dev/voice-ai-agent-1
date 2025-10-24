@@ -238,10 +238,13 @@ const Index = () => {
     const processingMessage: Message = {
       id: Date.now().toString(),
       type: 'agent',
-      content: 'Работаю, минуту...',
+      content: 'Данные проверены',
       timestamp: new Date(),
     };
-    setMessages((prev) => [...prev, processingMessage]);
+    setMessages((prev) => {
+      const filtered = prev.filter(m => m.type !== 'preview');
+      return [...filtered, processingMessage];
+    });
     
     try {
       const savedSettings = localStorage.getItem('ecomkassa_settings');
@@ -275,7 +278,7 @@ const Index = () => {
 
       const typeName = operationNames[pendingReceipt.operationType] || pendingReceipt.operationType;
 
-      const messageContent = data.success ? 'Чек создан' : 'Ошибка';
+      const messageContent = data.success ? 'Чек успешно отправлен в ЕкомКасса' : `Ошибка: ${data.message || data.error || 'Неизвестная ошибка'}`;
       
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -290,7 +293,7 @@ const Index = () => {
       };
 
       setMessages((prev) => {
-        const filtered = prev.filter(m => m.content !== 'Работаю, минуту...');
+        const filtered = prev.filter(m => m.content !== 'Данные проверены');
         return [...filtered, agentMessage];
       });
       setPendingReceipt(null);
