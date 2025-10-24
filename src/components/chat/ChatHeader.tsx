@@ -15,7 +15,9 @@ export const ChatHeader = () => {
           <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             ИИ кассир
           </h1>
-          <p className="text-xs md:text-sm text-muted-foreground">Екомкасса ИИ-помощник</p>
+          <p className="text-xs md:text-sm text-muted-foreground">
+            Заряжено в <a href="https://ecomkassa.ru" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary transition-colors">ecomkassa.ru</a>
+          </p>
         </div>
       </div>
       <div className="flex gap-2">
