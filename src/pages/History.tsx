@@ -17,6 +17,7 @@ interface Receipt {
   status: string;
   demo_mode: boolean;
   created_at: string;
+  uuid?: string;
 }
 
 const History = () => {
@@ -117,6 +118,19 @@ const History = () => {
                       </Badge>
                       <Badge variant="outline">{getOperationTypeName(receipt.operation_type)}</Badge>
                     </div>
+                    {receipt.uuid && (
+                      <p className="text-sm mb-1">
+                        <span className="text-muted-foreground">Чек </span>
+                        <a
+                          href={`https://app.ecomkassa.ru/admin/orders/${receipt.uuid}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline font-mono text-xs"
+                        >
+                          {receipt.uuid}
+                        </a>
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       {new Date(receipt.created_at).toLocaleString('ru-RU', {
                         day: '2-digit',
