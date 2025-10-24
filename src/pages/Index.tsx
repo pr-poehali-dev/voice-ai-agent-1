@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { ChatHeader } from '@/components/chat/ChatHeader';
@@ -240,6 +240,29 @@ const Index = () => {
       return newData;
     });
   };
+
+  useEffect(() => {
+    if (!editedData || !editedData.items) return;
+    
+    const calculatedTotal = editedData.items.reduce((sum: number, item: any) => {
+      const price = parseFloat(item.price) || 0;
+      const quantity = parseFloat(item.quantity) || 1;
+      return sum + (price * quantity);
+    }, 0);
+    
+    const roundedTotal = Math.round(calculatedTotal * 100) / 100;
+    
+    if (editedData.total !== roundedTotal) {
+      setEditedData((prev: any) => ({
+        ...prev,
+        total: roundedTotal,
+        payments: prev.payments ? prev.payments.map((p: any) => ({
+          ...p,
+          sum: roundedTotal
+        })) : [{ type: '1', sum: roundedTotal }]
+      }));
+    }
+  }, [editedData?.items]);
 
   const handleVoiceInput = () => {
     if (!('webkitSpeechRecognition' in window)) {
