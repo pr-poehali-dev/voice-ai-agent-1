@@ -135,6 +135,15 @@ const Index = () => {
     if (!pendingReceipt) return;
     
     setIsProcessing(true);
+    
+    const processingMessage: Message = {
+      id: Date.now().toString(),
+      type: 'agent',
+      content: 'Работаю, минуту...',
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, processingMessage]);
+    
     try {
       const savedSettings = localStorage.getItem('ecomkassa_settings');
       const settings = savedSettings ? JSON.parse(savedSettings) : {};
