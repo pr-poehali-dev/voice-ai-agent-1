@@ -82,7 +82,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     client_email = parsed_receipt.get('client', {}).get('email', '')
-    if not client_email or client_email == 'customer@example.com':
+    if not client_email or client_email == 'customer@example.com' or '@' not in client_email or '.' not in client_email:
         return {
             'statusCode': 400,
             'headers': {
@@ -91,7 +91,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             },
             'body': json.dumps({
                 'error': 'Не указан email клиента',
-                'message': 'Укажи email клиента в сообщении или добавь company_email в настройках (Продажа)',
+                'message': 'Укажи email клиента в сообщении или добавь company_email в настройках',
                 'missing_field': 'email'
             })
         }
@@ -461,7 +461,7 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
         settings = {}
     
     email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
-    customer_email = email_match.group(0) if email_match else settings.get('company_email', 'customer@example.com')
+    customer_email = email_match.group(0) if email_match else settings.get('company_email', '')
     
     phone_match = re.search(r'\+?[78][\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}', text)
     customer_phone = phone_match.group(0) if phone_match else None
