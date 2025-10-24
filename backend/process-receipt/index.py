@@ -608,7 +608,12 @@ def create_ecomkassa_receipt(
                     'sum': round(float(item['price']) * float(item.get('quantity', 1)), 2),
                     'measure': int(measure_map.get(item.get('measure', 'шт'), '0')),
                     'payment_method': item.get('payment_method', 'full_payment'),
-                    'payment_object': 1 if item.get('payment_object') == 'commodity' else 4,
+                    'payment_object': {
+                        'commodity': 1,
+                        'excise': 2,
+                        'job': 3,
+                        'service': 4
+                    }.get(item.get('payment_object'), 4),
                     'vat': {
                         'type': item.get('vat', 'none')
                     }
