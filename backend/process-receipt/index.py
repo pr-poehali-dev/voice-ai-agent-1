@@ -282,11 +282,11 @@ def detect_repeat_command(text: str) -> Optional[str]:
     text_lower = text.lower()
     
     repeat_patterns = [
-        r'повтор[иь]\s+чек\s+([a-zA-Z0-9_-]+)',
-        r'повтор[иь]\s+([a-zA-Z0-9_-]+)',
-        r'отправ[иь]\s+снова\s+([a-zA-Z0-9_-]+)',
-        r'пересоздай\s+чек\s+([a-zA-Z0-9_-]+)',
-        r'создай\s+заново\s+([a-zA-Z0-9_-]+)'
+        r'повтор[иь]\s+чек\s+№?\s*([a-zA-Z0-9_-]+)',
+        r'повтор[иь]\s+№?\s*([a-zA-Z0-9_-]+)',
+        r'отправ[иь]\s+снова\s+№?\s*([a-zA-Z0-9_-]+)',
+        r'пересоздай\s+чек\s+№?\s*([a-zA-Z0-9_-]+)',
+        r'создай\s+заново\s+№?\s*([a-zA-Z0-9_-]+)'
     ]
     
     for pattern in repeat_patterns:

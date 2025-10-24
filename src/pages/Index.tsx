@@ -206,7 +206,7 @@ const Index = () => {
       };
 
       setMessages((prev) => {
-        const filtered = prev.filter(m => m.content !== 'Работаю, минуту...');
+        const filtered = prev.filter(m => m.content !== 'Работаю, минуту...' && m.type !== 'preview');
         return [...filtered, previewMessage];
       });
       setPendingReceipt({ userInput, operationType: detectedType });
