@@ -95,6 +95,44 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if edited_data:
         print(f"[DEBUG] Using edited_data: {edited_data}")
         parsed_receipt = edited_data
+    elif repeat_uuid == 'LAST':
+        existing_receipt = get_last_receipt_from_db()
+        if existing_receipt:
+            parsed_receipt = {
+                'items': existing_receipt['items'],
+                'total': existing_receipt['total'],
+                'payment_type': existing_receipt.get('payment_type', 'card'),
+                'client': {
+                    'email': existing_receipt.get('customer_email', '')
+                },
+                'company': settings
+            }
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({
+                    'success': True,
+                    'message': f'Повторяю последний чек',
+                    'receipt': parsed_receipt,
+                    'operation_type': operation_type,
+                    'preview': True,
+                    'is_repeat': True
+                })
+            }
+        else:
+            return {
+                'statusCode': 404,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({
+                    'error': 'В истории нет чеков для повтора'
+                })
+            }
     elif repeat_uuid:
         existing_receipt = get_receipt_from_db(repeat_uuid)
         if existing_receipt:
@@ -315,7 +353,7 @@ def detect_repeat_command(text: str) -> Optional[str]:
     import re
     text_lower = text.lower()
     
-    repeat_patterns = [
+    repeat_with_uuid_patterns = [
         r'повтор[иь]\s+чек\s+№?\s*([a-zA-Z0-9_-]+)',
         r'повтор[иь]\s+№?\s*([a-zA-Z0-9_-]+)',
         r'отправ[иь]\s+снова\s+№?\s*([a-zA-Z0-9_-]+)',
@@ -323,10 +361,22 @@ def detect_repeat_command(text: str) -> Optional[str]:
         r'создай\s+заново\s+№?\s*([a-zA-Z0-9_-]+)'
     ]
     
-    for pattern in repeat_patterns:
+    for pattern in repeat_with_uuid_patterns:
         match = re.search(pattern, text_lower)
         if match:
             return match.group(1)
+    
+    repeat_without_uuid_patterns = [
+        r'повтор[иь]\s+чек',
+        r'повтор[иь]\s+последний',
+        r'отправ[иь]\s+снова',
+        r'пересоздай\s+чек',
+        r'создай\s+заново'
+    ]
+    
+    for pattern in repeat_without_uuid_patterns:
+        if re.search(pattern, text_lower):
+            return 'LAST'
     
     return None
 
@@ -374,6 +424,47 @@ def get_receipt_from_db(uuid_search: str) -> Optional[Dict[str, Any]]:
         return None
     except Exception as e:
         print(f"[DEBUG] Error getting receipt from DB: {str(e)}")
+        return None
+
+
+def get_last_receipt_from_db() -> Optional[Dict[str, Any]]:
+    database_url = os.environ.get('DATABASE_URL', '')
+    if not database_url:
+        return None
+    
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+    
+    try:
+        conn = psycopg2.connect(database_url)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute(
+            "SELECT external_id, user_message, operation_type, items, total, "
+            "payment_type, customer_email, ecomkassa_response "
+            "FROM t_p7891941_voice_ai_agent_1.receipts "
+            "WHERE status = 'success' AND demo_mode = false "
+            "ORDER BY created_at DESC LIMIT 1"
+        )
+        
+        receipt = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if receipt:
+            return {
+                'original_external_id': receipt['external_id'],
+                'user_message': receipt['user_message'],
+                'operation_type': receipt['operation_type'],
+                'items': receipt['items'],
+                'total': float(receipt['total']),
+                'payment_type': receipt['payment_type'],
+                'customer_email': receipt['customer_email']
+            }
+        
+        return None
+    except Exception as e:
+        print(f"[DEBUG] Error getting last receipt from DB: {str(e)}")
         return None
 
 
