@@ -275,11 +275,11 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-950/20">
-      <div className="container max-w-5xl mx-auto h-screen flex flex-col p-6">
+    <div className="h-screen bg-gradient-to-br from-background via-background to-purple-950/20 flex flex-col">
+      <div className="container max-w-5xl mx-auto h-full flex flex-col p-4 md:p-6">
         <ChatHeader />
 
-        <div className="flex-1 overflow-y-auto mb-6 space-y-4 pr-2">
+        <div className="flex-1 overflow-y-auto mb-4 md:mb-6 space-y-4 pr-2">
           {messages.map((message) => (
             <ChatMessage
               key={message.id}
