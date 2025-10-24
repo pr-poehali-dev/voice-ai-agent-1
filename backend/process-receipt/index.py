@@ -583,6 +583,7 @@ def create_ecomkassa_receipt(
     api_url = f'https://app.ecomkassa.ru/fiscalorder/v5/{group_code}/{api_operation_type}'
     
     from datetime import datetime
+    import time
     
     client_data = receipt_data.get('client', {})
     company_data = receipt_data.get('company', {})
@@ -629,8 +630,10 @@ def create_ecomkassa_receipt(
     
     calculated_total = round(sum(item['sum'] for item in items_for_payload), 2)
     
+    unique_id = f'receipt_{int(time.time() * 1000000)}'
+    
     ecomkassa_payload = {
-        'external_id': f'receipt_{abs(hash(str(receipt_data)))}',
+        'external_id': unique_id,
         'timestamp': datetime.now().strftime('%d.%m.%Y %H:%M:%S'),
         'receipt': {
             'client': {
