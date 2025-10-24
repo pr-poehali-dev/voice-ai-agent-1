@@ -54,7 +54,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Message is required'})
         }
     
-    has_ecomkassa = settings.get('username') and settings.get('password') and settings.get('group_code')
+    has_ecomkassa = (settings.get('ecomkassa_login') or settings.get('username')) and \
+                    (settings.get('ecomkassa_password') or settings.get('password')) and \
+                    settings.get('group_code')
     has_gigachat = settings.get('gigachat_auth_key')
     
     if not has_ecomkassa and not preview_only:
