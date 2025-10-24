@@ -95,7 +95,7 @@ export const ChatMessage = ({
                     rel="noopener noreferrer"
                     className="hover:underline"
                   >
-                    Чек создан №{message.receiptUuid}
+                    Чек №{message.receiptUuid}
                   </a>
                 ) : (
                   <span>Чек создан</span>
