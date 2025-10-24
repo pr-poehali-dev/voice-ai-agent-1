@@ -8,9 +8,11 @@ export const ChatHeader = () => {
   return (
     <header className="flex items-center justify-between mb-4 md:mb-8">
       <div className="flex items-center gap-2 md:gap-3">
-        <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-          <Icon name="Sparkles" size={20} className="text-white md:w-6 md:h-6" />
-        </div>
+        <img 
+          src="https://cdn.poehali.dev/files/cea89001-8a3d-474d-9920-28440564650b.png" 
+          alt="ИИ кассир" 
+          className="w-10 h-10 md:w-12 md:h-12 rounded-2xl"
+        />
         <div>
           <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             ИИ кассир
