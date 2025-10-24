@@ -25,74 +25,75 @@ export const ChatInput = ({
 }: ChatInputProps) => {
   return (
     <div className="relative pb-safe">
-      <div className="flex gap-2 md:gap-3 items-end">
-        <Button
-          variant="outline"
-          size="icon"
-          className="rounded-xl h-12 w-12 flex-shrink-0"
-          onClick={handleVoiceInput}
-          disabled={isProcessing}
-        >
-          <Icon
-            name={isListening ? 'MicOff' : 'Mic'}
-            size={20}
-            className={isListening ? 'text-destructive' : ''}
-          />
-        </Button>
+      <div className="space-y-2">
+        <div className="flex gap-1.5 md:gap-2">
+          <Button
+            variant={operationType === 'sell' ? 'default' : 'outline'}
+            size="sm"
+            className="rounded-lg text-xs md:text-sm flex-1"
+            onClick={() => setOperationType('sell')}
+            disabled={isProcessing}
+          >
+            Продажа
+          </Button>
+          <Button
+            variant={operationType === 'refund' ? 'default' : 'outline'}
+            size="sm"
+            className="rounded-lg text-xs md:text-sm flex-1"
+            onClick={() => setOperationType('refund')}
+            disabled={isProcessing}
+          >
+            Возврат
+          </Button>
+          <Button
+            variant={operationType === 'sell_correction' ? 'default' : 'outline'}
+            size="sm"
+            className="rounded-lg text-xs md:text-sm flex-1"
+            onClick={() => setOperationType('sell_correction')}
+            disabled={isProcessing}
+          >
+            Коррекция
+          </Button>
+        </div>
 
-        <div className="flex-1 space-y-2">
-          <div className="flex gap-1.5 md:gap-2">
-            <Button
-              variant={operationType === 'sell' ? 'default' : 'outline'}
-              size="sm"
-              className="rounded-lg text-xs md:text-sm flex-1 md:flex-initial"
-              onClick={() => setOperationType('sell')}
-              disabled={isProcessing}
-            >
-              Продажа
-            </Button>
-            <Button
-              variant={operationType === 'refund' ? 'default' : 'outline'}
-              size="sm"
-              className="rounded-lg text-xs md:text-sm flex-1 md:flex-initial"
-              onClick={() => setOperationType('refund')}
-              disabled={isProcessing}
-            >
-              Возврат
-            </Button>
-            <Button
-              variant={operationType === 'sell_correction' ? 'default' : 'outline'}
-              size="sm"
-              className="rounded-lg text-xs md:text-sm flex-1 md:flex-initial"
-              onClick={() => setOperationType('sell_correction')}
-              disabled={isProcessing}
-            >
-              Коррекция
-            </Button>
-          </div>
-
-          <div className="relative">
+        <div className="flex gap-2 items-center">
+          <div className="relative flex-1">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
               placeholder="Опиши чек голосом или текстом..."
-              className="pr-12 rounded-2xl h-12 text-sm resize-none"
+              className="rounded-2xl h-12 text-sm resize-none"
               disabled={isProcessing}
             />
-            <Button
-              size="icon"
-              className="absolute right-1 top-1 rounded-xl h-10 w-10"
-              onClick={handleSendMessage}
-              disabled={isProcessing || !input.trim()}
-            >
-              {isProcessing ? (
-                <Icon name="Loader2" size={20} className="animate-spin" />
-              ) : (
-                <Icon name="Send" size={20} />
-              )}
-            </Button>
           </div>
+          
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-xl h-12 w-12 flex-shrink-0"
+            onClick={handleVoiceInput}
+            disabled={isProcessing}
+          >
+            <Icon
+              name={isListening ? 'MicOff' : 'Mic'}
+              size={20}
+              className={isListening ? 'text-destructive' : ''}
+            />
+          </Button>
+
+          <Button
+            size="icon"
+            className="rounded-xl h-12 w-12 flex-shrink-0"
+            onClick={handleSendMessage}
+            disabled={isProcessing || !input.trim()}
+          >
+            {isProcessing ? (
+              <Icon name="Loader2" size={20} className="animate-spin" />
+            ) : (
+              <Icon name="Send" size={20} />
+            )}
+          </Button>
         </div>
       </div>
     </div>
