@@ -31,7 +31,7 @@ export const ChatInput = ({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-            placeholder="Опиши чек голосом или текстом..."
+            placeholder="Опишите, какой чек сделать"
             className="pr-14 rounded-2xl h-12 text-sm resize-none"
             disabled={isProcessing}
           />
