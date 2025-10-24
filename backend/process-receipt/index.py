@@ -54,6 +54,38 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Message is required'})
         }
     
+    import re
+    text_lower = user_message.lower().strip()
+    greeting_patterns = [
+        r'^привет',
+        r'^здравствуй',
+        r'^добр[ыо]',
+        r'^hello',
+        r'^hi\b',
+        r'^hey\b',
+        r'^расскажи',
+        r'^что такое',
+        r'^как дела',
+        r'^анекдот',
+        r'^пошути',
+        r'^кто ты',
+        r'^помоги$',
+        r'^спасибо'
+    ]
+    
+    for pattern in greeting_patterns:
+        if re.match(pattern, text_lower):
+            return {
+                'statusCode': 400,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({
+                    'error': 'Я ИИ-кассир и помогаю только с созданием чеков. Укажи товар/услугу, цену и email клиента для создания чека.'
+                })
+            }
+    
     has_ecomkassa = (settings.get('ecomkassa_login') or settings.get('username')) and \
                     (settings.get('ecomkassa_password') or settings.get('password')) and \
                     settings.get('group_code')
