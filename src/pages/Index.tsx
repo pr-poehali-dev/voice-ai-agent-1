@@ -11,6 +11,8 @@ interface Message {
   content: string;
   timestamp: Date;
   receiptData?: any;
+  receiptUuid?: string;
+  receiptPermalink?: string;
   previewData?: any;
   hasError?: boolean;
 }
@@ -165,6 +167,8 @@ const Index = () => {
         content: `${data.message || 'Чек отправлен'} (${typeName})`,
         timestamp: new Date(),
         receiptData: data.receipt,
+        receiptUuid: data.uuid,
+        receiptPermalink: data.permalink,
         hasError: !data.success,
       };
 

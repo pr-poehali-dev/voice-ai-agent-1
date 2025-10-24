@@ -9,6 +9,8 @@ interface Message {
   content: string;
   timestamp: Date;
   receiptData?: any;
+  receiptUuid?: string;
+  receiptPermalink?: string;
   previewData?: any;
   hasError?: boolean;
 }
@@ -86,7 +88,18 @@ export const ChatMessage = ({
             <div className="mt-3 pt-3 border-t border-primary/20 space-y-2">
               <div className="flex items-center gap-2 text-xs text-accent">
                 <Icon name="FileText" size={16} />
-                <span>Чек создан</span>
+                {message.receiptUuid && message.receiptPermalink ? (
+                  <a 
+                    href={message.receiptPermalink} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                  >
+                    Чек создан №{message.receiptUuid}
+                  </a>
+                ) : (
+                  <span>Чек создан</span>
+                )}
               </div>
               <div className="text-xs opacity-70 space-y-1">
                 {message.receiptData.items?.map((item: any, idx: number) => (

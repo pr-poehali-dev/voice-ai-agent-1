@@ -649,9 +649,14 @@ def create_ecomkassa_receipt(
             response_data = json.loads(response.read().decode('utf-8'))
             print(f"[DEBUG] Ecomkassa success response: {json.dumps(response_data, ensure_ascii=False)}")
             
+            uuid = response_data.get('uuid', '')
+            permalink = response_data.get('permalink', '')
+            
             return {
                 'success': True,
                 'message': 'Чек успешно создан в екомкасса',
+                'uuid': uuid,
+                'permalink': permalink,
                 'receipt': receipt_data,
                 'ecomkassa_response': response_data,
                 'operation_type': operation_type
