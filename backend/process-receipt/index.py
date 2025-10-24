@@ -301,11 +301,9 @@ def get_receipt_from_db(uuid_search: str) -> Optional[Dict[str, Any]]:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
-        cursor.execute('SET search_path TO t_p7891941_voice_ai_agent_1')
-        
         cursor.execute(
             "SELECT external_id, user_message, operation_type, items, total, "
-            "payment_type, customer_email, ecomkassa_response FROM receipts "
+            "payment_type, customer_email, ecomkassa_response FROM t_p7891941_voice_ai_agent_1.receipts "
             "WHERE ecomkassa_response->>'uuid' = %s LIMIT 1",
             (uuid_search,)
         )
