@@ -74,7 +74,6 @@ const Index = () => {
     const timer = setTimeout(() => {
       try {
         const toSave = messages
-          .filter(msg => msg.type !== 'preview')
           .slice(-50)
           .map(msg => ({
             id: msg.id,
@@ -84,7 +83,8 @@ const Index = () => {
             receiptUuid: msg.receiptUuid,
             receiptPermalink: msg.receiptPermalink,
             hasError: msg.hasError,
-            errorMessage: msg.errorMessage
+            errorMessage: msg.errorMessage,
+            previewData: msg.previewData
           }));
         localStorage.setItem('chat_messages', JSON.stringify(toSave));
       } catch (e) {
