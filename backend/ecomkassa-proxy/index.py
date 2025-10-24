@@ -8,9 +8,10 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Proxy requests to Ecomkassa API with JWT token authentication
-    Args: event with httpMethod, body (login, password, endpoint)
+    Business: Proxy requests to Ecomkassa API with Token authentication (ATOL Online v5 protocol)
+    Args: event with httpMethod, body (login, password, endpoint, method, payload)
     Returns: HTTP response with data from Ecomkassa API
+    Endpoint format: /fiscalorder/v5/{group_code}/sell
     '''
     method: str = event.get('httpMethod', 'GET')
     
@@ -57,7 +58,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     login = body_data.get('login', '')
     password = body_data.get('password', '')
-    endpoint = body_data.get('endpoint', '/api/mobile/v1/profile/firm')
+    endpoint = body_data.get('endpoint', '/fiscalorder/v5/default_group/sell')
     api_method = body_data.get('method', 'GET').upper()
     api_payload = body_data.get('payload')
     
@@ -131,7 +132,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         url = f'https://app.ecomkassa.ru{endpoint}'
         api_headers = {
             'Token': token,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json; charset=utf-8'
         }
         
         print(f"Requesting {api_method}: {url}")
