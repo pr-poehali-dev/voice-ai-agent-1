@@ -54,9 +54,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Message is required'})
         }
     
-    repeat_external_id = detect_repeat_command(user_message)
-    if repeat_external_id:
-        existing_receipt = get_receipt_from_db(repeat_external_id)
+    repeat_uuid = detect_repeat_command(user_message)
+    if repeat_uuid:
+        existing_receipt = get_receipt_from_db(repeat_uuid)
         if existing_receipt:
             parsed_receipt = existing_receipt
             operation_type = existing_receipt.get('operation_type', 'sell')
@@ -70,7 +70,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     },
                     'body': json.dumps({
                         'success': True,
-                        'message': f'Найден чек {repeat_external_id}. Проверь данные перед повторной отправкой.',
+                        'message': f'Найден чек UUID {repeat_uuid}. Проверь данные перед повторной отправкой. При отправке будет создан новый external_id.',
                         'receipt': parsed_receipt,
                         'operation_type': operation_type,
                         'preview': True,
@@ -85,7 +85,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'Access-Control-Allow-Origin': '*'
                 },
                 'body': json.dumps({
-                    'error': f'Чек {repeat_external_id} не найден в истории'
+                    'error': f'Чек с UUID {repeat_uuid} не найден в истории'
                 })
             }
     
@@ -281,7 +281,7 @@ def detect_repeat_command(text: str) -> Optional[str]:
     return None
 
 
-def get_receipt_from_db(external_id: str) -> Optional[Dict[str, Any]]:
+def get_receipt_from_db(uuid_search: str) -> Optional[Dict[str, Any]]:
     database_url = os.environ.get('DATABASE_URL', '')
     if not database_url:
         return None
@@ -295,9 +295,9 @@ def get_receipt_from_db(external_id: str) -> Optional[Dict[str, Any]]:
         
         cursor.execute(
             'SELECT external_id, user_message, operation_type, items, total, '
-            'payment_type, customer_email FROM t_p7891941_voice_ai_agent_1.receipts '
-            'WHERE LOWER(external_id) = LOWER(%s) LIMIT 1',
-            (external_id,)
+            'payment_type, customer_email, ecomkassa_response FROM t_p7891941_voice_ai_agent_1.receipts '
+            'WHERE ecomkassa_response->>''uuid'' = %s LIMIT 1',
+            (uuid_search,)
         )
         
         receipt = cursor.fetchone()
@@ -306,7 +306,7 @@ def get_receipt_from_db(external_id: str) -> Optional[Dict[str, Any]]:
         
         if receipt:
             return {
-                'external_id': receipt['external_id'],
+                'original_external_id': receipt['external_id'],
                 'user_message': receipt['user_message'],
                 'operation_type': receipt['operation_type'],
                 'items': receipt['items'],
