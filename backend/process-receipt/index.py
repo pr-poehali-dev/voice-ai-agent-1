@@ -607,7 +607,7 @@ def create_ecomkassa_receipt(
             data=json.dumps(ecomkassa_payload).encode('utf-8'),
             headers={
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer {token}'
+                'Token': token
             },
             method='POST'
         )
