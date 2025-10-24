@@ -304,10 +304,10 @@ def get_receipt_from_db(uuid_search: str) -> Optional[Dict[str, Any]]:
         cursor.execute('SET search_path TO t_p7891941_voice_ai_agent_1')
         
         cursor.execute(
-            'SELECT external_id, user_message, operation_type, items, total, '
-            'payment_type, customer_email, ecomkassa_response FROM receipts '
-            'WHERE ecomkassa_response->>%s = %s LIMIT 1',
-            ('uuid', uuid_search)
+            "SELECT external_id, user_message, operation_type, items, total, "
+            "payment_type, customer_email, ecomkassa_response FROM receipts "
+            "WHERE ecomkassa_response->>'uuid' = %s LIMIT 1",
+            (uuid_search,)
         )
         
         receipt = cursor.fetchone()
