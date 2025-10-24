@@ -95,13 +95,13 @@ const Index = () => {
         </div>
 
         {showScrollButton && (
-          <div className="flex justify-center mb-2">
+          <div className="flex justify-center mb-3">
             <button
               onClick={scrollToBottom}
-              className="bg-primary text-primary-foreground rounded-full p-2.5 shadow-lg hover:bg-primary/90 transition-all"
+              className="bg-primary/90 hover:bg-primary text-primary-foreground rounded-full p-2 shadow-md hover:shadow-lg transition-all backdrop-blur-sm"
               aria-label="Прокрутить вниз"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m6 9 6 6 6-6"/>
               </svg>
             </button>
