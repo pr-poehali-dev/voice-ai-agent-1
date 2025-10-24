@@ -528,9 +528,6 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
             client_data = parsed_data.get('client', {})
             client_email = client_data.get('email', '')
             
-            if not client_email or client_email == 'customer@example.com':
-                client_email = settings.get('company_email', 'customer@example.com')
-            
             items = parsed_data.get('items', [])
             default_vat = settings.get('default_vat', 'none')
             for item in items:
