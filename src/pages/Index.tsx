@@ -21,30 +21,34 @@ interface Message {
 const Index = () => {
   const navigate = useNavigate();
   
-  const loadMessages = () => {
-    const saved = localStorage.getItem('chat_messages');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return parsed.map((msg: any) => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
-        }));
-      } catch {
-        return [{
-          id: '1',
-          type: 'agent',
-          content: 'Привет! Я твой ИИ Кассир, создам чеки за тебя. Напиши запрос текстом или голосом, например: консультация по бизнесу 5000 рублей',
-          timestamp: new Date(),
-        }];
-      }
-    }
+  const getInitialMessages = (): Message[] => {
     return [{
       id: '1',
       type: 'agent',
       content: 'Привет! Я твой ИИ Кассир, создам чеки за тебя. Напиши запрос текстом или голосом, например: консультация по бизнесу 5000 рублей',
       timestamp: new Date(),
     }];
+  };
+  
+  const loadMessages = () => {
+    try {
+      const saved = localStorage.getItem('chat_messages');
+      if (!saved) return getInitialMessages();
+      
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        return getInitialMessages();
+      }
+      
+      return parsed.map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      }));
+    } catch (e) {
+      console.error('Error loading messages:', e);
+      localStorage.removeItem('chat_messages');
+      return getInitialMessages();
+    }
   };
   
   const [messages, setMessages] = useState<Message[]>(loadMessages());
@@ -58,7 +62,23 @@ const Index = () => {
   const [lastReceiptData, setLastReceiptData] = useState<any>(null);
 
   useEffect(() => {
-    localStorage.setItem('chat_messages', JSON.stringify(messages));
+    try {
+      const toSave = messages.map(msg => ({
+        id: msg.id,
+        type: msg.type,
+        content: msg.content,
+        timestamp: msg.timestamp.toISOString(),
+        receiptData: msg.receiptData,
+        receiptUuid: msg.receiptUuid,
+        receiptPermalink: msg.receiptPermalink,
+        previewData: msg.previewData,
+        hasError: msg.hasError,
+        errorMessage: msg.errorMessage
+      }));
+      localStorage.setItem('chat_messages', JSON.stringify(toSave));
+    } catch (e) {
+      console.error('Error saving messages:', e);
+    }
   }, [messages]);
 
   const handleSendMessage = async () => {
