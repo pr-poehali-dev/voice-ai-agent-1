@@ -56,10 +56,19 @@ const Index = () => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [operationType, setOperationType] = useState('sell');
-  const [pendingReceipt, setPendingReceipt] = useState<any>(null);
+  const [pendingReceipt, setPendingReceipt] = useState<any>(() => {
+    const saved = localStorage.getItem('pending_receipt');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [editMode, setEditMode] = useState(false);
-  const [editedData, setEditedData] = useState<any>(null);
-  const [lastReceiptData, setLastReceiptData] = useState<any>(null);
+  const [editedData, setEditedData] = useState<any>(() => {
+    const saved = localStorage.getItem('edited_data');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [lastReceiptData, setLastReceiptData] = useState<any>(() => {
+    const saved = localStorage.getItem('last_receipt_data');
+    return saved ? JSON.parse(saved) : null;
+  });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -85,6 +94,30 @@ const Index = () => {
     
     return () => clearTimeout(timer);
   }, [messages]);
+  
+  useEffect(() => {
+    if (pendingReceipt) {
+      localStorage.setItem('pending_receipt', JSON.stringify(pendingReceipt));
+    } else {
+      localStorage.removeItem('pending_receipt');
+    }
+  }, [pendingReceipt]);
+  
+  useEffect(() => {
+    if (editedData) {
+      localStorage.setItem('edited_data', JSON.stringify(editedData));
+    } else {
+      localStorage.removeItem('edited_data');
+    }
+  }, [editedData]);
+  
+  useEffect(() => {
+    if (lastReceiptData) {
+      localStorage.setItem('last_receipt_data', JSON.stringify(lastReceiptData));
+    } else {
+      localStorage.removeItem('last_receipt_data');
+    }
+  }, [lastReceiptData]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || isProcessing) return;
