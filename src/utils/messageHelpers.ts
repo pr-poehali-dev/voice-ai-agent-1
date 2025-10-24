@@ -72,3 +72,13 @@ export const saveMessages = (messages: Message[]) => {
     console.error('Error saving messages:', e);
   }
 };
+
+export const clearMessages = (): Message[] => {
+  try {
+    localStorage.removeItem('chat_messages');
+    return getInitialMessages();
+  } catch (e) {
+    console.error('Error clearing messages:', e);
+    return getInitialMessages();
+  }
+};

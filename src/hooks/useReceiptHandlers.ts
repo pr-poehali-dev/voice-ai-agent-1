@@ -26,6 +26,18 @@ export const useReceiptHandlers = (
 
   const handleSendMessage = async (input: string, operationType: string, setInput: (value: string) => void) => {
     if (!input.trim() || isProcessing) return;
+    
+    const clearCommands = ['очисти историю', 'почисти историю', 'очистить историю', 'почистить историю'];
+    if (clearCommands.some(cmd => input.toLowerCase().trim().includes(cmd))) {
+      setMessages((prev) => {
+        const initialMsg = prev.find(m => m.id === '1');
+        return initialMsg ? [initialMsg] : [];
+      });
+      localStorage.removeItem('chat_messages');
+      setInput('');
+      toast.success('История переписки очищена');
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
