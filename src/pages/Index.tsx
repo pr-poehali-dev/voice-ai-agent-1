@@ -62,23 +62,25 @@ const Index = () => {
   const [lastReceiptData, setLastReceiptData] = useState<any>(null);
 
   useEffect(() => {
-    try {
-      const toSave = messages.map(msg => ({
-        id: msg.id,
-        type: msg.type,
-        content: msg.content,
-        timestamp: msg.timestamp.toISOString(),
-        receiptData: msg.receiptData,
-        receiptUuid: msg.receiptUuid,
-        receiptPermalink: msg.receiptPermalink,
-        previewData: msg.previewData,
-        hasError: msg.hasError,
-        errorMessage: msg.errorMessage
-      }));
-      localStorage.setItem('chat_messages', JSON.stringify(toSave));
-    } catch (e) {
-      console.error('Error saving messages:', e);
-    }
+    const timer = setTimeout(() => {
+      try {
+        const toSave = messages.slice(-50).map(msg => ({
+          id: msg.id,
+          type: msg.type,
+          content: msg.content,
+          timestamp: msg.timestamp.toISOString(),
+          receiptUuid: msg.receiptUuid,
+          receiptPermalink: msg.receiptPermalink,
+          hasError: msg.hasError,
+          errorMessage: msg.errorMessage
+        }));
+        localStorage.setItem('chat_messages', JSON.stringify(toSave));
+      } catch (e) {
+        console.error('Error saving messages:', e);
+      }
+    }, 300);
+    
+    return () => clearTimeout(timer);
   }, [messages]);
 
   const handleSendMessage = async () => {
