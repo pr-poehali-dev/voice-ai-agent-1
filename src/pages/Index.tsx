@@ -77,7 +77,7 @@ const Index = () => {
       <div className="w-full max-w-5xl mx-auto h-full flex flex-col px-3 py-4 md:px-6 md:py-6">
         <ChatHeader />
 
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto mb-4 md:mb-6 space-y-4 overflow-x-hidden relative">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto mb-4 md:mb-6 space-y-4 overflow-x-hidden">
           {messages.map((message) => (
             <ChatMessage
               key={message.id}
@@ -92,19 +92,21 @@ const Index = () => {
             />
           ))}
           <div ref={messagesEndRef} />
-          
-          {showScrollButton && (
+        </div>
+
+        {showScrollButton && (
+          <div className="flex justify-center mb-2">
             <button
               onClick={scrollToBottom}
-              className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground rounded-full p-2.5 shadow-lg hover:bg-primary/90 transition-all z-10"
+              className="bg-primary text-primary-foreground rounded-full p-2.5 shadow-lg hover:bg-primary/90 transition-all"
               aria-label="Прокрутить вниз"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m6 9 6 6 6-6"/>
               </svg>
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         <ChatInput
           input={input}
