@@ -144,7 +144,7 @@ const Index = () => {
           message: pendingReceipt.userInput, 
           operation_type: pendingReceipt.operationType,
           preview_only: false,
-          edited_data: editMode ? editedData : null,
+          edited_data: editedData || lastReceiptData,
           external_id: externalId,
           settings
         }),
