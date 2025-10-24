@@ -161,10 +161,14 @@ const Index = () => {
 
       const typeName = operationNames[pendingReceipt.operationType] || pendingReceipt.operationType;
 
+      const messageContent = data.uuid 
+        ? `Чек создан №${data.uuid} (${typeName})`
+        : `${data.message || 'Чек отправлен'} (${typeName})`;
+      
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'agent',
-        content: `${data.message || 'Чек отправлен'} (${typeName})`,
+        content: messageContent,
         timestamp: new Date(),
         receiptData: data.receipt,
         receiptUuid: data.uuid,
