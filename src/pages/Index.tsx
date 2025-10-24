@@ -50,6 +50,11 @@ const Index = () => {
     const userInput = input;
     setInput('');
     setIsProcessing(true);
+    
+    // Сбрасываем предыдущие данные формы
+    setPendingReceipt(null);
+    setEditMode(false);
+    setEditedData(null);
 
     try {
       const savedSettings = localStorage.getItem('ecomkassa_settings');
