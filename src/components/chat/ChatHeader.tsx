@@ -13,7 +13,7 @@ export const ChatHeader = () => {
         </div>
         <div>
           <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            AI Receipt Agent
+            ИИ кассир
           </h1>
           <p className="text-xs md:text-sm text-muted-foreground">Екомкасса ИИ-помощник</p>
         </div>
