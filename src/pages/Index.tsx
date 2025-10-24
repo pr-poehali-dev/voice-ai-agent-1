@@ -10,7 +10,9 @@ import { useReceiptHandlers } from '@/hooks/useReceiptHandlers';
 const Index = () => {
   const [input, setInput] = useState('');
   const [operationType, setOperationType] = useState('sell');
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const { messages, setMessages } = useChatMessages();
   
@@ -53,12 +55,29 @@ const Index = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 200;
+      setShowScrollButton(!isNearBottom);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div className="h-screen bg-gradient-to-br from-background via-background to-purple-950/20 flex flex-col">
       <div className="w-full max-w-5xl mx-auto h-full flex flex-col px-3 py-4 md:px-6 md:py-6">
         <ChatHeader />
 
-        <div className="flex-1 overflow-y-auto mb-4 md:mb-6 space-y-4 overflow-x-hidden">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto mb-4 md:mb-6 space-y-4 overflow-x-hidden relative">
           {messages.map((message) => (
             <ChatMessage
               key={message.id}
@@ -73,6 +92,18 @@ const Index = () => {
             />
           ))}
           <div ref={messagesEndRef} />
+          
+          {showScrollButton && (
+            <button
+              onClick={scrollToBottom}
+              className="fixed bottom-24 right-6 bg-primary text-primary-foreground rounded-full p-3 shadow-lg hover:bg-primary/90 transition-all z-10"
+              aria-label="Прокрутить вниз"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m18 15-6-6-6 6"/>
+              </svg>
+            </button>
+          )}
         </div>
 
         <ChatInput
