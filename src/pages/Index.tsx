@@ -20,14 +20,34 @@ interface Message {
 
 const Index = () => {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<Message[]>([
-    {
+  
+  const loadMessages = () => {
+    const saved = localStorage.getItem('chat_messages');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+      } catch {
+        return [{
+          id: '1',
+          type: 'agent',
+          content: 'Привет! Я твой ИИ Кассир, создам чеки за тебя. Напиши запрос текстом или голосом, например: консультация по бизнесу 5000 рублей',
+          timestamp: new Date(),
+        }];
+      }
+    }
+    return [{
       id: '1',
       type: 'agent',
       content: 'Привет! Я твой ИИ Кассир, создам чеки за тебя. Напиши запрос текстом или голосом, например: консультация по бизнесу 5000 рублей',
       timestamp: new Date(),
-    },
-  ]);
+    }];
+  };
+  
+  const [messages, setMessages] = useState<Message[]>(loadMessages());
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -36,6 +56,10 @@ const Index = () => {
   const [editMode, setEditMode] = useState(false);
   const [editedData, setEditedData] = useState<any>(null);
   const [lastReceiptData, setLastReceiptData] = useState<any>(null);
+
+  useEffect(() => {
+    localStorage.setItem('chat_messages', JSON.stringify(messages));
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || isProcessing) return;
