@@ -4,10 +4,10 @@ export const getInitialMessages = (): Message[] => {
   const savedSettings = localStorage.getItem('ecomkassa_settings');
   const settings = savedSettings ? JSON.parse(savedSettings) : {};
   
-  const hasEcomkassaSettings = settings.username && settings.password && settings.group_code;
-  const hasGigachatSettings = settings.gigachat_auth_key;
+  const hasAnySettings = settings.username || settings.password || settings.group_code || 
+                         settings.gigachat_auth_key || settings.inn || settings.email;
   
-  if (!hasEcomkassaSettings || !hasGigachatSettings) {
+  if (!savedSettings || !hasAnySettings) {
     return [{
       id: '1',
       type: 'agent',
