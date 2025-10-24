@@ -42,6 +42,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     preview_only: bool = body_data.get('preview_only', False)
     settings: dict = body_data.get('settings', {})
     previous_receipt: dict = body_data.get('previous_receipt', {})
+    edited_data: dict = body_data.get('edited_data')
     
     if not user_message:
         return {
@@ -56,10 +57,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if not operation_type:
         operation_type = detect_operation_type(user_message)
     
-    parsed_receipt = parse_receipt_from_text(user_message, settings)
-    
-    if previous_receipt:
-        parsed_receipt = merge_receipts(previous_receipt, parsed_receipt)
+    if edited_data:
+        parsed_receipt = edited_data
+    else:
+        parsed_receipt = parse_receipt_from_text(user_message, settings)
+        
+        if previous_receipt:
+            parsed_receipt = merge_receipts(previous_receipt, parsed_receipt)
     
     if preview_only:
         return {
