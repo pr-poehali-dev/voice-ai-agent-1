@@ -672,78 +672,93 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
         'max_tokens': 1000
     }
     
-    try:
-        response = requests.post(chat_url, headers=headers, json=payload, verify=False, timeout=30)
-        result = response.json()
-        
-        ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
-        
-        print(f"[DEBUG] GigaChat response: {ai_response}")
-        
-        json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
-        if json_match:
-            parsed_data = json.loads(json_match.group(0))
+    max_retries = 2
+    last_error = None
+    
+    for attempt in range(max_retries):
+        try:
+            timeout = 15 if attempt == 0 else 10
+            print(f"[DEBUG] GigaChat request attempt {attempt + 1}/{max_retries}, timeout={timeout}s")
             
-            print(f"[DEBUG] Parsed data: {parsed_data}")
+            response = requests.post(chat_url, headers=headers, json=payload, verify=False, timeout=timeout)
+            result = response.json()
             
-            if 'error' in parsed_data:
+            ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+            
+            print(f"[DEBUG] GigaChat response: {ai_response}")
+            
+            json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+            if json_match:
+                parsed_data = json.loads(json_match.group(0))
+                
+                print(f"[DEBUG] Parsed data: {parsed_data}")
+                
+                if 'error' in parsed_data:
+                    return {
+                        'statusCode': 400,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*'
+                        },
+                        'body': json.dumps({
+                            'error': parsed_data['error'],
+                            'message': 'Не хватает обязательных данных для создания чека'
+                        })
+                    }
+                
+                client_data = parsed_data.get('client', {})
+                client_email = client_data.get('email', '')
+                
+                items = parsed_data.get('items', [])
+                default_vat = settings.get('default_vat', 'none')
+                for item in items:
+                    if 'vat' not in item or item['vat'] == 'none':
+                        item['vat'] = default_vat
+                
+                total = sum(item.get('price', 0) * item.get('quantity', 1) for item in items)
+                
+                payment_type_raw = parsed_data.get('payment_type', 'electronically')
+                payment_type_map = {
+                    'cash': '0',
+                    'electronically': '1',
+                    'prepaid': '2',
+                    'credit': '3',
+                    'other': '4'
+                }
+                payment_type = payment_type_map.get(payment_type_raw, '1')
+                
                 return {
-                    'statusCode': 400,
-                    'headers': {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    },
-                    'body': json.dumps({
-                        'error': parsed_data['error'],
-                        'message': 'Не хватает обязательных данных для создания чека'
-                    })
+                    'items': items,
+                    'total': round(total, 2),
+                    'payments': [{
+                        'type': payment_type,
+                        'sum': round(total, 2)
+                    }],
+                    'client': {'email': client_email, 'phone': client_data.get('phone')},
+                    'company': {
+                        'email': settings.get('company_email', 'company@example.com'),
+                        'sno': settings.get('sno', 'usn_income'),
+                        'inn': settings.get('inn', '1234567890'),
+                        'payment_address': settings.get('payment_address', 'example.com')
+                    }
                 }
             
-            client_data = parsed_data.get('client', {})
-            client_email = client_data.get('email', '')
-            
-            items = parsed_data.get('items', [])
-            default_vat = settings.get('default_vat', 'none')
-            for item in items:
-                if 'vat' not in item or item['vat'] == 'none':
-                    item['vat'] = default_vat
-            
-            total = sum(item.get('price', 0) * item.get('quantity', 1) for item in items)
-            
-            payment_type_raw = parsed_data.get('payment_type', 'electronically')
-            payment_type_map = {
-                'cash': '0',
-                'electronically': '1',
-                'prepaid': '2',
-                'credit': '3',
-                'other': '4'
-            }
-            payment_type = payment_type_map.get(payment_type_raw, '1')
-            
-            return {
-                'items': items,
-                'total': round(total, 2),
-                'payments': [{
-                    'type': payment_type,
-                    'sum': round(total, 2)
-                }],
-                'client': {'email': client_email, 'phone': client_data.get('phone')},
-                'company': {
-                    'email': settings.get('company_email', 'company@example.com'),
-                    'sno': settings.get('sno', 'usn_income'),
-                    'inn': settings.get('inn', '1234567890'),
-                    'payment_address': settings.get('payment_address', 'example.com')
-                }
-            }
-        
-        print(f"[DEBUG] No JSON found in response, using fallback")
-        return fallback_parse_receipt(text, settings)
-        
-    except ValueError as e:
-        raise e
-    except Exception as e:
-        print(f"[DEBUG] Exception: {str(e)}")
-        return fallback_parse_receipt(text, settings)
+            print(f"[DEBUG] No JSON found in response on attempt {attempt + 1}")
+            if attempt == max_retries - 1:
+                print(f"[DEBUG] All attempts failed, using fallback")
+                return fallback_parse_receipt(text, settings)
+                
+        except ValueError as e:
+            raise e
+        except Exception as e:
+            last_error = str(e)
+            print(f"[DEBUG] Attempt {attempt + 1} failed: {last_error}")
+            if attempt == max_retries - 1:
+                print(f"[DEBUG] All retries exhausted, using fallback")
+                return fallback_parse_receipt(text, settings)
+            continue
+    
+    return fallback_parse_receipt(text, settings)
 
 
 def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
