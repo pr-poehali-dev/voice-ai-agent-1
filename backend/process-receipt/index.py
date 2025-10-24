@@ -475,6 +475,15 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
         item_name = item_pattern.group(1).strip()
         price_val = float(item_pattern.group(2))
         
+        service_keywords = [
+            'консультация', 'стрижка', 'доставка', 'ремонт', 'услуга',
+            'обучение', 'тренинг', 'коучинг', 'массаж', 'сервис',
+            'поддержка', 'настройка', 'установка', 'монтаж'
+        ]
+        
+        item_lower = item_name.lower()
+        payment_object = 'service' if any(kw in item_lower for kw in service_keywords) else 'commodity'
+        
         items.append({
             'name': item_name.capitalize(), 
             'price': price_val, 
@@ -482,7 +491,7 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
             'measure': 'шт',
             'vat': default_vat,
             'payment_method': 'full_payment',
-            'payment_object': 'commodity'
+            'payment_object': payment_object
         })
         total = price_val
     else:
