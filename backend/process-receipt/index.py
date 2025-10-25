@@ -75,6 +75,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     for pattern in greeting_patterns:
         if re.match(pattern, text_lower):
+            print(f"[DEBUG] Greeting detected: '{user_message}' matched pattern '{pattern}'")
             return {
                 'statusCode': 400,
                 'headers': {
