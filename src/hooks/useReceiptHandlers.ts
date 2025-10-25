@@ -69,43 +69,35 @@ export const useReceiptHandlers = (
       
       const data = await sendReceiptPreview(userInput, operationType, settings, lastReceiptData);
 
-      if (data.error && data.missing_integration) {
+      if (data.error) {
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           type: 'agent',
-          content: `❌ ${data.message}`,
+          content: `❌ ${data.message || data.error}`,
           timestamp: new Date(),
         };
         setMessages((prev) => {
           const filtered = prev.filter(m => m.content !== 'Работаю, минуту...');
           return [...filtered, errorMessage];
         });
-        toast.error(data.error, {
-          action: {
-            label: 'Настройки',
-            onClick: () => navigate('/settings')
-          }
-        });
-        return;
-      }
-
-      if (data.error && data.missing_field === 'email') {
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          type: 'agent',
-          content: `❌ ${data.message}\n\nПерейди в настройки и заполни поле "Email компании" или укажи email клиента в сообщении.`,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => {
-          const filtered = prev.filter(m => m.content !== 'Работаю, минуту...');
-          return [...filtered, errorMessage];
-        });
-        toast.error('Не указан email', {
-          action: {
-            label: 'Настройки',
-            onClick: () => navigate('/settings')
-          }
-        });
+        
+        if (data.missing_integration) {
+          toast.error(data.error, {
+            action: {
+              label: 'Настройки',
+              onClick: () => navigate('/settings')
+            }
+          });
+        } else if (data.missing_field === 'email') {
+          toast.error('Не указан email', {
+            action: {
+              label: 'Настройки',
+              onClick: () => navigate('/settings')
+            }
+          });
+        } else {
+          toast.error(data.error);
+        }
         return;
       }
 
