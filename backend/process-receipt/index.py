@@ -56,36 +56,33 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     import re
     text_lower = user_message.lower().strip()
-    greeting_patterns = [
-        r'^привет',
-        r'^здравствуй',
-        r'^добр[ыо]',
-        r'^hello',
-        r'^hi\b',
-        r'^hey\b',
-        r'^расскажи',
-        r'^что такое',
-        r'^как дела',
-        r'^анекдот',
-        r'^пошути',
-        r'^кто ты',
-        r'^помоги$',
-        r'^спасибо'
+    
+    irrelevant_keywords = [
+        'привет', 'здравствуй', 'добрый', 'доброе', 'hello', 'hi', 'hey',
+        'расскажи', 'что такое', 'как дела', 'анекдот', 'пошути', 
+        'кто ты', 'спасибо', 'благодарю', 'помоги', 'помощь',
+        'шутка', 'история', 'сказка', 'стих'
     ]
     
-    for pattern in greeting_patterns:
-        if re.match(pattern, text_lower):
-            print(f"[DEBUG] Greeting detected: '{user_message}' matched pattern '{pattern}'")
-            return {
-                'statusCode': 400,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                'body': json.dumps({
-                    'error': 'Я ИИ-кассир и помогаю только с созданием чеков. Укажи товар/услугу, цену и email клиента для создания чека.'
-                })
-            }
+    has_receipt_keywords = any(keyword in text_lower for keyword in [
+        'чек', 'товар', 'услуга', 'продаж', 'возврат', 'корр', 
+        'руб', '₽', 'email', '@', 'цена', 'сумма'
+    ])
+    
+    if not has_receipt_keywords:
+        for keyword in irrelevant_keywords:
+            if keyword in text_lower:
+                print(f"[DEBUG] Irrelevant request detected: '{user_message}' contains '{keyword}'")
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({
+                        'error': 'Я ИИ-кассир и помогаю только с созданием чеков. Укажи товар/услугу, цену и email клиента для создания чека.'
+                    })
+                }
     
     has_ecomkassa = (settings.get('ecomkassa_login') or settings.get('username')) and \
                     (settings.get('ecomkassa_password') or settings.get('password')) and \
