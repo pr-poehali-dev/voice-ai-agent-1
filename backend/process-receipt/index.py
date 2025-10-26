@@ -738,12 +738,12 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
         'max_tokens': 1000
     }
     
-    max_retries = 2
+    max_retries = 1
     last_error = None
     
     for attempt in range(max_retries):
         try:
-            timeout = 15 if attempt == 0 else 10
+            timeout = 8
             print(f"[DEBUG] GigaChat request attempt {attempt + 1}/{max_retries}, timeout={timeout}s")
             
             response = requests.post(chat_url, headers=headers, json=payload, verify=False, timeout=timeout)
@@ -862,11 +862,11 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
     customer_phone = phone_match.group(0) if phone_match else None
     
     text_clean = text.lower()
-    skip_words = ['продажа', 'возврат', 'коррекция', 'чек', 'создать', 'сделать', 'оформить']
+    skip_words = ['продажа', 'возврат', 'коррекция', 'чек', 'создай', 'создать', 'сделай', 'сделать', 'оформи', 'оформить', 'пробей', 'отправь', 'на', 'для']
     for word in skip_words:
-        text_clean = text_clean.replace(word, '')
+        text_clean = re.sub(r'\b' + word + r'\b', '', text_clean)
     
-    item_patterns = re.findall(r'([а-яА-ЯёЁa-zA-Z]+(?:\s+[а-яА-ЯёЁa-zA-Z]+)*)\s+(\d+)\s*(?:руб|₽|рублей)?', text_clean, re.IGNORECASE)
+    item_patterns = re.findall(r'([а-яА-ЯёЁa-zA-Z]+(?:\s+[а-яА-ЯёЁa-zA-Z]+)?)\s+(\d+)\s*(?:руб|₽|рублей)?', text_clean, re.IGNORECASE)
     
     items = []
     total = 0
