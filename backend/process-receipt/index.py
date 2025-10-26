@@ -54,40 +54,49 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Message is required'})
         }
     
-    gigachat_key = settings.get('gigachat_auth_key')
+    import re
+    text_lower = user_message.lower().strip()
     
-    if gigachat_key:
-        validation_prompt = f'''Определи, относится ли запрос пользователя к созданию кассовых чеков, товарам, услугам, ценам, продажам, возвратам или корректировкам.
-
-Запрос пользователя: "{user_message}"
-
-Ответь ТОЛЬКО одним словом:
-- "ДА" - если запрос про чеки, товары, услуги, цены, продажи, возвраты, email клиента
-- "НЕТ" - если это приветствие, просьба рассказать что-то, анекдот, вопрос не про чеки
-
-Твой ответ:'''
-
-        try:
-            access_token = get_gigachat_token(gigachat_key)
-            validation_response = call_gigachat(access_token, validation_prompt, timeout=5)
-            
-            if validation_response:
-                answer = validation_response.strip().upper()
-                print(f"[DEBUG] Validation result for '{user_message}': {answer}")
-                
-                if answer == 'НЕТ' or 'НЕТ' in answer[:10]:
-                    return {
-                        'statusCode': 400,
-                        'headers': {
-                            'Content-Type': 'application/json',
-                            'Access-Control-Allow-Origin': '*'
-                        },
-                        'body': json.dumps({
-                            'error': '❌ Я ИИ-кассир и помогаю только с созданием чеков. Укажи товар/услугу, цену и email клиента для создания чека.'
-                        })
-                    }
-        except Exception as e:
-            print(f"[DEBUG] Validation check failed, allowing request: {e}")
+    irrelevant_keywords = [
+        'привет', 'здравствуй', 'добрый', 'доброе', 'hello', 'hi', 'hey',
+        'расскажи', 'что такое', 'как дела', 'анекдот', 'пошути', 
+        'кто ты', 'спасибо', 'благодарю', 'помоги', 'помощь',
+        'шутка', 'история', 'сказка', 'стих', 'стоп', 'хватит', 'стой',
+        'привет', 'пока', 'досвидания', 'хай', 'хелло'
+    ]
+    
+    has_receipt_keywords = any(keyword in text_lower for keyword in [
+        'чек', 'товар', 'услуга', 'продаж', 'возврат', 'корр', 
+        'руб', '₽', 'email', '@', 'цена', 'сумма', 'отправ', 'созда'
+    ])
+    
+    if not has_receipt_keywords:
+        for keyword in irrelevant_keywords:
+            if keyword in text_lower:
+                print(f"[DEBUG] Irrelevant request blocked: '{user_message}' contains '{keyword}'")
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({
+                        'error': '❌ Я ИИ-кассир и помогаю только с созданием чеков. Укажи товар/услугу, цену и email клиента для создания чека.'
+                    })
+                }
+        
+        if len(text_lower) < 10:
+            print(f"[DEBUG] Too short message without receipt keywords: '{user_message}'")
+            return {
+                'statusCode': 400,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({
+                    'error': '❌ Я ИИ-кассир и помогаю только с созданием чеков. Укажи товар/услугу, цену и email клиента для создания чека.'
+                })
+            }
     
     has_ecomkassa = (settings.get('ecomkassa_login') or settings.get('username')) and \
                     (settings.get('ecomkassa_password') or settings.get('password')) and \
