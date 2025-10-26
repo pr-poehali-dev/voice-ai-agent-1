@@ -27,8 +27,8 @@ export const useReceiptHandlers = (
   const handleSendMessage = async (input: string, operationType: string, setInput: (value: string) => void) => {
     if (!input.trim() || isProcessing) return;
     
-    const clearCommands = ['очисти историю', 'почисти историю', 'очистить историю', 'почистить историю'];
-    if (clearCommands.some(cmd => input.toLowerCase().trim().includes(cmd))) {
+    const clearCommands = ['очисти историю', 'почисти историю', 'очистить историю', 'почистить историю', 'очисти', 'почисти'];
+    if (clearCommands.some(cmd => input.toLowerCase().trim() === cmd)) {
       setMessages((prev) => {
         const initialMsg = prev.find(m => m.id === '1');
         return initialMsg ? [initialMsg] : [];
