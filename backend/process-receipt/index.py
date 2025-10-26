@@ -676,7 +676,7 @@ JSON формат:
     }
     
     try:
-        timeout = 8
+        timeout = 4
         print(f"[DEBUG] === GigaChat Request ===")
         print(f"[DEBUG] User message: {text[:100]}")
         print(f"[DEBUG] Prompt length: {len(prompt)} chars")
