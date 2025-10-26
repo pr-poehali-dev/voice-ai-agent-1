@@ -630,23 +630,25 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
     if not access_token:
         return fallback_parse_receipt(text, settings)
     
-    prompt = f"""Парсер чека. Извлеки данные → JSON.
+    prompt = f"""Ты ИИ-кассир. Преобразуй запрос в JSON для API Ecomkassa за 5 сек.
 
 Запрос: "{text}"
 
-Очисти название: убери "создай/пробей/чек/на/для". Примеры: "чек кофе 200р"→"Кофе", "стрижка 1500"→"Стрижка"
+Извлеки: сумму, товар/услугу, тип платежа, НДС. Очисти название (убери "создай/пробей/чек"). Примеры: "кофе 200р"→"Кофе", "стрижка 1500"→"Стрижка".
 
-operation_type: sell (продажа), sell_refund (возврат)
-payment_type: cash (наличные), electronically (безнал, дефолт)
-payment_object: commodity (товар), service (услуга)
-vat: none (дефолт), vat20, vat10
-measure: шт (товар), услуга (услуга)
+Поля (только корректные значения):
+operation_type: sell/sell_refund
+payment_type: cash/electronically (дефолт)
+payment_object: commodity/service
+vat: none/vat20/vat10 (дефолт none)
+measure: шт/услуга
+client: email (проверь формат), phone (+7...)
 
 Формат:
-{{"operation_type":"sell","items":[{{"name":"Товар","price":100,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":"email@example.com","phone":null}},"payment_type":"electronically"}}
+{{"operation_type":"sell","items":[{{"name":"Товар","price":100,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":"user@mail.ru","phone":null}},"payment_type":"electronically"}}
 
-Если данных мало:
-{{"error":"Недостаточно данных","missing":["email"]}}
+Если данных мало (email/phone/товар):
+{{"error":"Уточни данные","missing":["email"],"hint":"Пришли email для чека"}}
 
 JSON:"""
     
