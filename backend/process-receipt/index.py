@@ -755,7 +755,8 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
             
             json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
             if json_match:
-                parsed_data = json.loads(json_match.group(0))
+                json_str = json_match.group(0).replace('\n', ' ').replace('\r', ' ')
+                parsed_data = json.loads(json_str)
                 
                 print(f"[DEBUG] Parsed data: {parsed_data}")
                 
