@@ -740,14 +740,18 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
     
     try:
         timeout = 8
-        print(f"[DEBUG] GigaChat request with {timeout}s timeout")
+        print(f"[DEBUG] === GigaChat Request ===")
+        print(f"[DEBUG] User message: {text[:100]}")
+        print(f"[DEBUG] Prompt length: {len(prompt)} chars")
+        print(f"[DEBUG] Timeout: {timeout}s")
         
         response = requests.post(chat_url, headers=headers, json=payload, verify=False, timeout=timeout)
         result = response.json()
         
         ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
         
-        print(f"[DEBUG] GigaChat response: {ai_response}")
+        print(f"[DEBUG] === GigaChat Response ===")
+        print(f"[DEBUG] Response: {ai_response[:200]}")
         
         json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
         if json_match:
