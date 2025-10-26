@@ -738,12 +738,12 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
         'max_tokens': 1000
     }
     
-    max_retries = 1
+    max_retries = 2
     last_error = None
     
     for attempt in range(max_retries):
         try:
-            timeout = 8
+            timeout = 12 if attempt == 0 else 18
             print(f"[DEBUG] GigaChat request attempt {attempt + 1}/{max_retries}, timeout={timeout}s")
             
             response = requests.post(chat_url, headers=headers, json=payload, verify=False, timeout=timeout)
