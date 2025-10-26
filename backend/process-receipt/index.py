@@ -850,11 +850,11 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
     customer_phone = phone_match.group(0) if phone_match else None
     
     text_clean = text.lower()
-    skip_words = ['продажа', 'продаже', 'возврат', 'коррекция', 'чек', 'создай', 'создать', 'сделай', 'сделать', 'оформи', 'оформить', 'пробей', 'отправь', 'для']
+    skip_words = ['чек', 'создай', 'создать', 'сделай', 'сделать', 'оформи', 'оформить', 'пробей', 'отправь', 'для']
     for word in skip_words:
         text_clean = re.sub(r'\b' + word + r'\b', '', text_clean)
     
-    item_patterns = re.findall(r'([а-яА-ЯёЁa-zA-Z]+(?:\s+[а-яА-ЯёЁa-zA-Z]+)*?)\s+(\d+)\s*(?:руб|₽|рублей)?', text_clean, re.IGNORECASE)
+    item_patterns = re.findall(r'((?:на\s+)?(?:продажу\s+|продаже\s+|возврат\s+)?[а-яА-ЯёЁa-zA-Z]+(?:\s+[а-яА-ЯёЁa-zA-Z]+)*?)\s+(\d+)\s*(?:руб|₽|рублей)?', text_clean, re.IGNORECASE)
     
     items = []
     total = 0
