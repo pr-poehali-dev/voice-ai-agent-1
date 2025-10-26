@@ -6,21 +6,31 @@ export const sendReceiptPreview = async (
   settings: any,
   lastReceiptData: any
 ) => {
-  const response = await fetch(RECEIPT_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      message: userInput,
-      operation_type: operationType,
-      preview_only: true,
-      settings,
-      previous_receipt: lastReceiptData
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-  return response.json();
+  try {
+    const response = await fetch(RECEIPT_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: userInput,
+        operation_type: operationType,
+        preview_only: true,
+        settings,
+        previous_receipt: lastReceiptData
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+    return response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
 };
 
 export const confirmReceipt = async (
@@ -31,21 +41,30 @@ export const confirmReceipt = async (
   settings: any
 ) => {
   const externalId = `AI_${Date.now()}`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
   
-  const response = await fetch(RECEIPT_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      message: userInput,
-      operation_type: operationType,
-      preview_only: false,
-      edited_data: editedData || lastReceiptData,
-      external_id: externalId,
-      settings
-    }),
-  });
+  try {
+    const response = await fetch(RECEIPT_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: userInput,
+        operation_type: operationType,
+        preview_only: false,
+        edited_data: editedData || lastReceiptData,
+        external_id: externalId,
+        settings
+      }),
+      signal: controller.signal
+    });
 
-  return response.json();
+    clearTimeout(timeoutId);
+    return response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
 };
