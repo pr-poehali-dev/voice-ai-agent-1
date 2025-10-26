@@ -630,31 +630,25 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
     if not access_token:
         return fallback_parse_receipt(text, settings)
     
-    prompt = f"""Парсер чеков. Извлеки данные из запроса и верни JSON.
+    prompt = f"""Парсер чека. Извлеки данные → JSON.
 
 Запрос: "{text}"
 
-Правила:
-- Убери команды: создай, пробей, сделай, на, для, чек
-- Примеры: "чек кофе 200р" → "Кофе", "стрижка 1500" → "Стрижка"
-- operation_type: sell (продажа), sell_refund (возврат), sell_correction (коррекция)
-- payment_type: cash (наличные) или electronically (безнал, по умолчанию)
-- payment_object: commodity (товар) или service (услуга)
-- vat: none (по умолчанию), vat20, vat10
-- measure: шт (товар), услуга (услуга)
+Очисти название: убери "создай/пробей/чек/на/для". Примеры: "чек кофе 200р"→"Кофе", "стрижка 1500"→"Стрижка"
 
-JSON формат:
-{{
-  "operation_type": "sell",
-  "items": [{{"name": "Товар", "price": 100, "quantity": 1, "measure": "шт", "vat": "none", "payment_method": "full_payment", "payment_object": "commodity"}}],
-  "client": {{"email": "email@example.com", "phone": null}},
-  "payment_type": "electronically"
-}}
+operation_type: sell (продажа), sell_refund (возврат)
+payment_type: cash (наличные), electronically (безнал, дефолт)
+payment_object: commodity (товар), service (услуга)
+vat: none (дефолт), vat20, vat10
+measure: шт (товар), услуга (услуга)
 
-Если не хватает данных:
-{{"error": "Недостаточно данных", "missing": ["email"]}}
+Формат:
+{{"operation_type":"sell","items":[{{"name":"Товар","price":100,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":"email@example.com","phone":null}},"payment_type":"electronically"}}
 
-Ответ (только JSON):"""
+Если данных мало:
+{{"error":"Недостаточно данных","missing":["email"]}}
+
+JSON:"""
     
     chat_url = 'https://gigachat.devices.sberbank.ru/api/v1/chat/completions'
     
