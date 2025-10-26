@@ -7,7 +7,7 @@ export const sendReceiptPreview = async (
   lastReceiptData: any
 ) => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  const timeoutId = setTimeout(() => controller.abort(), 65000);
 
   try {
     const response = await fetch(RECEIPT_API_URL, {
@@ -42,7 +42,7 @@ export const confirmReceipt = async (
 ) => {
   const externalId = `AI_${Date.now()}`;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  const timeoutId = setTimeout(() => controller.abort(), 65000);
   
   try {
     const response = await fetch(RECEIPT_API_URL, {
