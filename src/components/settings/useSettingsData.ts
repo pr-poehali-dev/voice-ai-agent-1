@@ -186,8 +186,15 @@ export const useSettingsData = () => {
 
     console.log('[DEBUG] Saving settings:', updatedSettings);
     setSettings(updatedSettings);
-    localStorage.setItem('ecomkassa_settings', JSON.stringify(updatedSettings));
+    
+    const jsonString = JSON.stringify(updatedSettings);
+    console.log('[DEBUG] JSON string:', jsonString);
+    
+    localStorage.setItem('ecomkassa_settings', jsonString);
     console.log('[DEBUG] Settings saved to localStorage');
+    
+    const verify = localStorage.getItem('ecomkassa_settings');
+    console.log('[DEBUG] Verify read from localStorage:', verify);
     
     const provider = aiProviders.find(p => p.id === providerId);
     toast.success(`Подключен провайдер: ${provider?.name}`);
