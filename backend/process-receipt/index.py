@@ -821,6 +821,7 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
     print(f"[DEBUG] Active provider: {active_provider}")
     
     context = settings.get('context_message', '')
+    print(f"[DEBUG] Context from previous request: '{context}'")
     parsed_data = get_ai_completion(text, settings, context)
     
     if not parsed_data:
