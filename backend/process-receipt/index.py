@@ -443,7 +443,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({
                 'preview': True,
                 'receipt': parsed_receipt,
-                'message': f'Будет создано {count} копий чека',
                 'original_user_message': existing_receipt.get('user_message', ''),
                 'operation_type': existing_receipt.get('operation_type', 'sell')
             })
