@@ -454,7 +454,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         operation_type = detect_operation_type(user_message)
     
     if edited_data:
-        print(f"[DEBUG] Using edited_data: {edited_data}")
+        print(f"[DEBUG] Using edited_data: {json.dumps(edited_data, ensure_ascii=False)[:500]}")
+        print(f"[DEBUG] edited_data has bulk_count: {edited_data.get('bulk_count')}")
+        print(f"[DEBUG] edited_data has original_uuid: {edited_data.get('original_uuid')}")
         parsed_receipt = edited_data
     elif repeat_uuid == 'LAST':
         existing_receipt = get_last_receipt_from_db()
