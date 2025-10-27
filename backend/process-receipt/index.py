@@ -35,6 +35,8 @@ def get_ai_completion(user_text: str, settings: dict, context: str = '') -> Opti
 
 Если ты не получил все обязательные данные (price, name, email/phone), ты подставляешь их исходя из контекста, а если их определить не удалось - спрашиваешь у пользователя через error.
 
+ВАЖНО: Если пользователь явно указывает "без почты", "без email", "не отправлять чек" - оставляй client.email = null. Бэкэнд автоматически подставит дефолтный email из настроек.
+
 Валидацию проверенных данных делай по протоколу Атол онлайн (https://atol.online/upload/iblock/c9e/8j5817ef027cwjsww1b67msvdcpxshax/API_сервиса_АТОЛ%20Онлайн_v5.pdf).
 
 Поля (только корректные значения):
@@ -43,21 +45,25 @@ payment_type: cash/electronically (дефолт electronically)
 payment_object: commodity/service
 vat: none/vat20/vat10 (дефолт none)
 measure: шт/услуга
-client: email (проверь формат), phone (+7...)
+client: email (проверь формат), phone (+7...), МОЖНО null если "без почты"
 
 Часть данных подставит бэкэнд (group_code, inn, sno, default_vat, company_email, payment_address), так как он связан с настройками который вводит пользователь.
 
 Успешный формат:
 {{"operation_type":"sell","items":[{{"name":"Товар","price":100,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":"user@mail.ru","phone":null}},"payment_type":"electronically"}}
 
-Если НЕ ХВАТАЕТ ДАННЫХ - ОБЯЗАТЕЛЬНО верни error с детальным объяснением:
-{{"error":"Не хватает данных для чека: укажи цену товара/услуги и email клиента. Пример: изготовление шкафа 25000₽ ivan@mail.ru"}}
+Формат БЕЗ ПОЧТЫ (бэкэнд подставит дефолтный email):
+{{"operation_type":"sell","items":[{{"name":"Товар","price":100,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payment_type":"electronically"}}
 
-Примеры запросов с недостающими данными:
-- "кофе" → {{"error":"Укажи цену и email клиента. Пример: кофе 200₽ client@mail.ru"}}
-- "кофе 200р" → {{"error":"Укажи email клиента для отправки чека. Пример: кофе 200₽ client@mail.ru"}}
+Если НЕ ХВАТАЕТ ДАННЫХ - ОБЯЗАТЕЛЬНО верни error с детальным объяснением:
+{{"error":"Не хватает данных для чека: укажи цену товара/услуги. Email можно не указывать (будет использован дефолтный). Пример: изготовление шкафа 25000₽"}}
+
+Примеры запросов:
+- "кофе 200₽ без почты" → {{"operation_type":"sell","items":[{{"name":"кофе","price":200,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payment_type":"electronically"}}
+- "услуга 1500₽ не отправлять чек" → {{"operation_type":"sell","items":[{{"name":"услуга","price":1500,"quantity":1,"measure":"услуга","vat":"none","payment_method":"full_payment","payment_object":"service"}}],"client":{{"email":null,"phone":null}},"payment_type":"electronically"}}
+- "кофе" → {{"error":"Укажи цену. Email необязателен (будет дефолтный). Пример: кофе 200₽"}}
 - "стрижка test@mail.ru" → {{"error":"Укажи цену услуги. Пример: стрижка 1500₽ test@mail.ru"}}
-- "изготовление шкафа" → {{"error":"Укажи цену и email клиента. Пример: изготовление шкафа 25000₽ ivan@mail.ru"}}
+- "изготовление шкафа" → {{"error":"Укажи цену. Пример: изготовление шкафа 25000₽"}}
 
 JSON:"""
     
@@ -852,7 +858,11 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
         raise ValueError(parsed_data.get('error', 'Не хватает данных для создания чека'))
     
     client_data = parsed_data.get('client', {})
-    client_email = client_data.get('email', '')
+    client_email = client_data.get('email', '') or ''
+    
+    if not client_email or client_email.strip() == '':
+        client_email = settings.get('company_email', 'company@example.com')
+        print(f"[DEBUG] Client email empty, using default: {client_email}")
     
     items = parsed_data.get('items', [])
     default_vat = settings.get('default_vat', 'none')
