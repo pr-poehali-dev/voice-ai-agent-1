@@ -1026,7 +1026,7 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
                 'name': item_name.capitalize(), 
                 'price': price_val, 
                 'quantity': 1,
-                'measure': 'шт',
+                'measure': 0,
                 'vat': default_vat,
                 'payment_method': 'full_payment',
                 'payment_object': payment_object
@@ -1043,7 +1043,7 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
                     'name': 'Товар', 
                     'price': price_val, 
                     'quantity': 1,
-                    'measure': 'шт',
+                    'measure': 0,
                     'vat': default_vat,
                     'payment_method': 'full_payment',
                     'payment_object': 'commodity'
@@ -1055,7 +1055,7 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
             'name': 'Товар', 
             'price': 100.00, 
             'quantity': 1,
-            'measure': 'шт',
+            'measure': 0,
             'vat': default_vat,
             'payment_method': 'full_payment',
             'payment_object': 'commodity'
