@@ -688,32 +688,77 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps(error_result)
         }
     
-    receipt_result = create_ecomkassa_receipt(
-        parsed_receipt, 
-        token, 
-        group_code,
-        operation_type
-    )
+    created_receipts = []
+    failed_receipts = []
     
-    save_receipt_to_db(
-        external_id,
-        user_message,
-        parsed_receipt,
-        operation_type,
-        receipt_result.get('ecomkassa_response'),
-        receipt_result.get('demo', False),
-        receipt_result.get('uuid')
-    )
+    for i in range(10):
+        import time
+        unique_external_id = f'{external_id}_{int(time.time() * 1000)}_{i}'
+        
+        receipt_result = create_ecomkassa_receipt(
+            parsed_receipt, 
+            token, 
+            group_code,
+            operation_type
+        )
+        
+        if receipt_result.get('success') or receipt_result.get('demo'):
+            save_receipt_to_db(
+                unique_external_id,
+                user_message,
+                parsed_receipt,
+                operation_type,
+                receipt_result.get('ecomkassa_response'),
+                receipt_result.get('demo', False),
+                receipt_result.get('uuid')
+            )
+            created_receipts.append({
+                'index': i + 1,
+                'uuid': receipt_result.get('uuid'),
+                'external_id': unique_external_id,
+                'demo': receipt_result.get('demo', False)
+            })
+        else:
+            failed_receipts.append({
+                'index': i + 1,
+                'error': receipt_result.get('error', 'Неизвестная ошибка'),
+                'external_id': unique_external_id
+            })
     
-    return {
-        'statusCode': 200,
-        'headers': {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-        },
-        'isBase64Encoded': False,
-        'body': json.dumps(receipt_result)
-    }
+    if len(created_receipts) > 0:
+        first_receipt = created_receipts[0]
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'isBase64Encoded': False,
+            'body': json.dumps({
+                'success': True,
+                'message': f'Создано {len(created_receipts)} из 10 чеков',
+                'receipt': parsed_receipt,
+                'primary_uuid': first_receipt.get('uuid'),
+                'created': created_receipts,
+                'failed': failed_receipts,
+                'total_created': len(created_receipts),
+                'total_failed': len(failed_receipts)
+            })
+        }
+    else:
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'isBase64Encoded': False,
+            'body': json.dumps({
+                'success': False,
+                'error': 'Не удалось создать ни одного чека',
+                'failed': failed_receipts
+            })
+        }
 
 
 def get_ecomkassa_token(login: str, password: str) -> Optional[str]:
