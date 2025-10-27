@@ -1451,37 +1451,84 @@ def create_ecomkassa_receipt(
         'сутки': '24'
     }
     
-    # Build items, ensuring price * quantity = sum exactly using Decimal
+    # Build items, split fractional quantities to ensure price * quantity = sum
     from decimal import Decimal, ROUND_HALF_UP
+    import math
     
     items_for_payload = []
     for item in receipt_data['items']:
-        qty = Decimal(str(item.get('quantity', 1)))
-        price = Decimal(str(item['price']))
+        qty_decimal = Decimal(str(item.get('quantity', 1)))
+        price_decimal = Decimal(str(item['price']))
+        total_sum = float((price_decimal * qty_decimal).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
         
-        # Calculate sum with Decimal precision, then round to 2 decimals
-        item_sum = float((price * qty).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+        # If quantity has fractional part, split into integer + fraction
+        qty_float = float(qty_decimal)
+        qty_int = math.floor(qty_float)
+        qty_frac = qty_float - qty_int
         
-        # Recalculate price from sum to ensure exact match: price = sum / quantity
-        exact_price = float((Decimal(str(item_sum)) / qty).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
-        
-        items_for_payload.append({
-            'name': item['name'],
-            'price': exact_price,
-            'quantity': float(qty),
-            'sum': item_sum,
-            'measure': int(measure_map.get(item.get('measure', 'шт'), '0')),
-            'payment_method': item.get('payment_method', 'full_payment'),
-            'payment_object': {
-                'commodity': 1,
-                'excise': 2,
-                'job': 3,
-                'service': 4
-            }.get(item.get('payment_object'), 4),
-            'vat': {
-                'type': item.get('vat', 'none')
-            }
-        })
+        if qty_frac > 0.001:  # Has fractional part
+            # Integer part
+            if qty_int > 0:
+                price_rounded = float(price_decimal.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+                int_sum = float((Decimal(str(price_rounded)) * Decimal(str(qty_int))).quantize(Decimal('0.01')))
+                
+                items_for_payload.append({
+                    'name': item['name'],
+                    'price': price_rounded,
+                    'quantity': qty_int,
+                    'sum': int_sum,
+                    'measure': int(measure_map.get(item.get('measure', 'шт'), '0')),
+                    'payment_method': item.get('payment_method', 'full_payment'),
+                    'payment_object': {
+                        'commodity': 1,
+                        'excise': 2,
+                        'job': 3,
+                        'service': 4
+                    }.get(item.get('payment_object'), 4),
+                    'vat': {'type': item.get('vat', 'none')}
+                })
+            else:
+                int_sum = 0
+            
+            # Fractional part with adjusted price to match total
+            frac_sum = round(total_sum - int_sum, 2)
+            frac_price = float((Decimal(str(frac_sum)) / Decimal(str(qty_frac))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+            
+            items_for_payload.append({
+                'name': item['name'],
+                'price': frac_price,
+                'quantity': qty_frac,
+                'sum': frac_sum,
+                'measure': int(measure_map.get(item.get('measure', 'шт'), '0')),
+                'payment_method': item.get('payment_method', 'full_payment'),
+                'payment_object': {
+                    'commodity': 1,
+                    'excise': 2,
+                    'job': 3,
+                    'service': 4
+                }.get(item.get('payment_object'), 4),
+                'vat': {'type': item.get('vat', 'none')}
+            })
+        else:
+            # No fractional part - simple calculation
+            price_rounded = float(price_decimal.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+            item_sum = float((Decimal(str(price_rounded)) * qty_decimal).quantize(Decimal('0.01')))
+            
+            items_for_payload.append({
+                'name': item['name'],
+                'price': price_rounded,
+                'quantity': float(qty_decimal),
+                'sum': item_sum,
+                'measure': int(measure_map.get(item.get('measure', 'шт'), '0')),
+                'payment_method': item.get('payment_method', 'full_payment'),
+                'payment_object': {
+                    'commodity': 1,
+                    'excise': 2,
+                    'job': 3,
+                    'service': 4
+                }.get(item.get('payment_object'), 4),
+                'vat': {'type': item.get('vat', 'none')}
+            })
     
     calculated_total = round(sum(item['sum'] for item in items_for_payload), 2)
     
