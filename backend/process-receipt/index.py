@@ -681,7 +681,9 @@ def detect_repeat_command(text: str) -> Optional[str]:
     for pattern in repeat_with_uuid_patterns:
         match = re.search(pattern, text_lower)
         if match:
-            return match.group(1)
+            uuid_raw = match.group(1)
+            uuid_clean = extract_uuid_with_ai(uuid_raw)
+            return uuid_clean if uuid_clean else uuid_raw
     
     repeat_without_uuid_patterns = [
         r'повтор[иь]\s+чек',
@@ -695,6 +697,18 @@ def detect_repeat_command(text: str) -> Optional[str]:
         if re.search(pattern, text_lower):
             return 'LAST'
     
+    return None
+
+
+def extract_uuid_with_ai(text: str) -> Optional[str]:
+    import re
+    uuid_pattern = r'\b([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}|[a-zA-Z0-9]{8,})\b'
+    match = re.search(uuid_pattern, text.lower())
+    if match:
+        return match.group(1)
+    cleaned = re.sub(r'[^a-zA-Z0-9-]', '', text)
+    if len(cleaned) >= 8:
+        return cleaned
     return None
 
 
