@@ -175,7 +175,7 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-gray-900">{provider.name}</h3>
+                    <h3 className="font-semibold text-gray-600">{provider.name}</h3>
                   </div>
                   <p className="text-sm text-muted-foreground">{provider.description}</p>
                   <div className="flex items-center gap-2 mt-2">
