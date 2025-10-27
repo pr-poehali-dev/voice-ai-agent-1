@@ -1487,8 +1487,14 @@ def create_ecomkassa_receipt(
         # Recalculate last item: new_sum = old_sum + difference, new_price = new_sum / quantity
         new_sum = round(last_item['sum'] + difference, 2)
         last_item['sum'] = new_sum
-        last_item['price'] = round(new_sum / last_item['quantity'], 2)
-        print(f"[DEBUG] Adjusted last item: new_price={last_item['price']}, new_sum={new_sum} to match payment total: {payment_total}")
+        # Keep more precision in price to ensure price * quantity = sum exactly
+        exact_price = new_sum / last_item['quantity']
+        # Round to 2 decimals but verify it matches
+        last_item['price'] = round(exact_price, 2)
+        # If rounding breaks equality, use more precise price
+        if abs(last_item['price'] * last_item['quantity'] - new_sum) > 0.01:
+            last_item['price'] = round(exact_price, 4)
+        print(f"[DEBUG] Adjusted last item: new_price={last_item['price']}, new_sum={new_sum}, verify: {last_item['price'] * last_item['quantity']} to match payment total: {payment_total}")
     
     unique_id = f'AI_{int(time.time() * 1000000)}'
     
