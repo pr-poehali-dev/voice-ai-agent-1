@@ -73,7 +73,12 @@ export const AISettingsSection = ({
           )}
 
           <div className="space-y-2">
-            {aiProviders.map((provider) => {
+            {aiProviders
+              .filter((provider) => {
+                const isActive = settings.active_ai_provider === provider.id;
+                return !activeProvider || isActive;
+              })
+              .map((provider) => {
               const isActive = settings.active_ai_provider === provider.id;
               
               return (
