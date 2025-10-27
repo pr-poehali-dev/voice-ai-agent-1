@@ -141,9 +141,13 @@ def call_gptunnel(prompt: str, settings: dict, model: str) -> Optional[Dict[str,
     }
     
     try:
+        print(f"[DEBUG] Calling GPT Tunnel API: {url}, model: {model}")
         response = requests.post(url, headers=headers, json=payload, timeout=10)
+        print(f"[DEBUG] GPT Tunnel response status: {response.status_code}")
         result = response.json()
+        print(f"[DEBUG] GPT Tunnel response: {result}")
         ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+        print(f"[DEBUG] AI response text: {ai_response[:200]}")
         return extract_json_from_text(ai_response)
     except Exception as e:
         print(f"[ERROR] GPT Tunnel ({model}) failed: {e}")
