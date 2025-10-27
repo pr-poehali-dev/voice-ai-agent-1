@@ -100,31 +100,19 @@ export const ChatMessage = ({
           message.type === 'user' ? 'items-end' : 'items-start'
         } flex flex-col`}
       >
-        <Card
-          className={`p-4 ${
-            message.type === 'agent'
-              ? message.hasError 
-                ? 'bg-card border-destructive/30'
-                : 'bg-card border-primary/20'
-              : message.type === 'preview'
-              ? 'bg-accent/10 border-accent'
-              : 'bg-primary text-primary-foreground border-primary'
-          } relative`}
-        >
-          <div className="flex items-start gap-3">
-            <p className="text-sm leading-relaxed flex-1">{message.content}</p>
-            {message.receiptData && !message.hasError && onRepeat && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onRepeat(userMessage || '')}
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 flex-shrink-0"
-                title="Повторить"
-              >
-                <Icon name="RotateCw" size={14} />
-              </Button>
-            )}
-          </div>
+        <div className="flex items-start gap-2 w-full">
+          <Card
+            className={`p-4 flex-1 ${
+              message.type === 'agent'
+                ? message.hasError 
+                  ? 'bg-card border-destructive/30'
+                  : 'bg-card border-primary/20'
+                : message.type === 'preview'
+                ? 'bg-accent/10 border-accent'
+                : 'bg-primary text-primary-foreground border-primary'
+            }`}
+          >
+          <p className="text-sm leading-relaxed">{message.content}</p>
           {message.previewData && editedData && (
             <ReceiptPreview
               editedData={editedData}
@@ -175,6 +163,18 @@ export const ChatMessage = ({
             </div>
           )}
         </Card>
+        {message.receiptData && !message.hasError && onRepeat && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onRepeat(userMessage || '')}
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent/50 self-center mt-8"
+            title="Повторить"
+          >
+            <Icon name="RotateCw" size={16} />
+          </Button>
+        )}
+        </div>
         <div className={`flex items-center gap-2 mt-1 px-2 ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
           <span className="text-xs text-muted-foreground">
             {message.timestamp.toLocaleTimeString('ru-RU', {
