@@ -1480,6 +1480,9 @@ def create_ecomkassa_receipt(
     
     # Fix rounding: adjust last item price to match payment total
     # Ecomkassa validates: price * quantity == sum for each item
+    # Use Decimal for precise money calculations
+    from decimal import Decimal, ROUND_HALF_UP
+    
     items_total = round(sum(item['sum'] for item in items_for_payload), 2)
     if items_total != payment_total and len(items_for_payload) > 0:
         difference = round(payment_total - items_total, 2)
@@ -1487,14 +1490,19 @@ def create_ecomkassa_receipt(
         # Recalculate last item: new_sum = old_sum + difference, new_price = new_sum / quantity
         new_sum = round(last_item['sum'] + difference, 2)
         last_item['sum'] = new_sum
-        # Keep more precision in price to ensure price * quantity = sum exactly
-        exact_price = new_sum / last_item['quantity']
-        # Round to 2 decimals but verify it matches
-        last_item['price'] = round(exact_price, 2)
-        # If rounding breaks equality, use more precise price
-        if abs(last_item['price'] * last_item['quantity'] - new_sum) > 0.01:
-            last_item['price'] = round(exact_price, 4)
-        print(f"[DEBUG] Adjusted last item: new_price={last_item['price']}, new_sum={new_sum}, verify: {last_item['price'] * last_item['quantity']} to match payment total: {payment_total}")
+        
+        # Use Decimal for exact calculation
+        sum_decimal = Decimal(str(new_sum))
+        qty_decimal = Decimal(str(last_item['quantity']))
+        price_decimal = sum_decimal / qty_decimal
+        
+        # Round to 2 decimals
+        price_rounded = float(price_decimal.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+        last_item['price'] = price_rounded
+        
+        # Verify: recalculate sum with rounded price
+        verify_sum = round(price_rounded * last_item['quantity'], 2)
+        print(f"[DEBUG] Adjusted last item: price={price_rounded}, sum={new_sum}, verify_sum={verify_sum}, payment_total={payment_total}")
     
     unique_id = f'AI_{int(time.time() * 1000000)}'
     
