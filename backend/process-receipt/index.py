@@ -35,7 +35,8 @@ def get_ai_completion(user_text: str, settings: dict, context: str = '') -> Opti
 
 Если ты не получил все обязательные данные (price, name, email/phone), ты подставляешь их исходя из контекста, а если их определить не удалось - спрашиваешь у пользователя через error.
 
-ВАЖНО: Если пользователь явно указывает "без почты", "без email", "не отправлять чек" - оставляй client.email = null. Бэкэнд автоматически подставит дефолтный email из настроек.
+ВАЖНО: Если пользователь явно указывает отсутствие email клиента, оставляй client.email = null. Бэкэнд автоматически подставит дефолтный email из настроек.
+Варианты фраз: "без почты", "нет почты", "без email", "нет email", "не отправлять чек", "без отправки", "почты нет", "email нет", "на дефолтный email", "на стандартную почту".
 
 Валидацию проверенных данных делай по протоколу Атол онлайн (https://atol.online/upload/iblock/c9e/8j5817ef027cwjsww1b67msvdcpxshax/API_сервиса_АТОЛ%20Онлайн_v5.pdf).
 
@@ -61,6 +62,8 @@ client: email (проверь формат), phone (+7...), МОЖНО null ес
 Примеры запросов:
 - "кофе 200₽ без почты" → {{"operation_type":"sell","items":[{{"name":"кофе","price":200,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payment_type":"electronically"}}
 - "услуга 1500₽ не отправлять чек" → {{"operation_type":"sell","items":[{{"name":"услуга","price":1500,"quantity":1,"measure":"услуга","vat":"none","payment_method":"full_payment","payment_object":"service"}}],"client":{{"email":null,"phone":null}},"payment_type":"electronically"}}
+- "стрижка 800₽ нет почты" → {{"operation_type":"sell","items":[{{"name":"стрижка","price":800,"quantity":1,"measure":"услуга","vat":"none","payment_method":"full_payment","payment_object":"service"}}],"client":{{"email":null,"phone":null}},"payment_type":"electronically"}}
+- "товар 5000₽ на дефолтный email" → {{"operation_type":"sell","items":[{{"name":"товар","price":5000,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payment_type":"electronically"}}
 - "кофе" → {{"error":"Укажи цену. Email необязателен (будет дефолтный). Пример: кофе 200₽"}}
 - "стрижка test@mail.ru" → {{"error":"Укажи цену услуги. Пример: стрижка 1500₽ test@mail.ru"}}
 - "изготовление шкафа" → {{"error":"Укажи цену. Пример: изготовление шкафа 25000₽"}}
