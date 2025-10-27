@@ -504,6 +504,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if previous_receipt:
             parsed_receipt = merge_receipts(previous_receipt, parsed_receipt)
     
+    if parsed_receipt.get('payments'):
+        total_from_payments = sum(payment.get('sum', 0) for payment in parsed_receipt['payments'])
+        if total_from_payments > 0:
+            items_total = sum(item.get('price', 0) * item.get('quantity', 1) for item in parsed_receipt.get('items', []))
+            if abs(items_total - total_from_payments) > 0.01:
+                print(f"[DEBUG] Recalculating prices: items_total={items_total}, payments_total={total_from_payments}")
+                if len(parsed_receipt.get('items', [])) == 1:
+                    parsed_receipt['items'][0]['price'] = total_from_payments / parsed_receipt['items'][0].get('quantity', 1)
+                    print(f"[DEBUG] Updated single item price to {parsed_receipt['items'][0]['price']}")
+            parsed_receipt['total'] = total_from_payments
+    
     if preview_only:
         return {
             'statusCode': 200,
