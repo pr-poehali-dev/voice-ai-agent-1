@@ -1,0 +1,1 @@
+ALTER TABLE ai_settings ADD COLUMN selected_model VARCHAR(255);

@@ -57,61 +57,53 @@ def validate_yandexgpt_key(api_key: str, folder_id: str) -> Dict[str, Any]:
     except Exception as e:
         return {'valid': False, 'message': f'Validation error: {str(e)}'}
 
-def validate_gptunnel_key(api_key: str, model: str) -> Dict[str, Any]:
-    '''Validate GPTunnel API key by fetching available models and checking if target model exists'''
+def get_gptunnel_models(api_key: str) -> Dict[str, Any]:
+    '''Fetch available models from GPTunnel API'''
     try:
-        # First, get list of available models
+        response = requests.get(
+            'https://gptunnel.ru/v1/models',
+            headers={'Authorization': api_key},
+            timeout=15
+        )
+        
+        if response.status_code != 200:
+            return {'success': False, 'models': []}
+        
+        models_data = response.json()
+        models = []
+        for model in models_data.get('data', []):
+            models.append({
+                'id': model.get('id'),
+                'name': model.get('title', model.get('id')),
+                'type': model.get('type', 'TEXT')
+            })
+        
+        return {'success': True, 'models': models}
+    except Exception as e:
+        return {'success': False, 'models': []}
+
+def validate_gptunnel_key(api_key: str, model: str = None) -> Dict[str, Any]:
+    '''Validate GPTunnel API key by fetching available models'''
+    try:
         models_response = requests.get(
             'https://gptunnel.ru/v1/models',
             headers={'Authorization': api_key},
             timeout=15
         )
         
-        print(f"GPTunnel models response status: {models_response.status_code}")
-        print(f"GPTunnel models response: {models_response.text[:1000]}")
-        
         if models_response.status_code != 200:
             return {'valid': False, 'message': f'Invalid key: {models_response.status_code}'}
         
-        # Parse available models
+        if not model:
+            return {'valid': True, 'message': 'GPTunnel key is valid'}
+        
         models_data = models_response.json()
         available_models = [m.get('id') for m in models_data.get('data', [])]
-        print(f"Available models: {available_models}")
         
-        # Check if target model exists
         if model not in available_models:
-            # Try to find Claude models
-            claude_models = [m for m in available_models if 'claude' in m.lower()]
-            if claude_models:
-                return {'valid': False, 'message': f'Model {model} not found. Available Claude models: {", ".join(claude_models)}'}
-            return {'valid': False, 'message': f'Model {model} not found in available models'}
+            return {'valid': False, 'message': f'Model {model} not found'}
         
-        # Test the model with a simple request
-        response = requests.post(
-            'https://gptunnel.ru/v1/chat/completions',
-            headers={
-                'Authorization': api_key,
-                'Content-Type': 'application/json'
-            },
-            json={
-                'model': model,
-                'messages': [
-                    {'role': 'user', 'content': 'test'}
-                ],
-                'max_tokens': 10
-            },
-            timeout=15
-        )
-        
-        if response.status_code == 200:
-            return {'valid': True, 'message': 'GPTunnel key is valid'}
-        else:
-            try:
-                error_data = response.json()
-                error_msg = error_data.get('error', {}).get('message', response.text[:200])
-            except:
-                error_msg = response.text[:200]
-            return {'valid': False, 'message': f'Test failed: {response.status_code} - {error_msg}'}
+        return {'valid': True, 'message': 'GPTunnel key and model are valid'}
     except Exception as e:
         return {'valid': False, 'message': f'Validation error: {str(e)}'}
 
@@ -170,8 +162,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         },
         {
             'id': 'gptunnel_chatgpt',
-            'name': 'ChatGPT (GPT Tunnel)',
-            'description': 'GPT-4o через российский сервис',
+            'name': 'GPTunnel (мультимодели)',
+            'description': 'Доступ к GPT, DeepSeek, Gemini и другим моделям',
             'secret_name': 'GPTUNNEL_API_KEY',
             'has_secret': bool(os.environ.get('GPTUNNEL_API_KEY'))
         }
@@ -181,9 +173,23 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     cur = conn.cursor()
     
     if method == 'GET':
-        cur.execute("SELECT active_provider FROM ai_settings ORDER BY id DESC LIMIT 1")
+        cur.execute("SELECT active_provider, selected_model FROM ai_settings ORDER BY id DESC LIMIT 1")
         row = cur.fetchone()
         active_provider = row[0] if row else ''
+        selected_model = row[1] if row and len(row) > 1 else None
+        
+        response_data = {
+            'active_provider': active_provider,
+            'selected_model': selected_model,
+            'available_providers': available_providers
+        }
+        
+        if active_provider == 'gptunnel_chatgpt':
+            api_key = os.environ.get('GPTUNNEL_API_KEY', '')
+            if api_key:
+                models_result = get_gptunnel_models(api_key)
+                if models_result['success']:
+                    response_data['available_models'] = models_result['models']
         
         cur.close()
         conn.close()
@@ -192,15 +198,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'isBase64Encoded': False,
-            'body': json.dumps({
-                'active_provider': active_provider,
-                'available_providers': available_providers
-            })
+            'body': json.dumps(response_data)
         }
     
     if method == 'POST':
         body_data = json.loads(event.get('body', '{}'))
         provider_id: str = body_data.get('provider_id', '')
+        selected_model: str = body_data.get('selected_model', None)
         
         if provider_id and provider_id not in [p['id'] for p in available_providers]:
             cur.close()
@@ -232,7 +236,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             validation_result = validate_yandexgpt_key(api_key, folder_id)
         elif provider_id == 'gptunnel_chatgpt':
             api_key = os.environ.get('GPTUNNEL_API_KEY', '')
-            validation_result = validate_gptunnel_key(api_key, 'gpt-4o')
+            validation_result = validate_gptunnel_key(api_key, selected_model)
         else:
             validation_result = {'valid': False, 'message': 'Unknown provider'}
         
@@ -252,9 +256,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         count = cur.fetchone()[0]
         
         if count == 0:
-            cur.execute("INSERT INTO ai_settings (active_provider) VALUES (%s)", (provider_id,))
+            cur.execute("INSERT INTO ai_settings (active_provider, selected_model) VALUES (%s, %s)", (provider_id, selected_model))
         else:
-            cur.execute("UPDATE ai_settings SET active_provider = %s, updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT id FROM ai_settings ORDER BY id LIMIT 1)", (provider_id,))
+            cur.execute("UPDATE ai_settings SET active_provider = %s, selected_model = %s, updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT id FROM ai_settings ORDER BY id LIMIT 1)", (provider_id, selected_model))
         
         conn.commit()
         
@@ -268,6 +272,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({
                 'success': True,
                 'active_provider': provider_id,
+                'selected_model': selected_model,
                 'validation': validation_result
             })
         }

@@ -13,14 +13,24 @@ interface AIProvider {
   has_secret: boolean;
 }
 
+interface AIModel {
+  id: string;
+  name: string;
+  type: string;
+}
+
 interface AISettingsSectionNewProps {
   adminToken: string;
 }
 
 export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) => {
   const [activeProvider, setActiveProvider] = useState<string>('');
+  const [selectedModel, setSelectedModel] = useState<string | null>(null);
+  const [availableModels, setAvailableModels] = useState<AIModel[]>([]);
   const [providers, setProviders] = useState<AIProvider[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modelSelectMode, setModelSelectMode] = useState(false);
+  const [tempProvider, setTempProvider] = useState<string>('');
 
   useEffect(() => {
     loadSettings();
@@ -40,6 +50,8 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
 
       const data = await response.json();
       setActiveProvider(data.active_provider || '');
+      setSelectedModel(data.selected_model || null);
+      setAvailableModels(data.available_models || []);
       setProviders(data.available_providers || []);
     } catch (error) {
       toast.error('Ошибка загрузки настроек ИИ');
@@ -48,7 +60,7 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
     }
   };
 
-  const validateKey = async (providerId: string) => {
+  const validateKey = async (providerId: string, modelId?: string) => {
     const validatingToast = toast.loading('Проверяю API ключ...');
     
     try {
@@ -58,7 +70,10 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
           'Content-Type': 'application/json',
           'X-Admin-Token': adminToken
         },
-        body: JSON.stringify({ provider_id: providerId })
+        body: JSON.stringify({ 
+          provider_id: providerId,
+          selected_model: modelId 
+        })
       });
 
       const data = await response.json();
@@ -79,11 +94,39 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
   };
 
   const handleProviderChange = async (providerId: string) => {
-    const isValid = await validateKey(providerId);
+    if (!providerId) {
+      const isValid = await validateKey('');
+      if (isValid) {
+        setActiveProvider('');
+        setSelectedModel(null);
+        toast.success('Провайдер отключен');
+      }
+      return;
+    }
+    
+    if (providerId === 'gptunnel_chatgpt') {
+      setTempProvider(providerId);
+      setModelSelectMode(true);
+      await loadSettings();
+    } else {
+      const isValid = await validateKey(providerId);
+      
+      if (isValid) {
+        setActiveProvider(providerId);
+        setSelectedModel(null);
+        toast.success('Провайдер активирован ✓');
+      }
+    }
+  };
+
+  const handleModelSelect = async (modelId: string) => {
+    const isValid = await validateKey(tempProvider, modelId);
     
     if (isValid) {
-      setActiveProvider(providerId);
-      toast.success(providerId ? `Провайдер активирован ✓` : 'Провайдер отключен');
+      setActiveProvider(tempProvider);
+      setSelectedModel(modelId);
+      setModelSelectMode(false);
+      toast.success('Провайдер с моделью активирован ✓');
     }
   };
 
@@ -114,14 +157,61 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {activeProviderData ? (
+        {modelSelectMode ? (
+          <Alert className="bg-blue-50 border-blue-200">
+            <AlertDescription>
+              <div className="flex items-center gap-2 text-blue-800 mb-3">
+                <Icon name="Sparkles" size={16} />
+                <span className="font-semibold">Выберите модель для GPTunnel</span>
+              </div>
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {availableModels.length > 0 ? (
+                  availableModels.map((model) => (
+                    <button
+                      key={model.id}
+                      onClick={() => handleModelSelect(model.id)}
+                      className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
+                    >
+                      <div>
+                        <div className="font-medium text-gray-900">{model.name}</div>
+                        <div className="text-xs text-gray-600">{model.id}</div>
+                      </div>
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                        {model.type}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    Загрузка моделей...
+                  </div>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setModelSelectMode(false)}
+                className="mt-3 w-full"
+              >
+                Отмена
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : activeProviderData ? (
           <Alert className="bg-green-50 border-green-200">
             <AlertDescription className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-green-800">
                 <Icon name="Check" size={16} />
-                <span>
-                  <strong>Подключен:</strong> {activeProviderData.name}
-                </span>
+                <div>
+                  <div>
+                    <strong>Подключен:</strong> {activeProviderData.name}
+                  </div>
+                  {selectedModel && (
+                    <div className="text-xs text-green-700 mt-1">
+                      Модель: {selectedModel}
+                    </div>
+                  )}
+                </div>
               </div>
               <Button
                 variant="outline"
