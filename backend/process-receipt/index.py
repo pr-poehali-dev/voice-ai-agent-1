@@ -393,6 +393,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'items': existing_receipt['items'],
                 'total': existing_receipt['total'],
                 'payment_type': existing_receipt.get('payment_type', 'card'),
+                'payments': existing_receipt.get('payments', [{
+                    'type': '0' if existing_receipt.get('payment_type') == 'cash' else '1',
+                    'sum': existing_receipt['total']
+                }]),
                 'client': {
                     'email': existing_receipt.get('customer_email', '')
                 },
@@ -699,7 +703,7 @@ def get_receipt_from_db(uuid_search: str) -> Optional[Dict[str, Any]]:
         
         cursor.execute(
             "SELECT external_id, user_message, operation_type, items, total, "
-            "payment_type, customer_email, ecomkassa_response FROM t_p7891941_voice_ai_agent_1.receipts "
+            "payment_type, payments, customer_email, ecomkassa_response FROM t_p7891941_voice_ai_agent_1.receipts "
             "WHERE ecomkassa_response->>'uuid' = %s LIMIT 1",
             (uuid_search,)
         )
@@ -709,6 +713,11 @@ def get_receipt_from_db(uuid_search: str) -> Optional[Dict[str, Any]]:
         conn.close()
         
         if receipt:
+            payments_data = receipt.get('payments') or [{
+                'type': '0' if receipt['payment_type'] == 'cash' else '1',
+                'sum': float(receipt['total'])
+            }]
+            
             return {
                 'original_external_id': receipt['external_id'],
                 'user_message': receipt['user_message'],
@@ -719,10 +728,7 @@ def get_receipt_from_db(uuid_search: str) -> Optional[Dict[str, Any]]:
                 'client': {
                     'email': receipt['customer_email']
                 },
-                'payments': [{
-                    'type': '0' if receipt['payment_type'] == 'cash' else '1',
-                    'sum': float(receipt['total'])
-                }]
+                'payments': payments_data
             }
         
         return None
@@ -745,7 +751,7 @@ def get_last_receipt_from_db() -> Optional[Dict[str, Any]]:
         
         cursor.execute(
             "SELECT external_id, user_message, operation_type, items, total, "
-            "payment_type, customer_email, ecomkassa_response "
+            "payment_type, payments, customer_email, ecomkassa_response "
             "FROM t_p7891941_voice_ai_agent_1.receipts "
             "WHERE status = 'success' AND demo_mode = false "
             "ORDER BY created_at DESC LIMIT 1"
@@ -756,6 +762,11 @@ def get_last_receipt_from_db() -> Optional[Dict[str, Any]]:
         conn.close()
         
         if receipt:
+            payments_data = receipt.get('payments') or [{
+                'type': '0' if receipt['payment_type'] == 'cash' else '1',
+                'sum': float(receipt['total'])
+            }]
+            
             return {
                 'original_external_id': receipt['external_id'],
                 'user_message': receipt['user_message'],
@@ -763,7 +774,8 @@ def get_last_receipt_from_db() -> Optional[Dict[str, Any]]:
                 'items': receipt['items'],
                 'total': float(receipt['total']),
                 'payment_type': receipt['payment_type'],
-                'customer_email': receipt['customer_email']
+                'customer_email': receipt['customer_email'],
+                'payments': payments_data
             }
         
         return None
