@@ -127,7 +127,7 @@ def call_gptunnel(prompt: str, settings: dict, model: str) -> Optional[Dict[str,
     if not api_key:
         return None
     
-    url = 'https://api.gptunnel.ru/v1/chat/completions'
+    url = 'https://gptunnel.ru/v1/chat/completions'
     headers = {
         'Authorization': f'Bearer {api_key}',
         'Content-Type': 'application/json'
