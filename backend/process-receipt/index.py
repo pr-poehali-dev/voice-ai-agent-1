@@ -305,10 +305,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     has_receipt_keywords = any(keyword in text_lower for keyword in [
         'чек', 'товар', 'услуга', 'продаж', 'возврат', 'корр', 
-        'руб', '₽', 'email', '@', 'цена', 'сумма', 'отправ', 'созда'
+        'руб', '₽', 'email', '@', 'цена', 'сумма', 'отправ', 'созда',
+        'копи', 'повтор', 'дубл', 'еще раз', 'ещё раз'
     ])
     
-    if not has_receipt_keywords and not has_context:
+    has_copy_request = bool(re.search(r'\d{8,}', user_message)) and any(keyword in text_lower for keyword in ['копи', 'повтор', 'дубл', 'еще', 'ещё'])
+    
+    if not has_receipt_keywords and not has_context and not has_copy_request:
         for keyword in irrelevant_keywords:
             if keyword in text_lower:
                 print(f"[DEBUG] Irrelevant request blocked: '{user_message}' contains '{keyword}'")
