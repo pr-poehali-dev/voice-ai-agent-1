@@ -4,9 +4,23 @@ import { toast } from 'sonner';
 export const useVoiceInput = (setInput: (value: string) => void) => {
   const [isListening, setIsListening] = useState(false);
 
-  const handleVoiceInput = () => {
+  const handleVoiceInput = async () => {
     if (!('webkitSpeechRecognition' in window)) {
       toast.error('Голосовой ввод не поддерживается в вашем браузере');
+      return;
+    }
+
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (error: any) {
+      console.error('Microphone permission error:', error);
+      if (error.name === 'NotAllowedError') {
+        toast.error('Доступ к микрофону запрещен. Разрешите доступ в настройках Safari: Настройки → Веб-сайты → Микрофон');
+      } else if (error.name === 'NotFoundError') {
+        toast.error('Микрофон не найден. Подключите микрофон к устройству');
+      } else {
+        toast.error('Не удалось получить доступ к микрофону');
+      }
       return;
     }
 
@@ -32,7 +46,7 @@ export const useVoiceInput = (setInput: (value: string) => void) => {
       console.error('Speech recognition error:', event.error, event);
       
       if (event.error === 'not-allowed') {
-        toast.error('Доступ к микрофону запрещен. Разрешите доступ в настройках браузера');
+        toast.error('Доступ к микрофону запрещен. Откройте Настройки Safari → Веб-сайты → Микрофон');
       } else if (event.error === 'no-speech') {
         toast.error('Речь не обнаружена. Попробуйте еще раз');
       } else if (event.error === 'network') {
