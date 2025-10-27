@@ -65,17 +65,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         if has_payments:
             cursor.execute(
-                'SELECT id, external_id, user_message, operation_type, items, total, '
-                'payment_type, payments, customer_email, status, demo_mode, created_at, uuid '
-                'FROM receipts ORDER BY created_at DESC LIMIT %s OFFSET %s',
-                (limit, offset)
+                f'SELECT id, external_id, user_message, operation_type, items, total, '
+                f'payment_type, payments, customer_email, status, demo_mode, created_at, uuid '
+                f'FROM receipts ORDER BY created_at DESC LIMIT {limit} OFFSET {offset}'
             )
         else:
             cursor.execute(
-                'SELECT id, external_id, user_message, operation_type, items, total, '
-                'payment_type, customer_email, status, demo_mode, created_at, uuid '
-                'FROM receipts ORDER BY created_at DESC LIMIT %s OFFSET %s',
-                (limit, offset)
+                f'SELECT id, external_id, user_message, operation_type, items, total, '
+                f'payment_type, customer_email, status, demo_mode, created_at, uuid '
+                f'FROM receipts ORDER BY created_at DESC LIMIT {limit} OFFSET {offset}'
             )
         
         receipts = cursor.fetchall()
