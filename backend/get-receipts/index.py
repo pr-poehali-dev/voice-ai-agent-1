@@ -56,12 +56,27 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
+        # Проверяем, есть ли колонка payments
         cursor.execute(
-            'SELECT id, external_id, user_message, operation_type, items, total, '
-            'payment_type, payments, customer_email, status, demo_mode, created_at, uuid '
-            'FROM receipts ORDER BY created_at DESC LIMIT %s OFFSET %s',
-            (limit, offset)
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_name = 'receipts' AND column_name = 'payments'"
         )
+        has_payments = cursor.fetchone() is not None
+        
+        if has_payments:
+            cursor.execute(
+                'SELECT id, external_id, user_message, operation_type, items, total, '
+                'payment_type, payments, customer_email, status, demo_mode, created_at, uuid '
+                'FROM receipts ORDER BY created_at DESC LIMIT %s OFFSET %s',
+                (limit, offset)
+            )
+        else:
+            cursor.execute(
+                'SELECT id, external_id, user_message, operation_type, items, total, '
+                'payment_type, customer_email, status, demo_mode, created_at, uuid '
+                'FROM receipts ORDER BY created_at DESC LIMIT %s OFFSET %s',
+                (limit, offset)
+            )
         
         receipts = cursor.fetchall()
         
@@ -73,14 +88,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         receipts_list = []
         for receipt in receipts:
-            payment_type_display = receipt['payment_type']
+            payment_type_display = receipt.get('payment_type', '1')
             
             # Если есть массив payments с несколькими типами оплаты
-            if receipt.get('payments') and isinstance(receipt['payments'], list) and len(receipt['payments']) > 1:
-                payment_types = [p.get('type', '1') for p in receipt['payments']]
-                unique_types = list(dict.fromkeys(payment_types))  # Убираем дубликаты, сохраняя порядок
-                if len(unique_types) > 1:
-                    payment_type_display = ', '.join(unique_types)
+            if has_payments:
+                try:
+                    payments = receipt.get('payments')
+                    if payments and isinstance(payments, list) and len(payments) > 1:
+                        payment_types = [str(p.get('type', '1')) for p in payments if isinstance(p, dict)]
+                        unique_types = list(dict.fromkeys(payment_types))  # Убираем дубликаты, сохраняя порядок
+                        if len(unique_types) > 1:
+                            payment_type_display = ', '.join(unique_types)
+                except Exception:
+                    # Если ошибка при парсинге payments, используем payment_type как есть
+                    pass
             
             receipts_list.append({
                 'id': receipt['id'],
