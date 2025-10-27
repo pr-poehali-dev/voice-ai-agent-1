@@ -67,9 +67,14 @@ export const useReceiptHandlers = (
       const savedSettings = localStorage.getItem('ecomkassa_settings');
       const settings = savedSettings ? JSON.parse(savedSettings) : {};
       
+      const contextMessage = localStorage.getItem('context_message') || '';
+      settings.context_message = contextMessage;
+      
       const data = await sendReceiptPreview(userInput, operationType, settings, lastReceiptData);
 
       if (data.error) {
+        localStorage.setItem('context_message', userInput);
+        
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           type: 'agent',
@@ -100,6 +105,8 @@ export const useReceiptHandlers = (
         }
         return;
       }
+      
+      localStorage.removeItem('context_message');
 
       const detectedType = data.operation_type || operationType;
       const typeName = OPERATION_NAMES[detectedType] || detectedType;

@@ -6,16 +6,19 @@ import uuid
 from typing import Dict, Any, Optional
 
 
-def get_ai_completion(user_text: str, settings: dict) -> Optional[Dict[str, Any]]:
+def get_ai_completion(user_text: str, settings: dict, context: str = '') -> Optional[Dict[str, Any]]:
     '''
     Universal AI completion function supporting multiple providers
     Returns parsed receipt JSON or None if failed
+    context: previous incomplete request from user
     '''
     active_provider = settings.get('active_ai_provider', 'gigachat')
     
+    context_part = f"\n\nКонтекст предыдущего запроса: \"{context}\"\nОбъедини контекст с новым запросом в единый чек." if context else ""
+    
     prompt = f"""Ты ИИ-кассир. Преобразуй запрос в JSON для API Ecomkassa за 5 сек.
 
-Запрос: "{user_text}"
+Запрос: "{user_text}"{context_part}
 
 Извлеки: сумму, товар/услугу, тип платежа, НДС. Очисти название (убери "создай/пробей/чек"). Примеры: "кофе 200р"→"Кофе", "стрижка 1500"→"Стрижка".
 
@@ -214,6 +217,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     settings: dict = body_data.get('settings', {})
     previous_receipt: dict = body_data.get('previous_receipt', {})
     edited_data: dict = body_data.get('edited_data')
+    context_message: str = body_data.get('context_message', '')
     
     if not user_message:
         return {
@@ -813,7 +817,8 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
     print(f"[DEBUG] User message: {text[:100]}")
     print(f"[DEBUG] Active provider: {active_provider}")
     
-    parsed_data = get_ai_completion(text, settings)
+    context = settings.get('context_message', '')
+    parsed_data = get_ai_completion(text, settings, context)
     
     if not parsed_data:
         print("[WARN] AI parsing failed, using fallback")
