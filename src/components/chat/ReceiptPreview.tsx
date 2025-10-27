@@ -385,7 +385,7 @@ export const ReceiptPreview = ({
                   </select>
                   <Input
                     type="number"
-                    value={payment.sum}
+                    value={payment.sum || 0}
                     onChange={(e) => {
                       const newPayments = [...editedData.payments];
                       newPayments[idx].sum = parseFloat(e.target.value) || 0;
@@ -411,7 +411,7 @@ export const ReceiptPreview = ({
               ) : (
                 <>
                   <span className="flex-1 text-sm">{paymentNames[payment.type] || 'Безналичный'}</span>
-                  <span className="text-sm font-medium">{payment.sum}₽</span>
+                  <span className="text-sm font-medium">{payment.sum || 0}₽</span>
                 </>
               )}
             </div>
