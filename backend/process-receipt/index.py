@@ -423,6 +423,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             print(f"[DEBUG] Receipt found! Items: {existing_receipt.get('items')}")
             
+            # Use customer email from receipt, fallback to company email if empty
+            customer_email = existing_receipt.get('customer_email', '').strip()
+            if not customer_email:
+                customer_email = settings.get('company_email', 'company@example.com')
+            
             parsed_receipt = {
                 'items': existing_receipt['items'],
                 'total': existing_receipt['total'],
@@ -432,7 +437,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'sum': existing_receipt['total']
                 }]),
                 'client': {
-                    'email': existing_receipt.get('customer_email', ''),
+                    'email': customer_email,
                     'phone': existing_receipt.get('customer_phone', '')
                 },
                 'company': {
