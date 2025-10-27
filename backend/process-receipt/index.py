@@ -39,12 +39,6 @@ JSON:"""
     
     if active_provider == 'gigachat':
         return call_gigachat(prompt, settings)
-    elif active_provider == 'openrouter':
-        return call_openrouter(prompt, settings)
-    elif active_provider == 'anthropic':
-        return call_anthropic(prompt, settings)
-    elif active_provider == 'openai':
-        return call_openai(prompt, settings)
     elif active_provider == 'yandexgpt':
         return call_yandexgpt(prompt, settings)
     else:
@@ -84,97 +78,6 @@ def call_gigachat(prompt: str, settings: dict) -> Optional[Dict[str, Any]]:
         return extract_json_from_text(ai_response)
     except Exception as e:
         print(f"[ERROR] GigaChat failed: {e}")
-        return None
-
-
-def call_openrouter(prompt: str, settings: dict) -> Optional[Dict[str, Any]]:
-    '''Call OpenRouter API (Claude via proxy)'''
-    import requests
-    
-    api_key = settings.get('openrouter_api_key', '')
-    if not api_key:
-        return None
-    
-    url = 'https://openrouter.ai/api/v1/chat/completions'
-    headers = {
-        'Authorization': f'Bearer {api_key}',
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://poehali.dev',
-        'X-Title': 'AI Cashier'
-    }
-    
-    payload = {
-        'model': 'anthropic/claude-3.5-sonnet',
-        'messages': [{'role': 'user', 'content': prompt}],
-        'temperature': 0.1,
-        'max_tokens': 1000
-    }
-    
-    try:
-        response = requests.post(url, headers=headers, json=payload, timeout=10)
-        result = response.json()
-        ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
-        return extract_json_from_text(ai_response)
-    except Exception as e:
-        print(f"[ERROR] OpenRouter failed: {e}")
-        return None
-
-
-def call_anthropic(prompt: str, settings: dict) -> Optional[Dict[str, Any]]:
-    '''Call Anthropic API directly'''
-    try:
-        from anthropic import Anthropic
-    except ImportError:
-        print("[ERROR] anthropic library not installed")
-        return None
-    
-    api_key = settings.get('anthropic_api_key', '')
-    if not api_key:
-        return None
-    
-    try:
-        client = Anthropic(api_key=api_key)
-        message = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1000,
-            temperature=0.1,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        ai_response = message.content[0].text
-        return extract_json_from_text(ai_response)
-    except Exception as e:
-        print(f"[ERROR] Anthropic failed: {e}")
-        return None
-
-
-def call_openai(prompt: str, settings: dict) -> Optional[Dict[str, Any]]:
-    '''Call OpenAI API'''
-    import requests
-    
-    api_key = settings.get('openai_api_key', '')
-    if not api_key:
-        return None
-    
-    url = 'https://api.openai.com/v1/chat/completions'
-    headers = {
-        'Authorization': f'Bearer {api_key}',
-        'Content-Type': 'application/json'
-    }
-    
-    payload = {
-        'model': 'gpt-4-turbo-preview',
-        'messages': [{'role': 'user', 'content': prompt}],
-        'temperature': 0.1,
-        'max_tokens': 1000
-    }
-    
-    try:
-        response = requests.post(url, headers=headers, json=payload, timeout=10)
-        result = response.json()
-        ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
-        return extract_json_from_text(ai_response)
-    except Exception as e:
-        print(f"[ERROR] OpenAI failed: {e}")
         return None
 
 

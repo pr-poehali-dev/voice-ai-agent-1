@@ -23,9 +23,6 @@ export interface IntegrationSettings {
   payment_address: string;
   active_ai_provider: string;
   gigachat_auth_key: string;
-  anthropic_api_key: string;
-  openrouter_api_key: string;
-  openai_api_key: string;
   yandexgpt_api_key: string;
   yandexgpt_folder_id: string;
   ecomkassa_login: string;

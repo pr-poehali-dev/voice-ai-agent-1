@@ -12,9 +12,6 @@ export const useSettingsData = () => {
     payment_address: '',
     active_ai_provider: '',
     gigachat_auth_key: '',
-    anthropic_api_key: '',
-    openrouter_api_key: '',
-    openai_api_key: '',
     yandexgpt_api_key: '',
     yandexgpt_folder_id: '',
     ecomkassa_login: '',
@@ -32,33 +29,6 @@ export const useSettingsData = () => {
       apiKeyPlaceholder: 'base64(Client_ID:Client_Secret)',
       docsUrl: 'https://developers.sber.ru/studio/workspaces',
       isActive: !!settings.gigachat_auth_key
-    },
-    {
-      id: 'openrouter',
-      name: 'Claude via OpenRouter',
-      description: 'Claude 3.5 через OpenRouter (работает в РФ)',
-      apiKeyLabel: 'OpenRouter API Key',
-      apiKeyPlaceholder: 'sk-or-v1-...',
-      docsUrl: 'https://openrouter.ai',
-      isActive: !!settings.openrouter_api_key
-    },
-    {
-      id: 'anthropic',
-      name: 'Claude (Anthropic)',
-      description: 'Прямое подключение к Anthropic API',
-      apiKeyLabel: 'Anthropic API Key',
-      apiKeyPlaceholder: 'sk-ant-api03-...',
-      docsUrl: 'https://console.anthropic.com',
-      isActive: !!settings.anthropic_api_key
-    },
-    {
-      id: 'openai',
-      name: 'OpenAI GPT-4',
-      description: 'GPT-4 Turbo от OpenAI',
-      apiKeyLabel: 'OpenAI API Key',
-      apiKeyPlaceholder: 'sk-proj-...',
-      docsUrl: 'https://platform.openai.com/api-keys',
-      isActive: !!settings.openai_api_key
     },
     {
       id: 'yandexgpt',
@@ -84,9 +54,6 @@ export const useSettingsData = () => {
         payment_address: parsed.payment_address || '',
         active_ai_provider: parsed.active_ai_provider || '',
         gigachat_auth_key: parsed.gigachat_auth_key || '',
-        anthropic_api_key: parsed.anthropic_api_key || '',
-        openrouter_api_key: parsed.openrouter_api_key || '',
-        openai_api_key: parsed.openai_api_key || '',
         yandexgpt_api_key: parsed.yandexgpt_api_key || '',
         yandexgpt_folder_id: parsed.yandexgpt_folder_id || '',
         ecomkassa_login: parsed.ecomkassa_login || '',
@@ -179,9 +146,6 @@ export const useSettingsData = () => {
   const handleConnect = (providerId: string, apiKey: string, folderId?: string) => {
     const keyMap: Record<string, string> = {
       gigachat: 'gigachat_auth_key',
-      openrouter: 'openrouter_api_key',
-      anthropic: 'anthropic_api_key',
-      openai: 'openai_api_key',
       yandexgpt: 'yandexgpt_api_key'
     };
 
@@ -210,9 +174,6 @@ export const useSettingsData = () => {
     
     const keyMap: Record<string, string> = {
       gigachat: 'gigachat_auth_key',
-      openrouter: 'openrouter_api_key',
-      anthropic: 'anthropic_api_key',
-      openai: 'openai_api_key',
       yandexgpt: 'yandexgpt_api_key'
     };
 
