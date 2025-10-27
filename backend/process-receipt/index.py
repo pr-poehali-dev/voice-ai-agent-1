@@ -945,7 +945,7 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
     if item_patterns:
         for item_name_raw, price_str in item_patterns:
             item_name = item_name_raw.strip()
-            price_val = float(price_str)
+            price_val = round(float(price_str), 2)
             
             item_lower = item_name.lower()
             payment_object = 'service' if any(kw in item_lower for kw in service_keywords) else 'commodity'
@@ -966,7 +966,7 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
         
         if price_matches:
             for price_str in price_matches:
-                price_val = float(price_str)
+                price_val = round(float(price_str), 2)
                 items.append({
                     'name': 'Товар', 
                     'price': price_val, 
