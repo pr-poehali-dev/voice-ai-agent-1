@@ -4,6 +4,9 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
+import { AISettingsSection } from '@/components/settings/AISettingsSection';
+import { useSettingsData } from '@/components/settings/useSettingsData';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface FeedbackItem {
   message_id: string;
@@ -25,6 +28,14 @@ export const AdminPanel = () => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  
+  const {
+    settings,
+    aiProviders,
+    handleConnect,
+    handleDisconnect,
+    saveSettings
+  } = useSettingsData();
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -85,13 +96,21 @@ export const AdminPanel = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2">Админ-панель</h1>
-            <p className="text-muted-foreground">Статистика обратной связи</p>
+            <p className="text-muted-foreground">Управление системой</p>
           </div>
           <Button variant="outline" onClick={handleLogout}>
             <Icon name="LogOut" size={16} className="mr-2" />
             Выйти
           </Button>
         </div>
+
+        <Tabs defaultValue="stats" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsTrigger value="stats">Статистика фидбека</TabsTrigger>
+            <TabsTrigger value="ai">Настройки ИИ</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="stats">
 
         {stats && (
           <>
@@ -191,6 +210,24 @@ export const AdminPanel = () => {
             </Card>
           </>
         )}
+          </TabsContent>
+
+          <TabsContent value="ai">
+            <div className="space-y-6">
+              <AISettingsSection
+                settings={settings}
+                aiProviders={aiProviders}
+                onConnect={handleConnect}
+                onDisconnect={handleDisconnect}
+              />
+              
+              <Button onClick={saveSettings} className="w-full">
+                <Icon name="Save" size={16} className="mr-2" />
+                Сохранить настройки ИИ
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

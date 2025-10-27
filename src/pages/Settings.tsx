@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save, X } from 'lucide-react';
-import { AISettingsSection } from '@/components/settings/AISettingsSection';
 import { EcomkassaSettingsSection } from '@/components/settings/EcomkassaSettingsSection';
 import { useSettingsData } from '@/components/settings/useSettingsData';
 
@@ -9,12 +8,9 @@ const Settings = () => {
   const navigate = useNavigate();
   const {
     settings,
-    aiProviders,
     isLoadingShops,
     loadShops,
     handleShopSelect,
-    handleConnect,
-    handleDisconnect,
     updateSettings,
     saveSettings
   } = useSettingsData();
@@ -36,7 +32,7 @@ const Settings = () => {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-2xl font-bold">Настройки интеграции</h1>
+            <h1 className="text-2xl font-bold">Настройки Екомкасса</h1>
           </div>
           <Button
             variant="ghost"
@@ -49,13 +45,6 @@ const Settings = () => {
         </div>
 
         <div className="space-y-6">
-          <AISettingsSection
-            settings={settings}
-            aiProviders={aiProviders}
-            onConnect={handleConnect}
-            onDisconnect={handleDisconnect}
-          />
-
           <EcomkassaSettingsSection
             settings={settings}
             isLoadingShops={isLoadingShops}
