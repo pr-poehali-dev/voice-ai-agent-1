@@ -392,7 +392,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Skip to email check and receipt creation - do NOT re-parse bulk commands
     else:
         # Only detect bulk commands if NO edited_data (initial request)
-        bulk_repeat = detect_bulk_repeat_command(user_message)
+        # First, try AI-based bulk detection
+        bulk_repeat = detect_bulk_with_ai(user_message, settings)
+        if not bulk_repeat:
+            # Fallback to regex-based detection
+            bulk_repeat = detect_bulk_repeat_command(user_message)
+        
         if bulk_repeat:
             count, uuid = bulk_repeat
             if count > 50:
@@ -829,6 +834,89 @@ def merge_receipts(previous: dict, new: dict) -> dict:
                 result['company'][key] = value
     
     return result
+
+
+def detect_bulk_with_ai(text: str, settings: dict) -> Optional[tuple]:
+    '''
+    AI-powered bulk command detection
+    Returns (count, uuid) tuple or None
+    '''
+    import json
+    
+    text_lower = text.lower()
+    bulk_keywords = ['копи', 'дубл', 'повтор', 'еще', 'ещё', 'раз', 'штук']
+    has_bulk_keyword = any(kw in text_lower for kw in bulk_keywords)
+    has_number = any(char.isdigit() for char in text)
+    
+    if not (has_bulk_keyword and has_number):
+        return None
+    
+    print(f"[DEBUG] AI bulk detection for: {text}")
+    
+    active_provider = settings.get('active_ai_provider', '')
+    
+    prompt = f"""Ты ИИ-помощник. Анализируй запрос и определи, просит ли пользователь создать копии/дубли чека.
+
+Запрос: "{text}"
+
+Если это команда на создание копий чека:
+1. Найди КОЛИЧЕСТВО копий (число)
+2. Найди UUID/ID чека (последовательность цифр и букв, обычно 8+ символов)
+
+Примеры:
+- "105000516 сделай 2 дубля" → {{"bulk": true, "count": 2, "uuid": "105000516"}}
+- "создай 5 копий чека 12345678" → {{"bulk": true, "count": 5, "uuid": "12345678"}}
+- "повтори 3 раза abc123def" → {{"bulk": true, "count": 3, "uuid": "abc123def"}}
+- "еще 10 штук номер 999888" → {{"bulk": true, "count": 10, "uuid": "999888"}}
+
+Если это НЕ команда на копирование:
+{{"bulk": false}}
+
+ВАЖНО: Отвечай ТОЛЬКО валидным JSON, без дополнительного текста."""
+
+    if active_provider == 'gptunnel_chatgpt':
+        import requests
+        api_key = settings.get('gptunnel_api_key', '')
+        model = settings.get('gptunnel_selected_model', 'gpt-4')
+        
+        if not api_key:
+            return None
+        
+        try:
+            response = requests.post(
+                'https://gptunnel.ru/v1/chat/completions',
+                headers={
+                    'Authorization': f'Bearer {api_key}',
+                    'Content-Type': 'application/json'
+                },
+                json={
+                    'model': model,
+                    'messages': [{'role': 'user', 'content': prompt}],
+                    'temperature': 0.1,
+                    'max_tokens': 150
+                },
+                timeout=10
+            )
+            
+            if response.status_code != 200:
+                return None
+            
+            result = response.json()
+            ai_text = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+            print(f"[DEBUG] AI bulk detection response: {ai_text}")
+            
+            parsed = extract_json_from_text(ai_text)
+            if parsed and parsed.get('bulk'):
+                count = int(parsed.get('count', 0))
+                uuid = str(parsed.get('uuid', ''))
+                if count > 0 and uuid:
+                    print(f"[DEBUG] AI detected bulk: count={count}, uuid={uuid}")
+                    return (count, uuid)
+        except Exception as e:
+            print(f"[ERROR] AI bulk detection failed: {e}")
+            return None
+    
+    return None
 
 
 def detect_bulk_repeat_command(text: str) -> Optional[tuple]:
