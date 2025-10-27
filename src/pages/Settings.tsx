@@ -13,8 +13,8 @@ const Settings = () => {
     isLoadingShops,
     loadShops,
     handleShopSelect,
-    handleProviderSelect,
-    handleApiKeyChange,
+    handleConnect,
+    handleDisconnect,
     updateSettings,
     saveSettings
   } = useSettingsData();
@@ -52,9 +52,8 @@ const Settings = () => {
           <AISettingsSection
             settings={settings}
             aiProviders={aiProviders}
-            onProviderSelect={handleProviderSelect}
-            onApiKeyChange={handleApiKeyChange}
-            onYandexFolderIdChange={(value) => updateSettings({ yandexgpt_folder_id: value })}
+            onConnect={handleConnect}
+            onDisconnect={handleDisconnect}
           />
 
           <EcomkassaSettingsSection

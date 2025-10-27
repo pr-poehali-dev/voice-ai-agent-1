@@ -176,19 +176,7 @@ export const useSettingsData = () => {
     }
   };
 
-  const handleProviderSelect = (providerId: string) => {
-    const provider = aiProviders.find(p => p.id === providerId);
-    if (provider && provider.isActive) {
-      const updatedSettings = { ...settings, active_ai_provider: providerId };
-      setSettings(updatedSettings);
-      localStorage.setItem('ecomkassa_settings', JSON.stringify(updatedSettings));
-      toast.success(`Активирован провайдер: ${provider.name}`);
-    } else {
-      toast.error('Сначала укажите API ключ для этого провайдера');
-    }
-  };
-
-  const handleApiKeyChange = (providerId: string, value: string) => {
+  const handleConnect = (providerId: string, apiKey: string, folderId?: string) => {
     const keyMap: Record<string, string> = {
       gigachat: 'gigachat_auth_key',
       openrouter: 'openrouter_api_key',
@@ -198,19 +186,51 @@ export const useSettingsData = () => {
     };
 
     const key = keyMap[providerId];
-    if (key) {
-      const updatedSettings = { ...settings, [key]: value };
+    if (!key) return;
 
-      if (value && !settings.active_ai_provider) {
-        updatedSettings.active_ai_provider = providerId;
-      }
+    const updatedSettings = {
+      ...settings,
+      [key]: apiKey,
+      active_ai_provider: providerId
+    };
 
-      if (!value && settings.active_ai_provider === providerId) {
-        updatedSettings.active_ai_provider = '';
-      }
-
-      setSettings(updatedSettings);
+    if (providerId === 'yandexgpt' && folderId) {
+      updatedSettings.yandexgpt_folder_id = folderId;
     }
+
+    setSettings(updatedSettings);
+    localStorage.setItem('ecomkassa_settings', JSON.stringify(updatedSettings));
+    
+    const provider = aiProviders.find(p => p.id === providerId);
+    toast.success(`Подключен провайдер: ${provider?.name}`);
+  };
+
+  const handleDisconnect = () => {
+    const currentProvider = settings.active_ai_provider;
+    
+    const keyMap: Record<string, string> = {
+      gigachat: 'gigachat_auth_key',
+      openrouter: 'openrouter_api_key',
+      anthropic: 'anthropic_api_key',
+      openai: 'openai_api_key',
+      yandexgpt: 'yandexgpt_api_key'
+    };
+
+    const key = keyMap[currentProvider];
+    
+    const updatedSettings = {
+      ...settings,
+      [key]: '',
+      active_ai_provider: ''
+    };
+
+    if (currentProvider === 'yandexgpt') {
+      updatedSettings.yandexgpt_folder_id = '';
+    }
+
+    setSettings(updatedSettings);
+    localStorage.setItem('ecomkassa_settings', JSON.stringify(updatedSettings));
+    toast.info('AI провайдер отключен');
   };
 
   const updateSettings = (updates: Partial<IntegrationSettings>) => {
@@ -228,8 +248,8 @@ export const useSettingsData = () => {
     isLoadingShops,
     loadShops,
     handleShopSelect,
-    handleProviderSelect,
-    handleApiKeyChange,
+    handleConnect,
+    handleDisconnect,
     updateSettings,
     saveSettings
   };
