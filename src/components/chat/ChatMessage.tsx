@@ -2,6 +2,8 @@ import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import { ReceiptPreview } from './ReceiptPreview';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface Message {
   id: string;
@@ -37,6 +39,11 @@ export const ChatMessage = ({
   handleConfirmReceipt,
   handleCancelReceipt,
 }: ChatMessageProps) => {
+  const handleCopy = () => {
+    navigator.clipboard.writeText(message.content);
+    toast.success('Скопировано');
+  };
+
   return (
     <div
       className={`flex gap-3 animate-fade-in ${
@@ -124,12 +131,24 @@ export const ChatMessage = ({
             </div>
           )}
         </Card>
-        <span className="text-xs text-muted-foreground mt-1 px-2">
-          {message.timestamp.toLocaleTimeString('ru-RU', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </span>
+        <div className={`flex items-center gap-2 mt-1 px-2 ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+          <span className="text-xs text-muted-foreground">
+            {message.timestamp.toLocaleTimeString('ru-RU', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+          {message.type === 'user' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+              onClick={handleCopy}
+            >
+              <Icon name="Copy" size={14} />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
