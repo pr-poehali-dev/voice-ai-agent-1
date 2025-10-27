@@ -61,9 +61,14 @@ def get_ai_completion(user_text: str, settings: dict, context: str = '') -> Opti
 Поля (только корректные значения):
 operation_type: sell/sell_refund
 payment_object: commodity/service
+payment_method: full_payment (полная оплата) / advance (предоплата/частичная оплата при кредите)
 vat: none/vat20/vat10 (дефолт none)
 measure: шт/услуга
 client: email (проверь формат), phone (+7...), МОЖНО null если "без почты"
+
+ВАЖНО про payment_method:
+- full_payment: когда оплата одним способом (наличные ИЛИ карта ИЛИ безнал)
+- advance: когда есть кредит/рассрочка (взнос + последующая оплата)
 
 Часть данных подставит бэкэнд (group_code, inn, sno, default_vat, company_email, payment_address), так как он связан с настройками который вводит пользователя.
 
@@ -79,7 +84,7 @@ client: email (проверь формат), phone (+7...), МОЖНО null ес
 Примеры запросов:
 - "кофе 200₽ без почты" → {{"operation_type":"sell","items":[{{"name":"кофе","price":200,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":200}}]}}
 - "услуга 1500₽ не отправлять чек" → {{"operation_type":"sell","items":[{{"name":"услуга","price":1500,"quantity":1,"measure":"услуга","vat":"none","payment_method":"full_payment","payment_object":"service"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":1500}}]}}
-- "Я продаю мебель на заказ за 1300.12 в кредит первоначальный взнос 500" → {{"operation_type":"sell","items":[{{"name":"мебель на заказ","price":1300.12,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":500}},{{"type":"3","sum":800.12}}]}}
+- "Я продаю мебель на заказ за 1300.12 в кредит первоначальный взнос 500" → {{"operation_type":"sell","items":[{{"name":"мебель на заказ","price":1300.12,"quantity":1,"measure":"шт","vat":"none","payment_method":"advance","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":500}},{{"type":"3","sum":800.12}}]}}
 - "товар 1000₽, 600 наличными остальное картой" → {{"operation_type":"sell","items":[{{"name":"товар","price":1000,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"0","sum":600}},{{"type":"1","sum":400}}]}}
 - "стрижка и укладка 2500₽" → {{"operation_type":"sell","items":[{{"name":"стрижка и укладка","price":2500,"quantity":1,"measure":"услуга","vat":"none","payment_method":"full_payment","payment_object":"service"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":2500}}]}}
 - "кофе" → {{"error":"Укажи цену. Email необязателен (будет дефолтный). Пример: кофе 200₽"}}
