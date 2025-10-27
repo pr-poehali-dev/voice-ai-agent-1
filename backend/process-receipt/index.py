@@ -389,6 +389,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f"[DEBUG] edited_data has original_uuid: {edited_data.get('original_uuid')}")
         parsed_receipt = edited_data
         operation_type = edited_data.get('operation_type', operation_type)
+        
+        # Apply price recalculation for edited_data too
+        if parsed_receipt.get('payments'):
+            total_from_payments = sum(payment.get('sum', 0) for payment in parsed_receipt['payments'])
+            if total_from_payments > 0:
+                items_total = sum(item.get('price', 0) * item.get('quantity', 1) for item in parsed_receipt.get('items', []))
+                if abs(items_total - total_from_payments) > 0.01:
+                    print(f"[DEBUG] [EDITED_DATA] Recalculating prices: items_total={items_total}, payments_total={total_from_payments}")
+                    if len(parsed_receipt.get('items', [])) == 1:
+                        parsed_receipt['items'][0]['price'] = total_from_payments / parsed_receipt['items'][0].get('quantity', 1)
+                        print(f"[DEBUG] [EDITED_DATA] Updated single item price to {parsed_receipt['items'][0]['price']}")
+                parsed_receipt['total'] = total_from_payments
         # Skip to email check and receipt creation - do NOT re-parse bulk commands
     else:
         # Only detect bulk commands if NO edited_data (initial request)
