@@ -174,13 +174,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'description': 'GPT-4o через российский сервис',
             'secret_name': 'GPTUNNEL_API_KEY',
             'has_secret': bool(os.environ.get('GPTUNNEL_API_KEY'))
-        },
-        {
-            'id': 'gptunnel_claude',
-            'name': 'Claude 3.5 Sonnet (GPT Tunnel)',
-            'description': 'Claude 3.5 через российский сервис',
-            'secret_name': 'GPTUNNEL_API_KEY',
-            'has_secret': bool(os.environ.get('GPTUNNEL_API_KEY'))
         }
     ]
     
@@ -240,9 +233,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif provider_id == 'gptunnel_chatgpt':
             api_key = os.environ.get('GPTUNNEL_API_KEY', '')
             validation_result = validate_gptunnel_key(api_key, 'gpt-4o')
-        elif provider_id == 'gptunnel_claude':
-            api_key = os.environ.get('GPTUNNEL_API_KEY', '')
-            validation_result = validate_gptunnel_key(api_key, 'claude-3-5-sonnet')
         else:
             validation_result = {'valid': False, 'message': 'Unknown provider'}
         
