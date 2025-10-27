@@ -161,11 +161,26 @@ const History = () => {
                       })}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="flex flex-col items-end gap-2">
                     <div className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                       {receipt.total}₽
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">{getPaymentTypeName(receipt.payment_type, receipt)}</div>
+                    <div className="text-xs text-muted-foreground">{getPaymentTypeName(receipt.payment_type, receipt)}</div>
+                    {receipt.uuid && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-1"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`повтори чек ${receipt.uuid}`);
+                          toast.success('Команда скопирована! Вставь в чат');
+                          navigate('/');
+                        }}
+                      >
+                        <Icon name="RotateCw" size={14} className="mr-1" />
+                        Повторить
+                      </Button>
+                    )}
                   </div>
                 </div>
 
