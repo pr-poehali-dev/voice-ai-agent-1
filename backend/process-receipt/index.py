@@ -16,7 +16,9 @@ def get_ai_completion(user_text: str, settings: dict, context: str = '') -> Opti
     
     context_part = f"\n\nКонтекст предыдущего запроса: \"{context}\"\nОбъедини контекст с новым запросом в единый чек." if context else ""
     
-    prompt = f"""Ты ИИ-кассир. Преобразуй запрос в JSON для API Ecomkassa за 5 сек.
+    prompt = f"""Ты ИИ кассир, который получает запросы на создание чека текстом или голосовыми сообщениями.
+
+Задача: Преобразуй запрос в JSON, заполняя часть API запроса по документации Ecomkassa (https://ecomkassa.ru/dokumentacija_cheki_12).
 
 Запрос: "{user_text}"{context_part}
 
@@ -25,15 +27,24 @@ def get_ai_completion(user_text: str, settings: dict, context: str = '') -> Opti
 - "ivan@mail.ru" = "иван собака мейл точка ру" = "ivan at mail dot ru"
 - Числа: "2000" = "две тысячи" = "2к" = "2 тыщи"
 
-Извлеки: сумму, товар/услугу, тип платежа, НДС. Очисти название (убери "создай/пробей/чек"). Примеры: "кофе 200р"→"Кофе", "стрижка 1500"→"Стрижка".
+Пользователь указывает данные из массивов:
+- items (товары/услуги): name, price, quantity, measure, vat, payment_method, payment_object
+- payments (способы оплаты): payment_type
+- client (данные клиента): email, phone
+
+Если ты не получил все обязательные данные (price, name, email/phone), ты подставляешь их исходя из контекста, а если их определить не удалось - спрашиваешь у пользователя через error.
+
+Валидацию проверенных данных делай по протоколу Атол онлайн (https://atol.online/upload/iblock/c9e/8j5817ef027cwjsww1b67msvdcpxshax/API_сервиса_АТОЛ%20Онлайн_v5.pdf).
 
 Поля (только корректные значения):
 operation_type: sell/sell_refund
-payment_type: cash/electronically (дефолт)
+payment_type: cash/electronically (дефолт electronically)
 payment_object: commodity/service
 vat: none/vat20/vat10 (дефолт none)
 measure: шт/услуга
 client: email (проверь формат), phone (+7...)
+
+Часть данных подставит бэкэнд (group_code, inn, sno, default_vat, company_email, payment_address), так как он связан с настройками который вводит пользователь.
 
 Успешный формат:
 {{"operation_type":"sell","items":[{{"name":"Товар","price":100,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":"user@mail.ru","phone":null}},"payment_type":"electronically"}}
@@ -46,8 +57,6 @@ client: email (проверь формат), phone (+7...)
 - "кофе 200р" → {{"error":"Укажи email клиента для отправки чека. Пример: кофе 200₽ client@mail.ru"}}
 - "стрижка test@mail.ru" → {{"error":"Укажи цену услуги. Пример: стрижка 1500₽ test@mail.ru"}}
 - "изготовление шкафа" → {{"error":"Укажи цену и email клиента. Пример: изготовление шкафа 25000₽ ivan@mail.ru"}}
-
-Учись на запросах пользователей - если видишь частые ошибки, подсказывай точнее в своих error-сообщениях.
 
 JSON:"""
     
