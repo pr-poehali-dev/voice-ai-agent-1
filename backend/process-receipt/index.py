@@ -3,6 +3,7 @@ import os
 import urllib.request
 import urllib.error
 import uuid
+import re
 from typing import Dict, Any, Optional
 
 
@@ -289,7 +290,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Message is required'})
         }
     
-    import re
     text_lower = user_message.lower().strip()
     
     context_message = settings.get('context_message', '')
