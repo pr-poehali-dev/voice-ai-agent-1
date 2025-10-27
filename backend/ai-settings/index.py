@@ -61,7 +61,7 @@ def validate_gptunnel_key(api_key: str, model: str) -> Dict[str, Any]:
     '''Validate GPTunnel API key with test completion request'''
     try:
         response = requests.post(
-            'https://api.gptunnel.ru/v1/chat/completions',
+            'https://gptunnel.ru/v1/chat/completions',
             headers={
                 'Authorization': f'Bearer {api_key}',
                 'Content-Type': 'application/json'
