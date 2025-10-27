@@ -48,7 +48,7 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
     }
   };
 
-  const handleProviderChange = async (providerId: string) => {
+  const validateKey = async (providerId: string) => {
     const validatingToast = toast.loading('Проверяю API ключ...');
     
     try {
@@ -62,20 +62,33 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
       });
 
       const data = await response.json();
+      toast.dismiss(validatingToast);
 
       if (!response.ok) {
-        toast.dismiss(validatingToast);
-        toast.error(data.message || data.error || 'Ошибка изменения провайдера');
-        return;
+        toast.error(data.message || data.error || 'Ключ невалиден');
+        return false;
       }
 
-      toast.dismiss(validatingToast);
-      setActiveProvider(providerId);
-      toast.success(providerId ? `Провайдер активирован ✓` : 'Провайдер отключен');
+      toast.success('Ключ валиден ✓');
+      return true;
     } catch (error) {
       toast.dismiss(validatingToast);
       toast.error('Ошибка подключения');
+      return false;
     }
+  };
+
+  const handleProviderChange = async (providerId: string) => {
+    const isValid = await validateKey(providerId);
+    
+    if (isValid) {
+      setActiveProvider(providerId);
+      toast.success(providerId ? `Провайдер активирован ✓` : 'Провайдер отключен');
+    }
+  };
+
+  const handleTestKey = async (providerId: string) => {
+    await validateKey(providerId);
   };
 
   if (loading) {
@@ -173,16 +186,29 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
                     </div>
                   </div>
                   
-                  {!isActive && !activeProvider && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleProviderChange(provider.id)}
-                      disabled={!provider.has_secret}
-                    >
-                      Активировать
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {provider.has_secret && !isActive && !activeProvider && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleTestKey(provider.id)}
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      >
+                        <Icon name="TestTube2" size={14} className="mr-1" />
+                        Проверить ключ
+                      </Button>
+                    )}
+                    {!isActive && !activeProvider && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleProviderChange(provider.id)}
+                        disabled={!provider.has_secret}
+                      >
+                        Активировать
+                      </Button>
+                    )}
+                  </div>
                 </div>
               );
             })}
