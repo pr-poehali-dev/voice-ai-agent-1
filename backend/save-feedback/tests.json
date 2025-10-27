@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "name": "Test save positive feedback",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "message_id": "test123",
+        "user_message": "Создай чек на 100р",
+        "agent_response": "Чек создан успешно",
+        "feedback_type": "positive"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test OPTIONS for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    }
+  ]
+}

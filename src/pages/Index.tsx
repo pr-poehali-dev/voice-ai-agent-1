@@ -90,19 +90,25 @@ const Index = ({ repeatCommand, setRepeatCommand }: IndexProps) => {
         <ChatHeader />
 
         <div ref={messagesContainerRef} className="flex-1 overflow-y-auto mb-4 md:mb-6 space-y-4 overflow-x-hidden">
-          {messages.map((message) => (
-            <ChatMessage
-              key={message.id}
-              message={message}
-              editedData={editedData}
-              editMode={editMode}
-              isProcessing={isProcessing}
-              updateEditedField={updateEditedField}
-              handleEditToggle={handleEditToggle}
-              handleConfirmReceipt={handleConfirmReceipt}
-              handleCancelReceipt={handleCancelReceipt}
-            />
-          ))}
+          {messages.map((message, index) => {
+            const prevMessage = index > 0 ? messages[index - 1] : null;
+            const userMessageContext = prevMessage?.type === 'user' ? prevMessage.content : undefined;
+            
+            return (
+              <ChatMessage
+                key={message.id}
+                message={message}
+                editedData={editedData}
+                editMode={editMode}
+                isProcessing={isProcessing}
+                updateEditedField={updateEditedField}
+                handleEditToggle={handleEditToggle}
+                handleConfirmReceipt={handleConfirmReceipt}
+                handleCancelReceipt={handleCancelReceipt}
+                userMessage={userMessageContext}
+              />
+            );
+          })}
           <div ref={messagesEndRef} />
         </div>
 

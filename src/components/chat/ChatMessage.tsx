@@ -4,6 +4,7 @@ import Icon from '@/components/ui/icon';
 import { ReceiptPreview } from './ReceiptPreview';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 interface Message {
   id: string;
@@ -27,6 +28,7 @@ interface ChatMessageProps {
   handleEditToggle: () => void;
   handleConfirmReceipt: () => void;
   handleCancelReceipt: () => void;
+  userMessage?: string;
 }
 
 export const ChatMessage = ({
@@ -38,10 +40,37 @@ export const ChatMessage = ({
   handleEditToggle,
   handleConfirmReceipt,
   handleCancelReceipt,
+  userMessage,
 }: ChatMessageProps) => {
+  const [feedbackSent, setFeedbackSent] = useState<'positive' | 'negative' | null>(null);
+
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
     toast.success('Скопировано');
+  };
+
+  const handleFeedback = async (type: 'positive' | 'negative') => {
+    if (feedbackSent) return;
+    
+    try {
+      const response = await fetch('https://functions.poehali.dev/6eedb517-4a92-4cc9-bb6f-210d8d684016', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message_id: message.id,
+          user_message: userMessage || '',
+          agent_response: message.content,
+          feedback_type: type
+        })
+      });
+      
+      if (response.ok) {
+        setFeedbackSent(type);
+        toast.success(type === 'positive' ? 'Спасибо за отзыв!' : 'Спасибо, буду лучше!');
+      }
+    } catch (error) {
+      console.error('Failed to send feedback:', error);
+    }
   };
 
   return (
@@ -147,6 +176,28 @@ export const ChatMessage = ({
             >
               <Icon name="Copy" size={14} />
             </Button>
+          )}
+          {(message.type === 'agent' || message.type === 'preview') && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-6 px-2 text-xs ${feedbackSent === 'positive' ? 'text-green-600' : 'text-muted-foreground hover:text-foreground'}`}
+                onClick={() => handleFeedback('positive')}
+                disabled={feedbackSent !== null}
+              >
+                <Icon name="ThumbsUp" size={14} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-6 px-2 text-xs ${feedbackSent === 'negative' ? 'text-red-600' : 'text-muted-foreground hover:text-foreground'}`}
+                onClick={() => handleFeedback('negative')}
+                disabled={feedbackSent !== null}
+              >
+                <Icon name="ThumbsDown" size={14} />
+              </Button>
+            </div>
           )}
         </div>
       </div>
