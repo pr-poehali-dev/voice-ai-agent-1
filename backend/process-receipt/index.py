@@ -1238,12 +1238,17 @@ def save_receipt_to_db(
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
         
+        # Определяем payment_type для отображения (первый тип оплаты)
+        payments = receipt_data.get('payments', [])
+        payment_type_display = payments[0].get('type', '1') if payments else receipt_data.get('payment_type', 'card')
+        
         cursor.execute(
             'INSERT INTO receipts (external_id, user_message, operation_type, items, total, '
-            'payment_type, customer_email, ecomkassa_response, status, demo_mode, uuid) '
-            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) '
+            'payment_type, payments, customer_email, ecomkassa_response, status, demo_mode, uuid) '
+            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) '
             'ON CONFLICT (external_id) DO UPDATE SET '
             'ecomkassa_response = EXCLUDED.ecomkassa_response, '
+            'payments = EXCLUDED.payments, '
             'status = EXCLUDED.status, '
             'uuid = EXCLUDED.uuid, '
             'updated_at = CURRENT_TIMESTAMP',
@@ -1253,7 +1258,8 @@ def save_receipt_to_db(
                 operation_type,
                 json.dumps(receipt_data['items']),
                 receipt_data['total'],
-                receipt_data.get('payment_type', 'card'),
+                payment_type_display,
+                json.dumps(payments) if payments else None,
                 receipt_data.get('customer_email'),
                 json.dumps(ecomkassa_response) if ecomkassa_response else None,
                 'success' if not demo_mode else 'demo',
