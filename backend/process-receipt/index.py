@@ -27,11 +27,19 @@ vat: none/vat20/vat10 (дефолт none)
 measure: шт/услуга
 client: email (проверь формат), phone (+7...)
 
-Формат:
+Успешный формат:
 {{"operation_type":"sell","items":[{{"name":"Товар","price":100,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":"user@mail.ru","phone":null}},"payment_type":"electronically"}}
 
-Если данных мало (email/phone/товар):
-{{"error":"Уточни данные","missing":["email"],"hint":"Пришли email для чека"}}
+Если НЕ ХВАТАЕТ ДАННЫХ - ОБЯЗАТЕЛЬНО верни error с детальным объяснением:
+{{"error":"Не хватает данных для чека: укажи цену товара/услуги и email клиента. Пример: изготовление шкафа 25000₽ ivan@mail.ru"}}
+
+Примеры запросов с недостающими данными:
+- "кофе" → {{"error":"Укажи цену и email клиента. Пример: кофе 200₽ client@mail.ru"}}
+- "кофе 200р" → {{"error":"Укажи email клиента для отправки чека. Пример: кофе 200₽ client@mail.ru"}}
+- "стрижка test@mail.ru" → {{"error":"Укажи цену услуги. Пример: стрижка 1500₽ test@mail.ru"}}
+- "изготовление шкафа" → {{"error":"Укажи цену и email клиента. Пример: изготовление шкафа 25000₽ ivan@mail.ru"}}
+
+Учись на запросах пользователей - если видишь частые ошибки, подсказывай точнее в своих error-сообщениях.
 
 JSON:"""
     
