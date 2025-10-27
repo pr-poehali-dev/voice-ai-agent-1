@@ -14,6 +14,7 @@ export const useSettingsData = () => {
     gigachat_auth_key: '',
     yandexgpt_api_key: '',
     yandexgpt_folder_id: '',
+    gptunnel_api_key: '',
     ecomkassa_login: '',
     ecomkassa_password: '',
     available_shops: []
@@ -38,6 +39,24 @@ export const useSettingsData = () => {
       apiKeyPlaceholder: 'AQVNxxxxxx...',
       docsUrl: 'https://cloud.yandex.ru/docs/yandexgpt',
       isActive: !!settings.yandexgpt_api_key && !!settings.yandexgpt_folder_id
+    },
+    {
+      id: 'gptunnel_chatgpt',
+      name: 'ChatGPT (GPT Tunnel)',
+      description: 'GPT-4o через российский сервис',
+      apiKeyLabel: 'GPT Tunnel API Key',
+      apiKeyPlaceholder: 'gt-xxxxxx...',
+      docsUrl: 'https://gptunnel.ru/',
+      isActive: !!settings.gptunnel_api_key
+    },
+    {
+      id: 'gptunnel_claude',
+      name: 'Claude 3.5 Sonnet (GPT Tunnel)',
+      description: 'Claude 3.5 через российский сервис',
+      apiKeyLabel: 'GPT Tunnel API Key',
+      apiKeyPlaceholder: 'gt-xxxxxx...',
+      docsUrl: 'https://gptunnel.ru/',
+      isActive: !!settings.gptunnel_api_key
     }
   ];
 
@@ -56,6 +75,7 @@ export const useSettingsData = () => {
         gigachat_auth_key: parsed.gigachat_auth_key || '',
         yandexgpt_api_key: parsed.yandexgpt_api_key || '',
         yandexgpt_folder_id: parsed.yandexgpt_folder_id || '',
+        gptunnel_api_key: parsed.gptunnel_api_key || '',
         ecomkassa_login: parsed.ecomkassa_login || '',
         ecomkassa_password: parsed.ecomkassa_password || '',
         available_shops: parsed.available_shops || []
@@ -146,7 +166,9 @@ export const useSettingsData = () => {
   const handleConnect = (providerId: string, apiKey: string, folderId?: string) => {
     const keyMap: Record<string, string> = {
       gigachat: 'gigachat_auth_key',
-      yandexgpt: 'yandexgpt_api_key'
+      yandexgpt: 'yandexgpt_api_key',
+      gptunnel_chatgpt: 'gptunnel_api_key',
+      gptunnel_claude: 'gptunnel_api_key'
     };
 
     const key = keyMap[providerId];
@@ -174,7 +196,9 @@ export const useSettingsData = () => {
     
     const keyMap: Record<string, string> = {
       gigachat: 'gigachat_auth_key',
-      yandexgpt: 'yandexgpt_api_key'
+      yandexgpt: 'yandexgpt_api_key',
+      gptunnel_chatgpt: 'gptunnel_api_key',
+      gptunnel_claude: 'gptunnel_api_key'
     };
 
     const key = keyMap[currentProvider];

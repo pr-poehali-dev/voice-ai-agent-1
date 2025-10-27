@@ -41,6 +41,10 @@ JSON:"""
         return call_gigachat(prompt, settings)
     elif active_provider == 'yandexgpt':
         return call_yandexgpt(prompt, settings)
+    elif active_provider == 'gptunnel_chatgpt':
+        return call_gptunnel(prompt, settings, 'gpt-4o')
+    elif active_provider == 'gptunnel_claude':
+        return call_gptunnel(prompt, settings, 'claude-3.5-sonnet')
     else:
         print(f"[WARN] Unknown provider {active_provider}, falling back to GigaChat")
         return call_gigachat(prompt, settings)
@@ -112,6 +116,37 @@ def call_yandexgpt(prompt: str, settings: dict) -> Optional[Dict[str, Any]]:
         return extract_json_from_text(ai_response)
     except Exception as e:
         print(f"[ERROR] YandexGPT failed: {e}")
+        return None
+
+
+def call_gptunnel(prompt: str, settings: dict, model: str) -> Optional[Dict[str, Any]]:
+    '''Call GPT Tunnel API (ChatGPT or Claude)'''
+    import requests
+    
+    api_key = settings.get('gptunnel_api_key', '')
+    if not api_key:
+        return None
+    
+    url = 'https://api.gptunnel.ru/v1/chat/completions'
+    headers = {
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json'
+    }
+    
+    payload = {
+        'model': model,
+        'messages': [{'role': 'user', 'content': prompt}],
+        'temperature': 0.1,
+        'max_tokens': 1000
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        result = response.json()
+        ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+        return extract_json_from_text(ai_response)
+    except Exception as e:
+        print(f"[ERROR] GPT Tunnel ({model}) failed: {e}")
         return None
 
 

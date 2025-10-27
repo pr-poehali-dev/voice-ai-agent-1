@@ -25,6 +25,7 @@ export interface IntegrationSettings {
   gigachat_auth_key: string;
   yandexgpt_api_key: string;
   yandexgpt_folder_id: string;
+  gptunnel_api_key: string;
   ecomkassa_login: string;
   ecomkassa_password: string;
   available_shops: Shop[];
