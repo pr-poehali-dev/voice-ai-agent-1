@@ -6,6 +6,7 @@ import { useChatMessages } from '@/hooks/useChatMessages';
 import { useReceiptState } from '@/hooks/useReceiptState';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useReceiptHandlers } from '@/hooks/useReceiptHandlers';
+import { getUserId } from '@/utils/userId';
 
 interface IndexProps {
   repeatCommand: string;
@@ -20,6 +21,10 @@ const Index = ({ repeatCommand, setRepeatCommand }: IndexProps) => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const { messages, setMessages } = useChatMessages();
+  
+  useEffect(() => {
+    getUserId();
+  }, []);
   
   useEffect(() => {
     if (repeatCommand) {

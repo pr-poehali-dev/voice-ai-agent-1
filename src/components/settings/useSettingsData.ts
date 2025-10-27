@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { IntegrationSettings, AIProvider, Shop } from './types';
+import { getUserId } from '@/utils/userId';
 
 export const useSettingsData = () => {
   const [settings, setSettings] = useState<IntegrationSettings>({
@@ -61,27 +62,50 @@ export const useSettingsData = () => {
   ];
 
   useEffect(() => {
-    const saved = localStorage.getItem('ecomkassa_settings');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setSettings({
-        group_code: parsed.group_code || '',
-        inn: parsed.inn || '',
-        sno: parsed.sno || 'usn_income',
-        default_vat: parsed.default_vat || 'none',
-        company_email: parsed.company_email || '',
-        payment_address: parsed.payment_address || '',
-        active_ai_provider: parsed.active_ai_provider || '',
-        gigachat_auth_key: parsed.gigachat_auth_key || '',
-        yandexgpt_api_key: parsed.yandexgpt_api_key || '',
-        yandexgpt_folder_id: parsed.yandexgpt_folder_id || '',
-        gptunnel_api_key: parsed.gptunnel_api_key || '',
-        ecomkassa_login: parsed.ecomkassa_login || '',
-        ecomkassa_password: parsed.ecomkassa_password || '',
-        available_shops: parsed.available_shops || []
-      });
-    }
+    loadSettingsFromServer();
   }, []);
+
+  const loadSettingsFromServer = async () => {
+    const userId = getUserId();
+    
+    try {
+      const response = await fetch('https://functions.poehali.dev/e8972b95-5a58-4023-8f81-5385338d4590', {
+        headers: {
+          'X-User-Id': userId
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load settings');
+      }
+
+      const data = await response.json();
+      const serverSettings = data.settings || {};
+      
+      const localAI = localStorage.getItem('ai_provider_settings');
+      const aiSettings = localAI ? JSON.parse(localAI) : {};
+
+      setSettings({
+        group_code: serverSettings.group_code || '',
+        inn: serverSettings.inn || '',
+        sno: serverSettings.sno || 'usn_income',
+        default_vat: serverSettings.default_vat || 'none',
+        company_email: serverSettings.company_email || '',
+        payment_address: serverSettings.payment_address || '',
+        ecomkassa_login: serverSettings.ecomkassa_login || '',
+        ecomkassa_password: serverSettings.ecomkassa_password || '',
+        active_ai_provider: aiSettings.active_ai_provider || '',
+        gigachat_auth_key: aiSettings.gigachat_auth_key || '',
+        yandexgpt_api_key: aiSettings.yandexgpt_api_key || '',
+        yandexgpt_folder_id: aiSettings.yandexgpt_folder_id || '',
+        gptunnel_api_key: aiSettings.gptunnel_api_key || '',
+        available_shops: []
+      });
+    } catch (error) {
+      console.error('[Settings] Failed to load from server:', error);
+      toast.error('Ошибка загрузки настроек с сервера');
+    }
+  };
 
   const loadShops = async () => {
     if (!settings.ecomkassa_login || !settings.ecomkassa_password) {
@@ -140,7 +164,7 @@ export const useSettingsData = () => {
       };
 
       setSettings(updatedSettings);
-      localStorage.setItem('ecomkassa_settings', JSON.stringify(updatedSettings));
+      await saveSettingsToServer(updatedSettings);
       toast.success(`Загружен профиль. Магазинов: ${shops.length}`);
       
       if (!updatedSettings.active_ai_provider) {
@@ -157,7 +181,7 @@ export const useSettingsData = () => {
     }
   };
 
-  const handleShopSelect = (shopId: string) => {
+  const handleShopSelect = async (shopId: string) => {
     const shop = settings.available_shops.find(s => s.storeId === shopId);
     if (shop) {
       const updatedSettings = {
@@ -166,8 +190,41 @@ export const useSettingsData = () => {
         payment_address: shop.storeAddress
       };
       setSettings(updatedSettings);
-      localStorage.setItem('ecomkassa_settings', JSON.stringify(updatedSettings));
+      await saveSettingsToServer(updatedSettings);
       toast.info(`Выбран магазин: ${shop.storeName}`);
+    }
+  };
+
+  const saveSettingsToServer = async (settingsToSave: IntegrationSettings) => {
+    const userId = getUserId();
+    
+    try {
+      const response = await fetch('https://functions.poehali.dev/e8972b95-5a58-4023-8f81-5385338d4590', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': userId
+        },
+        body: JSON.stringify({
+          settings: {
+            group_code: settingsToSave.group_code,
+            inn: settingsToSave.inn,
+            sno: settingsToSave.sno,
+            default_vat: settingsToSave.default_vat,
+            company_email: settingsToSave.company_email,
+            payment_address: settingsToSave.payment_address,
+            ecomkassa_login: settingsToSave.ecomkassa_login,
+            ecomkassa_password: settingsToSave.ecomkassa_password
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save settings');
+      }
+    } catch (error) {
+      console.error('[Settings] Failed to save to server:', error);
+      throw error;
     }
   };
 
@@ -192,17 +249,17 @@ export const useSettingsData = () => {
       updatedSettings.yandexgpt_folder_id = folderId;
     }
 
-    console.log('[DEBUG] Saving settings:', updatedSettings);
     setSettings(updatedSettings);
     
-    const jsonString = JSON.stringify(updatedSettings);
-    console.log('[DEBUG] JSON string:', jsonString);
+    const aiSettings = {
+      active_ai_provider: providerId,
+      gigachat_auth_key: updatedSettings.gigachat_auth_key,
+      yandexgpt_api_key: updatedSettings.yandexgpt_api_key,
+      yandexgpt_folder_id: updatedSettings.yandexgpt_folder_id,
+      gptunnel_api_key: updatedSettings.gptunnel_api_key
+    };
     
-    localStorage.setItem('ecomkassa_settings', jsonString);
-    console.log('[DEBUG] Settings saved to localStorage');
-    
-    const verify = localStorage.getItem('ecomkassa_settings');
-    console.log('[DEBUG] Verify read from localStorage:', verify);
+    localStorage.setItem('ai_provider_settings', JSON.stringify(aiSettings));
     
     const provider = aiProviders.find(p => p.id === providerId);
     toast.success(`Подключен провайдер: ${provider?.name}`);
@@ -231,7 +288,16 @@ export const useSettingsData = () => {
     }
 
     setSettings(updatedSettings);
-    localStorage.setItem('ecomkassa_settings', JSON.stringify(updatedSettings));
+    
+    const aiSettings = {
+      active_ai_provider: '',
+      gigachat_auth_key: '',
+      yandexgpt_api_key: '',
+      yandexgpt_folder_id: '',
+      gptunnel_api_key: ''
+    };
+    
+    localStorage.setItem('ai_provider_settings', JSON.stringify(aiSettings));
     toast.info('AI провайдер отключен');
   };
 
@@ -239,9 +305,13 @@ export const useSettingsData = () => {
     setSettings({ ...settings, ...updates });
   };
 
-  const saveSettings = () => {
-    localStorage.setItem('ecomkassa_settings', JSON.stringify(settings));
-    toast.success('Настройки сохранены');
+  const saveSettings = async () => {
+    try {
+      await saveSettingsToServer(settings);
+      toast.success('Настройки сохранены');
+    } catch (error) {
+      toast.error('Ошибка сохранения настроек');
+    }
   };
 
   return {

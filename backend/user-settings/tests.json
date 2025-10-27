@@ -1,0 +1,60 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS returns CORS headers",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET without user_id returns 400",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "X-User-Id header required"
+      }
+    },
+    {
+      "name": "GET with user_id returns default settings",
+      "method": "GET",
+      "path": "/",
+      "headers": {
+        "X-User-Id": "test-user-123"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "settings": {
+          "group_code": "string",
+          "inn": "string",
+          "sno": "string",
+          "default_vat": "string"
+        }
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST saves user settings",
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "X-User-Id": "test-user-456"
+      },
+      "body": {
+        "settings": {
+          "group_code": "TEST123",
+          "inn": "1234567890",
+          "sno": "usn_income",
+          "default_vat": "none",
+          "company_email": "test@example.com",
+          "payment_address": "example.com"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "status": "saved"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
