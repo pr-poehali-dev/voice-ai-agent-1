@@ -24,6 +24,7 @@ def get_ai_completion(user_text: str, settings: dict, context: str = '') -> Opti
 
 ВАЖНО: Запрос может быть голосовым (с ошибками распознавания). Исправляй очевидные опечатки и синонимы:
 - "150₽" = "150 рублей" = "150р" = "150 руб" = "полторы сотни"
+- "1300.12₽" = "1300,12 рублей" = "тысяча триста рублей двенадцать копеек"
 - "ivan@mail.ru" = "иван собака мейл точка ру" = "ivan at mail dot ru"
 - Числа: "2000" = "две тысячи" = "2к" = "2 тыщи"
 
@@ -929,7 +930,7 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
     
     text_clean = re.sub(r'\b(продажу|продаже|возврат|коррекция|коррекцию)\b', '', text_clean)
     
-    item_patterns = re.findall(r'([а-яА-ЯёЁa-zA-Z]+(?:\s+[а-яА-ЯёЁa-zA-Z]+)*?)\s+(\d+)\s*(?:руб|₽|рублей)?', text_clean, re.IGNORECASE)
+    item_patterns = re.findall(r'([а-яА-ЯёЁa-zA-Z]+(?:\s+[а-яА-ЯёЁa-zA-Z]+)*?)\s+(\d+(?:[\.,]\d{1,2})?)\s*(?:руб|₽|рублей)?', text_clean, re.IGNORECASE)
     
     items = []
     total = 0
@@ -945,7 +946,7 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
     if item_patterns:
         for item_name_raw, price_str in item_patterns:
             item_name = item_name_raw.strip()
-            price_val = round(float(price_str), 2)
+            price_val = round(float(price_str.replace(',', '.')), 2)
             
             item_lower = item_name.lower()
             payment_object = 'service' if any(kw in item_lower for kw in service_keywords) else 'commodity'
@@ -962,11 +963,11 @@ def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
             total += price_val
     else:
         # Fallback: ищем просто цену
-        price_matches = re.findall(r'(\d+)\s*(?:руб|₽|рублей)', text.lower())
+        price_matches = re.findall(r'(\d+(?:[\.,]\d{1,2})?)\s*(?:руб|₽|рублей)', text.lower())
         
         if price_matches:
             for price_str in price_matches:
-                price_val = round(float(price_str), 2)
+                price_val = round(float(price_str.replace(',', '.')), 2)
                 items.append({
                     'name': 'Товар', 
                     'price': price_val, 
