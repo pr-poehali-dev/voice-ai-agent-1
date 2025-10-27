@@ -398,9 +398,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'sum': existing_receipt['total']
                 }]),
                 'client': {
-                    'email': existing_receipt.get('customer_email', '')
+                    'email': existing_receipt.get('customer_email', ''),
+                    'phone': existing_receipt.get('customer_phone', '')
                 },
-                'company': settings
+                'company': {
+                    'email': settings.get('company_email', 'company@example.com'),
+                    'sno': settings.get('sno', 'usn_income'),
+                    'inn': settings.get('inn', '1234567890'),
+                    'payment_address': settings.get('payment_address', 'example.com')
+                }
             }
             return {
                 'statusCode': 200,
