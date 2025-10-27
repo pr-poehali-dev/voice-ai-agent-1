@@ -134,10 +134,10 @@ export const ReceiptPreview = ({
                   />
                   <Input 
                     type="number"
-                    value={item.price}
+                    value={item.price || 0}
                     onChange={(e) => {
                       const newItems = [...editedData.items];
-                      newItems[idx].price = parseFloat(e.target.value);
+                      newItems[idx].price = parseFloat(e.target.value) || 0;
                       updateEditedField('items', newItems);
                     }}
                     className="h-7 text-sm"
@@ -147,10 +147,10 @@ export const ReceiptPreview = ({
                 <div className="grid grid-cols-2 gap-1">
                   <Input 
                     type="number"
-                    value={item.quantity}
+                    value={item.quantity || 1}
                     onChange={(e) => {
                       const newItems = [...editedData.items];
-                      newItems[idx].quantity = parseFloat(e.target.value);
+                      newItems[idx].quantity = parseFloat(e.target.value) || 1;
                       updateEditedField('items', newItems);
                     }}
                     className="h-7 text-sm"
