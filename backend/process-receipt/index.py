@@ -1119,7 +1119,7 @@ def create_ecomkassa_receipt(
             'payments': [
                 {
                     'type': int(payment.get('type', 1)) if isinstance(payment.get('type'), str) and payment.get('type').isdigit() else 1,
-                    'sum': calculated_total
+                    'sum': float(payment.get('sum', calculated_total))
                 }
                 for payment in receipt_data.get('payments', [{'type': 1, 'sum': calculated_total}])
             ],
