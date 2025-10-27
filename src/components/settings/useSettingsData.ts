@@ -142,6 +142,14 @@ export const useSettingsData = () => {
       setSettings(updatedSettings);
       localStorage.setItem('ecomkassa_settings', JSON.stringify(updatedSettings));
       toast.success(`Загружен профиль. Магазинов: ${shops.length}`);
+      
+      if (!updatedSettings.active_ai_provider) {
+        setTimeout(() => {
+          toast.info('⚠️ Не забудь подключить AI провайдера для обработки запросов', {
+            duration: 5000
+          });
+        }, 1000);
+      }
     } catch (error) {
       toast.error('Ошибка соединения с сервером');
     } finally {
