@@ -28,6 +28,13 @@ def get_ai_completion(user_text: str, settings: dict, context: str = '') -> Opti
 - "ivan@mail.ru" = "иван собака мейл точка ру" = "ivan at mail dot ru"
 - Числа: "2000" = "две тысячи" = "2к" = "2 тыщи"
 
+ВАЖНО про название товара/услуги (name):
+- Название товара - это все слова ДО указания цены
+- Примеры: "мебель на заказ за 1300₽" → name: "мебель на заказ"
+- Примеры: "Я продаю стрижку и укладку за 2000" → name: "стрижка и укладка"
+- Примеры: "кофе американо 200₽" → name: "кофе американо"
+- НЕ включай в название: цену, способ оплаты, email, телефон
+
 Пользователь указывает данные из массивов:
 - items (товары/услуги): name, price, quantity, measure, vat, payment_method, payment_object
 - payments (способы оплаты): массив объектов с полями type (тип оплаты) и sum (сумма)
@@ -72,8 +79,9 @@ client: email (проверь формат), phone (+7...), МОЖНО null ес
 Примеры запросов:
 - "кофе 200₽ без почты" → {{"operation_type":"sell","items":[{{"name":"кофе","price":200,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":200}}]}}
 - "услуга 1500₽ не отправлять чек" → {{"operation_type":"sell","items":[{{"name":"услуга","price":1500,"quantity":1,"measure":"услуга","vat":"none","payment_method":"full_payment","payment_object":"service"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":1500}}]}}
-- "мебель 1300.12₽ в кредит первоначальный взнос 500" → {{"operation_type":"sell","items":[{{"name":"мебель","price":1300.12,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":500}},{{"type":"3","sum":800.12}}]}}
+- "Я продаю мебель на заказ за 1300.12 в кредит первоначальный взнос 500" → {{"operation_type":"sell","items":[{{"name":"мебель на заказ","price":1300.12,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":500}},{{"type":"3","sum":800.12}}]}}
 - "товар 1000₽, 600 наличными остальное картой" → {{"operation_type":"sell","items":[{{"name":"товар","price":1000,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"0","sum":600}},{{"type":"1","sum":400}}]}}
+- "стрижка и укладка 2500₽" → {{"operation_type":"sell","items":[{{"name":"стрижка и укладка","price":2500,"quantity":1,"measure":"услуга","vat":"none","payment_method":"full_payment","payment_object":"service"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":2500}}]}}
 - "кофе" → {{"error":"Укажи цену. Email необязателен (будет дефолтный). Пример: кофе 200₽"}}
 - "стрижка test@mail.ru" → {{"error":"Укажи цену услуги. Пример: стрижка 1500₽ test@mail.ru"}}
 - "изготовление шкафа" → {{"error":"Укажи цену. Пример: изготовление шкафа 25000₽"}}
