@@ -285,7 +285,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         settings.get('openrouter_api_key'),
         settings.get('anthropic_api_key'),
         settings.get('openai_api_key'),
-        settings.get('yandexgpt_api_key')
+        settings.get('yandexgpt_api_key'),
+        settings.get('gptunnel_api_key')
     ])
     
     if not has_ecomkassa and not preview_only:
@@ -809,7 +810,8 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
         settings.get('openrouter_api_key'),
         settings.get('anthropic_api_key'),
         settings.get('openai_api_key'),
-        settings.get('yandexgpt_api_key')
+        settings.get('yandexgpt_api_key'),
+        settings.get('gptunnel_api_key')
     ])
     
     if not has_any_ai and not active_provider:
