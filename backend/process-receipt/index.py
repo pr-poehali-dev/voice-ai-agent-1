@@ -378,6 +378,99 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             })
         }
     
+    bulk_repeat = detect_bulk_repeat_command(user_message)
+    if bulk_repeat:
+        count, uuid = bulk_repeat
+        if count > 50:
+            return {
+                'statusCode': 400,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({
+                    'error': f'Слишком много копий: {count}. Максимум 50 чеков за раз'
+                })
+            }
+        
+        existing_receipt = get_receipt_from_db(uuid)
+        if not existing_receipt:
+            return {
+                'statusCode': 404,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({
+                    'error': f'Чек с UUID {uuid} не найден в истории'
+                })
+            }
+        
+        login = settings.get('ecomkassa_login') or os.environ.get('ECOMKASSA_LOGIN', '')
+        password = settings.get('ecomkassa_password') or os.environ.get('ECOMKASSA_PASSWORD', '')
+        group_code = settings.get('group_code') or os.environ.get('ECOMKASSA_GROUP_CODE', '')
+        
+        if not (login and password and group_code):
+            return {
+                'statusCode': 400,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({
+                    'error': 'Массовое создание доступно только с настроенным ЕкомКасса',
+                    'message': 'Заполни настройки ЕкомКасса для массового создания чеков'
+                })
+            }
+        
+        created_receipts = []
+        failed_receipts = []
+        operation_type = existing_receipt.get('operation_type', 'sell')
+        
+        for i in range(count):
+            import time
+            unique_external_id = f'BULK_{uuid}_{int(time.time() * 1000)}_{i}'
+            
+            receipt_payload = {
+                'external_id': unique_external_id,
+                'items': existing_receipt.get('items', []),
+                'payments': existing_receipt.get('payments', []),
+                'client': existing_receipt.get('client', {}),
+                'company': {
+                    'email': settings.get('company_email', existing_receipt.get('company', {}).get('email', '')),
+                    'sno': settings.get('sno', existing_receipt.get('company', {}).get('sno', 'usn_income')),
+                    'inn': settings.get('inn', existing_receipt.get('company', {}).get('inn', '')),
+                    'payment_address': settings.get('payment_address', existing_receipt.get('company', {}).get('payment_address', ''))
+                }
+            }
+            
+            try:
+                result = send_to_ecomkassa(receipt_payload, operation_type, login, password, group_code)
+                if result.get('success'):
+                    save_receipt_to_db(unique_external_id, f'Копия #{i+1} чека {uuid}', receipt_payload, operation_type, result.get('uuid'), False)
+                    created_receipts.append({'index': i+1, 'uuid': result.get('uuid'), 'external_id': unique_external_id})
+                else:
+                    failed_receipts.append({'index': i+1, 'error': result.get('error', 'Неизвестная ошибка')})
+            except Exception as e:
+                failed_receipts.append({'index': i+1, 'error': str(e)})
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'success': True,
+                'message': f'Создано {len(created_receipts)} из {count} чеков',
+                'created': created_receipts,
+                'failed': failed_receipts,
+                'total_requested': count,
+                'total_created': len(created_receipts),
+                'total_failed': len(failed_receipts)
+            })
+        }
+    
     repeat_uuid = detect_repeat_command(user_message)
     
     if not operation_type:
@@ -675,6 +768,27 @@ def merge_receipts(previous: dict, new: dict) -> dict:
                 result['company'][key] = value
     
     return result
+
+
+def detect_bulk_repeat_command(text: str) -> Optional[tuple]:
+    import re
+    text_lower = text.lower()
+    
+    bulk_patterns = [
+        r'(?:создай|сделай|отправ[иь])\s+(\d+)\s+(?:копи[йи]|дубл[ей]|чек[ао]в?)\s+чека?\s+№?\s*([a-zA-Z0-9_-]+)',
+        r'(\d+)\s+(?:копи[йи]|дубл[ей]|раз[аы]?)\s+чека?\s+№?\s*([a-zA-Z0-9_-]+)',
+        r'(?:создай|сделай)\s+(\d+)\s+штук\s+чека?\s+№?\s*([a-zA-Z0-9_-]+)'
+    ]
+    
+    for pattern in bulk_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            count = int(match.group(1))
+            uuid_raw = match.group(2)
+            uuid_clean = extract_uuid_with_ai(uuid_raw)
+            return (count, uuid_clean if uuid_clean else uuid_raw)
+    
+    return None
 
 
 def detect_repeat_command(text: str) -> Optional[str]:
