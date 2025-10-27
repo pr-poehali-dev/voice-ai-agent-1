@@ -30,8 +30,19 @@ def get_ai_completion(user_text: str, settings: dict, context: str = '') -> Opti
 
 Пользователь указывает данные из массивов:
 - items (товары/услуги): name, price, quantity, measure, vat, payment_method, payment_object
-- payments (способы оплаты): payment_type
+- payments (способы оплаты): массив объектов с полями type (тип оплаты) и sum (сумма)
 - client (данные клиента): email, phone
+
+ВАЖНО про payments:
+- По умолчанию один платёж: [{"type": "1", "sum": <общая сумма>}] (безналичный)
+- Для смешанной оплаты (наличные+безнал, взнос+кредит): несколько платежей
+- Типы: "0"=наличные, "1"=безналичный, "2"=предоплата(аванс), "3"=последующая оплата(кредит), "4"=иная форма
+- Сумма всех payments ОБЯЗАТЕЛЬНО должна равняться общей стоимости товаров
+
+Примеры смешанной оплаты:
+- "500 наличными, остальное картой" → payments: [{"type":"0","sum":500}, {"type":"1","sum":<остаток>}]
+- "первоначальный взнос 500, остальное в кредит" → payments: [{"type":"1","sum":500}, {"type":"3","sum":<остаток>}]
+- "аванс 300, остальное потом" → payments: [{"type":"2","sum":300}, {"type":"3","sum":<остаток>}]
 
 Если ты не получил все обязательные данные (price, name, email/phone), ты подставляешь их исходя из контекста, а если их определить не удалось - спрашиваешь у пользователя через error.
 
@@ -42,28 +53,27 @@ def get_ai_completion(user_text: str, settings: dict, context: str = '') -> Opti
 
 Поля (только корректные значения):
 operation_type: sell/sell_refund
-payment_type: cash/electronically (дефолт electronically)
 payment_object: commodity/service
 vat: none/vat20/vat10 (дефолт none)
 measure: шт/услуга
 client: email (проверь формат), phone (+7...), МОЖНО null если "без почты"
 
-Часть данных подставит бэкэнд (group_code, inn, sno, default_vat, company_email, payment_address), так как он связан с настройками который вводит пользователь.
+Часть данных подставит бэкэнд (group_code, inn, sno, default_vat, company_email, payment_address), так как он связан с настройками который вводит пользователя.
 
-Успешный формат:
-{{"operation_type":"sell","items":[{{"name":"Товар","price":100,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":"user@mail.ru","phone":null}},"payment_type":"electronically"}}
+Успешный формат (простая оплата):
+{{"operation_type":"sell","items":[{{"name":"Товар","price":100,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":"user@mail.ru","phone":null}},"payments":[{{"type":"1","sum":100}}]}}
 
 Формат БЕЗ ПОЧТЫ (бэкэнд подставит дефолтный email):
-{{"operation_type":"sell","items":[{{"name":"Товар","price":100,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payment_type":"electronically"}}
+{{"operation_type":"sell","items":[{{"name":"Товар","price":100,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":100}}]}}
 
 Если НЕ ХВАТАЕТ ДАННЫХ - ОБЯЗАТЕЛЬНО верни error с детальным объяснением:
 {{"error":"Не хватает данных для чека: укажи цену товара/услуги. Email можно не указывать (будет использован дефолтный). Пример: изготовление шкафа 25000₽"}}
 
 Примеры запросов:
-- "кофе 200₽ без почты" → {{"operation_type":"sell","items":[{{"name":"кофе","price":200,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payment_type":"electronically"}}
-- "услуга 1500₽ не отправлять чек" → {{"operation_type":"sell","items":[{{"name":"услуга","price":1500,"quantity":1,"measure":"услуга","vat":"none","payment_method":"full_payment","payment_object":"service"}}],"client":{{"email":null,"phone":null}},"payment_type":"electronically"}}
-- "стрижка 800₽ нет почты" → {{"operation_type":"sell","items":[{{"name":"стрижка","price":800,"quantity":1,"measure":"услуга","vat":"none","payment_method":"full_payment","payment_object":"service"}}],"client":{{"email":null,"phone":null}},"payment_type":"electronically"}}
-- "товар 5000₽ на дефолтный email" → {{"operation_type":"sell","items":[{{"name":"товар","price":5000,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payment_type":"electronically"}}
+- "кофе 200₽ без почты" → {{"operation_type":"sell","items":[{{"name":"кофе","price":200,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":200}}]}}
+- "услуга 1500₽ не отправлять чек" → {{"operation_type":"sell","items":[{{"name":"услуга","price":1500,"quantity":1,"measure":"услуга","vat":"none","payment_method":"full_payment","payment_object":"service"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":1500}}]}}
+- "мебель 1300.12₽ в кредит первоначальный взнос 500" → {{"operation_type":"sell","items":[{{"name":"мебель","price":1300.12,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":500}},{{"type":"3","sum":800.12}}]}}
+- "товар 1000₽, 600 наличными остальное картой" → {{"operation_type":"sell","items":[{{"name":"товар","price":1000,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"0","sum":600}},{{"type":"1","sum":400}}]}}
 - "кофе" → {{"error":"Укажи цену. Email необязателен (будет дефолтный). Пример: кофе 200₽"}}
 - "стрижка test@mail.ru" → {{"error":"Укажи цену услуги. Пример: стрижка 1500₽ test@mail.ru"}}
 - "изготовление шкафа" → {{"error":"Укажи цену. Пример: изготовление шкафа 25000₽"}}
@@ -875,23 +885,27 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
     
     total = sum(item.get('price', 0) * item.get('quantity', 1) for item in items)
     
-    payment_type_raw = parsed_data.get('payment_type', 'electronically')
-    payment_type_map = {
-        'cash': '0',
-        'electronically': '1',
-        'prepaid': '2',
-        'credit': '3',
-        'other': '4'
-    }
-    payment_type = payment_type_map.get(payment_type_raw, '1')
+    if 'payments' in parsed_data and isinstance(parsed_data['payments'], list) and len(parsed_data['payments']) > 0:
+        payments = parsed_data['payments']
+    else:
+        payment_type_raw = parsed_data.get('payment_type', 'electronically')
+        payment_type_map = {
+            'cash': '0',
+            'electronically': '1',
+            'prepaid': '2',
+            'credit': '3',
+            'other': '4'
+        }
+        payment_type = payment_type_map.get(payment_type_raw, '1')
+        payments = [{
+            'type': payment_type,
+            'sum': round(total, 2)
+        }]
     
     return {
         'items': items,
         'total': round(total, 2),
-        'payments': [{
-            'type': payment_type,
-            'sum': round(total, 2)
-        }],
+        'payments': payments,
         'client': {'email': client_email, 'phone': client_data.get('phone')},
         'company': {
             'email': settings.get('company_email', 'company@example.com'),
