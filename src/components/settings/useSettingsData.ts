@@ -142,14 +142,6 @@ export const useSettingsData = () => {
       setSettings(updatedSettings);
       localStorage.setItem('ecomkassa_settings', JSON.stringify(updatedSettings));
       toast.success(`Загружен профиль. Магазинов: ${shops.length}`);
-      
-      if (!settings.active_ai_provider) {
-        setTimeout(() => {
-          toast.info('⚠️ Не забудь подключить AI провайдера для обработки запросов', {
-            duration: 5000
-          });
-        }, 1000);
-      }
     } catch (error) {
       toast.error('Ошибка соединения с сервером');
     } finally {
@@ -241,14 +233,7 @@ export const useSettingsData = () => {
 
   const saveSettings = () => {
     localStorage.setItem('ecomkassa_settings', JSON.stringify(settings));
-    
-    if (!settings.active_ai_provider) {
-      toast.warning('⚠️ AI провайдер не подключен. Подключи GigaChat, YandexGPT или GPT Tunnel для работы кассира', {
-        duration: 5000
-      });
-    } else {
-      toast.success('Настройки сохранены');
-    }
+    toast.success('Настройки сохранены');
   };
 
   return {
