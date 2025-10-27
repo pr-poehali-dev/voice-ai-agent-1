@@ -53,8 +53,21 @@ export const ReceiptPreview = ({
 }: ReceiptPreviewProps) => {
   if (!editedData) return null;
 
+  const isBulkMode = editedData.bulk_count && editedData.original_uuid;
+
   return (
     <div className="mt-4 space-y-3">
+      {isBulkMode && (
+        <div className="bg-blue-500/10 border border-blue-500/30 p-3 rounded text-sm">
+          <div className="flex items-center gap-2 text-blue-400 font-medium">
+            <Icon name="Copy" size={16} />
+            <span>Массовое создание чеков</span>
+          </div>
+          <div className="mt-1 text-muted-foreground">
+            Будет создано <span className="font-bold text-foreground">{editedData.bulk_count}</span> копий чека <span className="font-mono text-xs">{editedData.original_uuid}</span>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div className="bg-background/50 p-2 rounded">
           <div className="text-xs text-muted-foreground">Тип операции</div>
@@ -476,8 +489,8 @@ export const ReceiptPreview = ({
           disabled={isProcessing}
           className="flex-1"
         >
-          <Icon name="Check" size={16} className="mr-2" />
-          Отправить чек
+          <Icon name={isBulkMode ? "Copy" : "Check"} size={16} className="mr-2" />
+          {isBulkMode ? `Создать ${editedData.bulk_count} копий` : 'Отправить чек'}
         </Button>
         <Button 
           onClick={handleCancelReceipt}
