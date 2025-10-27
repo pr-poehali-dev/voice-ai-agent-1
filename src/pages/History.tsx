@@ -20,7 +20,11 @@ interface Receipt {
   uuid?: string;
 }
 
-const History = () => {
+interface HistoryProps {
+  setRepeatCommand: (value: string) => void;
+}
+
+const History = ({ setRepeatCommand }: HistoryProps) => {
   const navigate = useNavigate();
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -172,8 +176,7 @@ const History = () => {
                         size="sm"
                         className="mt-1"
                         onClick={() => {
-                          navigator.clipboard.writeText(`повтори чек ${receipt.uuid}`);
-                          toast.success('Команда скопирована! Вставь в чат');
+                          setRepeatCommand(`повтори чек ${receipt.uuid}`);
                           navigate('/');
                         }}
                       >

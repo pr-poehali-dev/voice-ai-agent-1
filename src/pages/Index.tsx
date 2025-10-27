@@ -7,7 +7,12 @@ import { useReceiptState } from '@/hooks/useReceiptState';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useReceiptHandlers } from '@/hooks/useReceiptHandlers';
 
-const Index = () => {
+interface IndexProps {
+  repeatCommand: string;
+  setRepeatCommand: (value: string) => void;
+}
+
+const Index = ({ repeatCommand, setRepeatCommand }: IndexProps) => {
   const [input, setInput] = useState('');
   const [operationType, setOperationType] = useState('sell');
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -15,6 +20,13 @@ const Index = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const { messages, setMessages } = useChatMessages();
+  
+  useEffect(() => {
+    if (repeatCommand) {
+      setInput(repeatCommand);
+      setRepeatCommand('');
+    }
+  }, [repeatCommand, setRepeatCommand]);
   
   const {
     pendingReceipt,
