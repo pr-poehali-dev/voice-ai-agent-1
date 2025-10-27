@@ -12,6 +12,36 @@ interface ReceiptPreviewProps {
   handleCancelReceipt: () => void;
 }
 
+const getMeasureUnit = (code: string): string => {
+  const units: Record<string, string> = {
+    '0': 'шт',
+    '10': 'г',
+    '11': 'кг',
+    '12': 'т',
+    '20': 'см',
+    '21': 'дм',
+    '22': 'м',
+    '30': 'см²',
+    '31': 'дм²',
+    '32': 'м²',
+    '40': 'мл',
+    '41': 'л',
+    '42': 'м³',
+    '50': 'кВт⋅ч',
+    '51': 'Гкал',
+    '70': 'сут',
+    '71': 'ч',
+    '72': 'мин',
+    '73': 'с',
+    '80': 'Кб',
+    '81': 'Мб',
+    '82': 'Гб',
+    '83': 'Тб',
+    '255': 'ед',
+  };
+  return units[code] || 'шт';
+};
+
 export const ReceiptPreview = ({
   editedData,
   editMode,
@@ -277,7 +307,7 @@ export const ReceiptPreview = ({
                   <span className="font-medium">{item.price}₽</span>
                 </div>
                 <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-                  <span>{item.quantity} {item.measure || 'шт'} • {item.vat === 'none' ? 'Без НДС' : item.vat}</span>
+                  <span>{item.quantity} {getMeasureUnit(item.measurement_unit || '0')} • {item.vat === 'none' ? 'Без НДС' : item.vat}</span>
                   <span className="text-right">{(item.price * item.quantity).toFixed(2)}₽</span>
                 </div>
                 <div className="text-xs text-muted-foreground">
