@@ -218,7 +218,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             validation_result = validate_gptunnel_key(api_key, 'gpt-4o')
         elif provider_id == 'gptunnel_claude':
             api_key = os.environ.get('GPTUNNEL_API_KEY', '')
-            validation_result = validate_gptunnel_key(api_key, 'claude-3-5-sonnet-20241022')
+            validation_result = validate_gptunnel_key(api_key, 'claude-3-5-sonnet')
         else:
             validation_result = {'valid': False, 'message': 'Unknown provider'}
         
