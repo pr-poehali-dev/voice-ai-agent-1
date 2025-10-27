@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS request returns CORS headers",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "POST with empty password returns 401",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "password": ""
+      },
+      "expectedStatus": 401
+    },
+    {
+      "name": "POST with invalid password returns 401",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "password": "wrong_password"
+      },
+      "expectedStatus": 401
+    }
+  ]
+}

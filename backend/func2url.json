@@ -1,4 +1,6 @@
 {
+  "admin-stats": "https://functions.poehali.dev/3816b065-d7fe-4f0b-bd74-1ae24e865355",
+  "admin-auth": "https://functions.poehali.dev/9e5db515-a0fc-4981-9d4f-6f4fd56861b2",
   "save-feedback": "https://functions.poehali.dev/6eedb517-4a92-4cc9-bb6f-210d8d684016",
   "ecomkassa-proxy": "https://functions.poehali.dev/43959fb6-01cc-48d6-83ce-8160cf016d09",
   "get-receipts": "https://functions.poehali.dev/1e30d22a-a25c-46a5-b05a-ccc647ed9bb6",

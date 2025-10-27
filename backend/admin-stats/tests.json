@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS request returns CORS headers",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET without token returns 401",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 401
+    },
+    {
+      "name": "GET with token returns statistics",
+      "method": "GET",
+      "path": "/",
+      "headers": {
+        "X-Admin-Token": "valid_token_here"
+      },
+      "expectedStatus": 200
+    }
+  ]
+}

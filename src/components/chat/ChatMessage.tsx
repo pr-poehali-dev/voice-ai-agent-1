@@ -29,6 +29,7 @@ interface ChatMessageProps {
   handleConfirmReceipt: () => void;
   handleCancelReceipt: () => void;
   userMessage?: string;
+  userMessage?: string;
 }
 
 export const ChatMessage = ({
