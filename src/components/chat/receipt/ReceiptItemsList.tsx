@@ -7,6 +7,56 @@ interface ReceiptItemsListProps {
   getMeasureUnit: (code: string) => string;
 }
 
+const getPaymentMethodName = (code: string): string => {
+  const methods: Record<string, string> = {
+    'full_prepayment': 'Предоплата 100%',
+    'prepayment': 'Предоплата',
+    'advance': 'Аванс',
+    'full_payment': 'Полный расчет',
+    'partial_payment': 'Частичный расчет',
+    'credit': 'Кредит',
+    'credit_payment': 'Оплата кредита'
+  };
+  return methods[code] || 'Полный расчет';
+};
+
+const getPaymentObjectName = (code: string): string => {
+  const objects: Record<string, string> = {
+    'commodity': 'Товар',
+    'excise': 'Подакцизный товар',
+    'job': 'Работа',
+    'service': 'Услуга',
+    'gambling_bet': 'Ставки азартных игр',
+    'gambling_prize': 'Выигрыш азартных игр',
+    'lottery': 'Лотерея',
+    'lottery_prize': 'Выигрыш лотереи',
+    'intellectual_activity': 'РИД',
+    'payment': 'Аванс/Предоплата',
+    'agent_commission': 'Вознаграждение агента',
+    'composite': 'Взнос/Штраф/Бонус',
+    'another': 'Иной предмет',
+    'property_right': 'Имущественные права',
+    'non_operating_gain': 'Внереализационный доход',
+    'insurance_premium': 'Расходы',
+    'sales_tax': 'Торговый сбор',
+    'resort_fee': 'Туристический налог',
+    'deposit': 'Залог',
+    'expense': 'Расходы по 346.16 НК',
+    'pension_insurance_ip': 'Пенсионное ИП',
+    'pension_insurance_org': 'Пенсионное орг.',
+    'health_insurance_ip': 'Медицинское ИП',
+    'health_insurance_org': 'Медицинское орг.',
+    'social_insurance': 'Социальное',
+    'casino_payment': 'Казино',
+    'agent_payment': 'Банковский агент',
+    'marked_excise_no_code': 'Маркированный подакцизный',
+    'marked_excise_with_code': 'Маркированный подакцизный с кодом',
+    'marked_commodity_no_code': 'Маркированный товар',
+    'marked_commodity_with_code': 'Маркированный товар с кодом'
+  };
+  return objects[code] || 'Товар';
+};
+
 export const ReceiptItemsList = ({ items, editMode, updateEditedField, getMeasureUnit }: ReceiptItemsListProps) => {
   return (
     <div className="bg-background/50 p-3 rounded space-y-2">
@@ -172,6 +222,10 @@ export const ReceiptItemsList = ({ items, editMode, updateEditedField, getMeasur
               </div>
               <div className="text-xs text-muted-foreground mt-1">
                 {(item.price || 0).toFixed(2)} ₽ × {item.quantity || 1} {getMeasureUnit(item.measurement_unit || item.measure || '0')}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                <div>Предмет: {getPaymentObjectName(item.payment_object || 'commodity')}</div>
+                <div>Метод: {getPaymentMethodName(item.payment_method || 'full_payment')}</div>
               </div>
             </div>
           )}
