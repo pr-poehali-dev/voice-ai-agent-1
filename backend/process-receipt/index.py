@@ -5,6 +5,227 @@ import urllib.error
 import uuid
 from typing import Dict, Any, Optional
 
+
+def get_ai_completion(user_text: str, settings: dict) -> Optional[Dict[str, Any]]:
+    '''
+    Universal AI completion function supporting multiple providers
+    Returns parsed receipt JSON or None if failed
+    '''
+    active_provider = settings.get('active_ai_provider', 'gigachat')
+    
+    prompt = f"""Ты ИИ-кассир. Преобразуй запрос в JSON для API Ecomkassa за 5 сек.
+
+Запрос: "{user_text}"
+
+Извлеки: сумму, товар/услугу, тип платежа, НДС. Очисти название (убери "создай/пробей/чек"). Примеры: "кофе 200р"→"Кофе", "стрижка 1500"→"Стрижка".
+
+Поля (только корректные значения):
+operation_type: sell/sell_refund
+payment_type: cash/electronically (дефолт)
+payment_object: commodity/service
+vat: none/vat20/vat10 (дефолт none)
+measure: шт/услуга
+client: email (проверь формат), phone (+7...)
+
+Формат:
+{{"operation_type":"sell","items":[{{"name":"Товар","price":100,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":"user@mail.ru","phone":null}},"payment_type":"electronically"}}
+
+Если данных мало (email/phone/товар):
+{{"error":"Уточни данные","missing":["email"],"hint":"Пришли email для чека"}}
+
+JSON:"""
+    
+    print(f"[DEBUG] Using AI provider: {active_provider}")
+    
+    if active_provider == 'gigachat':
+        return call_gigachat(prompt, settings)
+    elif active_provider == 'openrouter':
+        return call_openrouter(prompt, settings)
+    elif active_provider == 'anthropic':
+        return call_anthropic(prompt, settings)
+    elif active_provider == 'openai':
+        return call_openai(prompt, settings)
+    elif active_provider == 'yandexgpt':
+        return call_yandexgpt(prompt, settings)
+    else:
+        print(f"[WARN] Unknown provider {active_provider}, falling back to GigaChat")
+        return call_gigachat(prompt, settings)
+
+
+def call_gigachat(prompt: str, settings: dict) -> Optional[Dict[str, Any]]:
+    '''Call GigaChat API'''
+    import requests
+    
+    auth_key = settings.get('gigachat_auth_key') or os.environ.get('GIGACHAT_AUTH_KEY', '')
+    if not auth_key:
+        return None
+    
+    access_token = get_gigachat_token(auth_key)
+    if not access_token:
+        return None
+    
+    chat_url = 'https://gigachat.devices.sberbank.ru/api/v1/chat/completions'
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
+    }
+    
+    payload = {
+        'model': 'GigaChat',
+        'messages': [{'role': 'user', 'content': prompt}],
+        'temperature': 0.1,
+        'max_tokens': 1000
+    }
+    
+    try:
+        response = requests.post(chat_url, headers=headers, json=payload, verify=False, timeout=5)
+        result = response.json()
+        ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+        return extract_json_from_text(ai_response)
+    except Exception as e:
+        print(f"[ERROR] GigaChat failed: {e}")
+        return None
+
+
+def call_openrouter(prompt: str, settings: dict) -> Optional[Dict[str, Any]]:
+    '''Call OpenRouter API (Claude via proxy)'''
+    import requests
+    
+    api_key = settings.get('openrouter_api_key', '')
+    if not api_key:
+        return None
+    
+    url = 'https://openrouter.ai/api/v1/chat/completions'
+    headers = {
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://poehali.dev',
+        'X-Title': 'AI Cashier'
+    }
+    
+    payload = {
+        'model': 'anthropic/claude-3.5-sonnet',
+        'messages': [{'role': 'user', 'content': prompt}],
+        'temperature': 0.1,
+        'max_tokens': 1000
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        result = response.json()
+        ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+        return extract_json_from_text(ai_response)
+    except Exception as e:
+        print(f"[ERROR] OpenRouter failed: {e}")
+        return None
+
+
+def call_anthropic(prompt: str, settings: dict) -> Optional[Dict[str, Any]]:
+    '''Call Anthropic API directly'''
+    try:
+        from anthropic import Anthropic
+    except ImportError:
+        print("[ERROR] anthropic library not installed")
+        return None
+    
+    api_key = settings.get('anthropic_api_key', '')
+    if not api_key:
+        return None
+    
+    try:
+        client = Anthropic(api_key=api_key)
+        message = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=1000,
+            temperature=0.1,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        ai_response = message.content[0].text
+        return extract_json_from_text(ai_response)
+    except Exception as e:
+        print(f"[ERROR] Anthropic failed: {e}")
+        return None
+
+
+def call_openai(prompt: str, settings: dict) -> Optional[Dict[str, Any]]:
+    '''Call OpenAI API'''
+    import requests
+    
+    api_key = settings.get('openai_api_key', '')
+    if not api_key:
+        return None
+    
+    url = 'https://api.openai.com/v1/chat/completions'
+    headers = {
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json'
+    }
+    
+    payload = {
+        'model': 'gpt-4-turbo-preview',
+        'messages': [{'role': 'user', 'content': prompt}],
+        'temperature': 0.1,
+        'max_tokens': 1000
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        result = response.json()
+        ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+        return extract_json_from_text(ai_response)
+    except Exception as e:
+        print(f"[ERROR] OpenAI failed: {e}")
+        return None
+
+
+def call_yandexgpt(prompt: str, settings: dict) -> Optional[Dict[str, Any]]:
+    '''Call YandexGPT API'''
+    import requests
+    
+    api_key = settings.get('yandexgpt_api_key', '')
+    folder_id = settings.get('yandexgpt_folder_id', '')
+    if not api_key or not folder_id:
+        return None
+    
+    url = 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion'
+    headers = {
+        'Authorization': f'Api-Key {api_key}',
+        'Content-Type': 'application/json'
+    }
+    
+    payload = {
+        'modelUri': f'gpt://{folder_id}/yandexgpt-lite',
+        'completionOptions': {
+            'temperature': 0.1,
+            'maxTokens': 1000
+        },
+        'messages': [{'role': 'user', 'text': prompt}]
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        result = response.json()
+        ai_response = result.get('result', {}).get('alternatives', [{}])[0].get('message', {}).get('text', '')
+        return extract_json_from_text(ai_response)
+    except Exception as e:
+        print(f"[ERROR] YandexGPT failed: {e}")
+        return None
+
+
+def extract_json_from_text(text: str) -> Optional[Dict[str, Any]]:
+    '''Extract and parse JSON from AI response text'''
+    import re
+    
+    json_match = re.search(r'\{.*\}', text, re.DOTALL)
+    if not json_match:
+        return None
+    
+    try:
+        json_str = json_match.group(0).replace('\n', ' ').replace('\r', ' ')
+        return json.loads(json_str)
+    except json.JSONDecodeError:
+        return None
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
     Business: Process natural language receipt requests and create receipt via ecomkassa API
@@ -101,7 +322,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     has_ecomkassa = (settings.get('ecomkassa_login') or settings.get('username')) and \
                     (settings.get('ecomkassa_password') or settings.get('password')) and \
                     settings.get('group_code')
-    has_gigachat = settings.get('gigachat_auth_key')
+    
+    has_any_ai = any([
+        settings.get('gigachat_auth_key'),
+        settings.get('openrouter_api_key'),
+        settings.get('anthropic_api_key'),
+        settings.get('openai_api_key'),
+        settings.get('yandexgpt_api_key')
+    ])
     
     if not has_ecomkassa and not preview_only:
         return {
@@ -117,7 +345,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             })
         }
     
-    if not has_gigachat and not preview_only:
+    if not has_any_ai and not preview_only:
         return {
             'statusCode': 400,
             'headers': {
@@ -125,9 +353,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({
-                'error': 'Настройки GigaChat не заполнены',
-                'message': 'Перейди в Настройки и заполни ключ авторизации GigaChat для распознавания запросов',
-                'missing_integration': 'gigachat'
+                'error': 'Настройки AI не заполнены',
+                'message': 'Перейди в Настройки и выбери AI провайдера (GigaChat, Claude, OpenAI или YandexGPT)',
+                'missing_integration': 'ai'
             })
         }
     
@@ -589,8 +817,6 @@ def get_gigachat_token(auth_key: str) -> Optional[str]:
 
 def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
     import re
-    import requests
-    import uuid
     
     if settings is None:
         settings = {}
@@ -620,136 +846,70 @@ def parse_receipt_from_text(text: str, settings: dict = None) -> Dict[str, Any]:
                 'Укажи товар/услугу, цену и email клиента для создания чека.'
             )
     
-    auth_key = settings.get('gigachat_auth_key') or os.environ.get('GIGACHAT_AUTH_KEY', '')
+    active_provider = settings.get('active_ai_provider', '')
+    has_any_ai = any([
+        settings.get('gigachat_auth_key'),
+        settings.get('openrouter_api_key'),
+        settings.get('anthropic_api_key'),
+        settings.get('openai_api_key'),
+        settings.get('yandexgpt_api_key')
+    ])
     
-    if not auth_key:
+    if not has_any_ai and not active_provider:
+        print("[INFO] No AI provider configured, using fallback")
         return fallback_parse_receipt(text, settings)
     
-    access_token = get_gigachat_token(auth_key)
+    print(f"[DEBUG] === AI Request ===")
+    print(f"[DEBUG] User message: {text[:100]}")
+    print(f"[DEBUG] Active provider: {active_provider}")
     
-    if not access_token:
+    parsed_data = get_ai_completion(text, settings)
+    
+    if not parsed_data:
+        print("[WARN] AI parsing failed, using fallback")
         return fallback_parse_receipt(text, settings)
     
-    prompt = f"""Ты ИИ-кассир. Преобразуй запрос в JSON для API Ecomkassa за 5 сек.
-
-Запрос: "{text}"
-
-Извлеки: сумму, товар/услугу, тип платежа, НДС. Очисти название (убери "создай/пробей/чек"). Примеры: "кофе 200р"→"Кофе", "стрижка 1500"→"Стрижка".
-
-Поля (только корректные значения):
-operation_type: sell/sell_refund
-payment_type: cash/electronically (дефолт)
-payment_object: commodity/service
-vat: none/vat20/vat10 (дефолт none)
-measure: шт/услуга
-client: email (проверь формат), phone (+7...)
-
-Формат:
-{{"operation_type":"sell","items":[{{"name":"Товар","price":100,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":"user@mail.ru","phone":null}},"payment_type":"electronically"}}
-
-Если данных мало (email/phone/товар):
-{{"error":"Уточни данные","missing":["email"],"hint":"Пришли email для чека"}}
-
-JSON:"""
+    print(f"[DEBUG] Parsed data: {parsed_data}")
     
-    chat_url = 'https://gigachat.devices.sberbank.ru/api/v1/chat/completions'
+    if 'error' in parsed_data:
+        raise ValueError(parsed_data.get('error', 'Не хватает данных для создания чека'))
     
-    headers = {
-        'Authorization': f'Bearer {access_token}',
-        'Content-Type': 'application/json'
+    client_data = parsed_data.get('client', {})
+    client_email = client_data.get('email', '')
+    
+    items = parsed_data.get('items', [])
+    default_vat = settings.get('default_vat', 'none')
+    for item in items:
+        if 'vat' not in item or item['vat'] == 'none':
+            item['vat'] = default_vat
+    
+    total = sum(item.get('price', 0) * item.get('quantity', 1) for item in items)
+    
+    payment_type_raw = parsed_data.get('payment_type', 'electronically')
+    payment_type_map = {
+        'cash': '0',
+        'electronically': '1',
+        'prepaid': '2',
+        'credit': '3',
+        'other': '4'
     }
+    payment_type = payment_type_map.get(payment_type_raw, '1')
     
-    payload = {
-        'model': 'GigaChat',
-        'messages': [
-            {
-                'role': 'user',
-                'content': prompt
-            }
-        ],
-        'temperature': 0.1,
-        'max_tokens': 1000
+    return {
+        'items': items,
+        'total': round(total, 2),
+        'payments': [{
+            'type': payment_type,
+            'sum': round(total, 2)
+        }],
+        'client': {'email': client_email, 'phone': client_data.get('phone')},
+        'company': {
+            'email': settings.get('company_email', 'company@example.com'),
+            'sno': settings.get('sno', 'usn_income'),
+            'inn': settings.get('inn', '1234567890'),
+            'payment_address': settings.get('payment_address', 'example.com')
+        }
     }
-    
-    try:
-        timeout = 4
-        print(f"[DEBUG] === GigaChat Request ===")
-        print(f"[DEBUG] User message: {text[:100]}")
-        print(f"[DEBUG] Prompt length: {len(prompt)} chars")
-        print(f"[DEBUG] Timeout: {timeout}s")
-        
-        response = requests.post(chat_url, headers=headers, json=payload, verify=False, timeout=timeout)
-        result = response.json()
-        
-        ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
-        
-        print(f"[DEBUG] === GigaChat Response ===")
-        print(f"[DEBUG] Response: {ai_response[:200]}")
-        
-        json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(0).replace('\n', ' ').replace('\r', ' ')
-            parsed_data = json.loads(json_str)
-            
-            print(f"[DEBUG] Parsed data: {parsed_data}")
-            
-            if 'error' in parsed_data:
-                return {
-                    'statusCode': 400,
-                    'headers': {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    },
-                    'body': json.dumps({
-                        'error': parsed_data['error'],
-                        'message': 'Не хватает обязательных данных для создания чека'
-                    })
-                }
-            
-            client_data = parsed_data.get('client', {})
-            client_email = client_data.get('email', '')
-            
-            items = parsed_data.get('items', [])
-            default_vat = settings.get('default_vat', 'none')
-            for item in items:
-                if 'vat' not in item or item['vat'] == 'none':
-                    item['vat'] = default_vat
-            
-            total = sum(item.get('price', 0) * item.get('quantity', 1) for item in items)
-            
-            payment_type_raw = parsed_data.get('payment_type', 'electronically')
-            payment_type_map = {
-                'cash': '0',
-                'electronically': '1',
-                'prepaid': '2',
-                'credit': '3',
-                'other': '4'
-            }
-            payment_type = payment_type_map.get(payment_type_raw, '1')
-            
-            return {
-                'items': items,
-                'total': round(total, 2),
-                'payments': [{
-                    'type': payment_type,
-                    'sum': round(total, 2)
-                }],
-                'client': {'email': client_email, 'phone': client_data.get('phone')},
-                'company': {
-                    'email': settings.get('company_email', 'company@example.com'),
-                    'sno': settings.get('sno', 'usn_income'),
-                    'inn': settings.get('inn', '1234567890'),
-                    'payment_address': settings.get('payment_address', 'example.com')
-                }
-            }
-        
-        print(f"[WARN] No JSON found in GigaChat response, using fallback")
-                
-    except Exception as e:
-        print(f"[WARN] GigaChat failed ({str(e)}), using fallback")
-    
-    print(f"[INFO] Using fallback parser")
-    return fallback_parse_receipt(text, settings)
 
 
 def fallback_parse_receipt(text: str, settings: dict = None) -> Dict[str, Any]:
