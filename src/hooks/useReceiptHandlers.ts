@@ -151,10 +151,11 @@ export const useReceiptHandlers = (
     
     setIsProcessing(true);
     
+    const processingMessageId = Date.now().toString();
     const processingMessage: Message = {
-      id: Date.now().toString(),
+      id: processingMessageId,
       type: 'agent',
-      content: 'Данные проверены',
+      content: 'Отправляю чек...',
       timestamp: new Date(),
     };
     setMessages((prev) => {
@@ -190,7 +191,7 @@ export const useReceiptHandlers = (
       };
 
       setMessages((prev) => {
-        const filtered = prev.filter(m => m.content !== 'Данные проверены');
+        const filtered = prev.filter(m => m.id !== processingMessageId);
         return [...filtered, agentMessage];
       });
       setPendingReceipt(null);
@@ -205,6 +206,17 @@ export const useReceiptHandlers = (
         toast.error('Произошла ошибка при создании чека');
       }
     } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        type: 'agent',
+        content: 'Ошибка соединения с сервером. Попробуй еще раз.',
+        timestamp: new Date(),
+        hasError: true,
+      };
+      setMessages((prev) => {
+        const filtered = prev.filter(m => m.id !== processingMessageId);
+        return [...filtered, errorMessage];
+      });
       toast.error('Ошибка соединения с сервером');
     } finally {
       setIsProcessing(false);
