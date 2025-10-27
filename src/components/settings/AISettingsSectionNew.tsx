@@ -49,6 +49,8 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
   };
 
   const handleProviderChange = async (providerId: string) => {
+    const validatingToast = toast.loading('Проверяю API ключ...');
+    
     try {
       const response = await fetch('https://functions.poehali.dev/0924c3f7-bb48-46bb-9dbb-fddba37c9280', {
         method: 'POST',
@@ -62,13 +64,16 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.error || 'Ошибка изменения провайдера');
+        toast.dismiss(validatingToast);
+        toast.error(data.message || data.error || 'Ошибка изменения провайдера');
         return;
       }
 
+      toast.dismiss(validatingToast);
       setActiveProvider(providerId);
-      toast.success(providerId ? `Провайдер активирован` : 'Провайдер отключен');
+      toast.success(providerId ? `Провайдер активирован ✓` : 'Провайдер отключен');
     } catch (error) {
+      toast.dismiss(validatingToast);
       toast.error('Ошибка подключения');
     }
   };
