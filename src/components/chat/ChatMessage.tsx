@@ -100,9 +100,9 @@ export const ChatMessage = ({
           message.type === 'user' ? 'items-end' : 'items-start'
         } flex flex-col`}
       >
-        <div className="flex items-start gap-2 w-full">
+        <div className="flex items-start gap-2">
           <Card
-            className={`p-4 flex-1 ${
+            className={`p-4 ${
               message.type === 'agent'
                 ? message.hasError 
                   ? 'bg-card border-destructive/30'
