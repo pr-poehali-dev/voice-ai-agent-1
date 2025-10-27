@@ -381,86 +381,48 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             })
         }
     
-    bulk_repeat = detect_bulk_repeat_command(user_message)
-    if bulk_repeat:
-        count, uuid = bulk_repeat
-        if count > 50:
-            return {
-                'statusCode': 400,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                'body': json.dumps({
-                    'error': f'Слишком много копий: {count}. Максимум 50 чеков за раз'
-                })
-            }
-        
-        existing_receipt = get_receipt_from_db(uuid)
-        print(f"[DEBUG] Retrieved receipt from DB: {existing_receipt is not None}")
-        if not existing_receipt:
-            print(f"[DEBUG] Receipt {uuid} not found in database")
-            return {
-                'statusCode': 404,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                'body': json.dumps({
-                    'error': f'Чек с UUID {uuid} не найден в истории'
-                })
-            }
-        print(f"[DEBUG] Receipt found! Items: {existing_receipt.get('items')}")
-        
-        parsed_receipt = {
-            'items': existing_receipt['items'],
-            'total': existing_receipt['total'],
-            'payment_type': existing_receipt.get('payment_type', 'card'),
-            'payments': existing_receipt.get('payments', [{
-                'type': '0' if existing_receipt.get('payment_type') == 'cash' else '1',
-                'sum': existing_receipt['total']
-            }]),
-            'client': {
-                'email': existing_receipt.get('customer_email', ''),
-                'phone': existing_receipt.get('customer_phone', '')
-            },
-            'company': {
-                'email': settings.get('company_email', 'company@example.com'),
-                'sno': settings.get('sno', 'usn_income'),
-                'inn': settings.get('inn', '1234567890'),
-                'payment_address': settings.get('payment_address', 'example.com')
-            },
-            'bulk_count': count,
-            'original_uuid': uuid
-        }
-        
-        return {
-            'statusCode': 200,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            'body': json.dumps({
-                'preview': True,
-                'receipt': parsed_receipt,
-                'original_user_message': existing_receipt.get('user_message', ''),
-                'operation_type': existing_receipt.get('operation_type', 'sell')
-            })
-        }
-    
-    repeat_uuid = detect_repeat_command(user_message)
-    
-    if not operation_type:
-        operation_type = detect_operation_type(user_message)
-    
+    # CRITICAL: Check edited_data FIRST before detecting bulk commands
+    # If edited_data exists, user already confirmed the preview - skip command detection
     if edited_data:
         print(f"[DEBUG] Using edited_data: {json.dumps(edited_data, ensure_ascii=False)[:500]}")
         print(f"[DEBUG] edited_data has bulk_count: {edited_data.get('bulk_count')}")
         print(f"[DEBUG] edited_data has original_uuid: {edited_data.get('original_uuid')}")
         parsed_receipt = edited_data
-    elif repeat_uuid == 'LAST':
-        existing_receipt = get_last_receipt_from_db()
-        if existing_receipt:
+        operation_type = edited_data.get('operation_type', operation_type)
+        # Skip to email check and receipt creation - do NOT re-parse bulk commands
+    else:
+        # Only detect bulk commands if NO edited_data (initial request)
+        bulk_repeat = detect_bulk_repeat_command(user_message)
+        if bulk_repeat:
+            count, uuid = bulk_repeat
+            if count > 50:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({
+                        'error': f'Слишком много копий: {count}. Максимум 50 чеков за раз'
+                    })
+                }
+            
+            existing_receipt = get_receipt_from_db(uuid)
+            print(f"[DEBUG] Retrieved receipt from DB: {existing_receipt is not None}")
+            if not existing_receipt:
+                print(f"[DEBUG] Receipt {uuid} not found in database")
+                return {
+                    'statusCode': 404,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({
+                        'error': f'Чек с UUID {uuid} не найден в истории'
+                    })
+                }
+            print(f"[DEBUG] Receipt found! Items: {existing_receipt.get('items')}")
+            
             parsed_receipt = {
                 'items': existing_receipt['items'],
                 'total': existing_receipt['total'],
@@ -478,8 +440,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'sno': settings.get('sno', 'usn_income'),
                     'inn': settings.get('inn', '1234567890'),
                     'payment_address': settings.get('payment_address', 'example.com')
-                }
+                },
+                'bulk_count': count,
+                'original_uuid': uuid
             }
+            
             return {
                 'statusCode': 200,
                 'headers': {
@@ -487,50 +452,40 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'Access-Control-Allow-Origin': '*'
                 },
                 'body': json.dumps({
-                    'success': True,
-                    'message': f'Повторяю последний чек',
-                    'receipt': parsed_receipt,
-                    'operation_type': operation_type,
                     'preview': True,
-                    'is_repeat': True
+                    'receipt': parsed_receipt,
+                    'original_user_message': existing_receipt.get('user_message', ''),
+                    'operation_type': existing_receipt.get('operation_type', 'sell')
                 })
             }
-        else:
-            return {
-                'statusCode': 404,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                'body': json.dumps({
-                    'error': 'В истории нет чеков для повтора'
-                })
-            }
-    elif repeat_uuid:
-        existing_receipt = get_receipt_from_db(repeat_uuid)
-        if existing_receipt:
-            print(f"[DEBUG] Repeat receipt UUID {repeat_uuid}: existing_receipt = {existing_receipt}")
-            parsed_receipt = existing_receipt
-            operation_type = existing_receipt.get('operation_type', 'sell')
-            
-            print(f"[DEBUG] Repeat receipt payments data: {parsed_receipt.get('payments')}")
-            
-            if 'company' not in parsed_receipt:
-                parsed_receipt['company'] = {}
-            
-            parsed_receipt['company']['email'] = settings.get('company_email', parsed_receipt.get('company', {}).get('email', ''))
-            parsed_receipt['company']['inn'] = settings.get('inn', parsed_receipt.get('company', {}).get('inn', ''))
-            parsed_receipt['company']['sno'] = settings.get('sno', parsed_receipt.get('company', {}).get('sno', 'usn_income'))
-            parsed_receipt['company']['payment_address'] = settings.get('payment_address', parsed_receipt.get('company', {}).get('payment_address', ''))
-            
-            if not parsed_receipt.get('client', {}).get('email'):
-                company_email = settings.get('company_email', '')
-                if company_email:
-                    if 'client' not in parsed_receipt:
-                        parsed_receipt['client'] = {}
-                    parsed_receipt['client']['email'] = company_email
-            
-            if preview_only:
+    
+        repeat_uuid = detect_repeat_command(user_message)
+        
+        if not operation_type:
+            operation_type = detect_operation_type(user_message)
+        
+        if repeat_uuid == 'LAST':
+            existing_receipt = get_last_receipt_from_db()
+            if existing_receipt:
+                parsed_receipt = {
+                    'items': existing_receipt['items'],
+                    'total': existing_receipt['total'],
+                    'payment_type': existing_receipt.get('payment_type', 'card'),
+                    'payments': existing_receipt.get('payments', [{
+                        'type': '0' if existing_receipt.get('payment_type') == 'cash' else '1',
+                        'sum': existing_receipt['total']
+                    }]),
+                    'client': {
+                        'email': existing_receipt.get('customer_email', ''),
+                        'phone': existing_receipt.get('customer_phone', '')
+                    },
+                    'company': {
+                        'email': settings.get('company_email', 'company@example.com'),
+                        'sno': settings.get('sno', 'usn_income'),
+                        'inn': settings.get('inn', '1234567890'),
+                        'payment_address': settings.get('payment_address', 'example.com')
+                    }
+                }
                 return {
                     'statusCode': 200,
                     'headers': {
@@ -539,42 +494,93 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     },
                     'body': json.dumps({
                         'success': True,
-                        'message': f'Найден чек UUID {repeat_uuid}. Проверь данные перед повторной отправкой. При отправке будет создан новый external_id.',
+                        'message': f'Повторяю последний чек',
                         'receipt': parsed_receipt,
                         'operation_type': operation_type,
                         'preview': True,
                         'is_repeat': True
                     })
                 }
+            else:
+                return {
+                    'statusCode': 404,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({
+                        'error': 'В истории нет чеков для повтора'
+                    })
+                }
+        elif repeat_uuid:
+            existing_receipt = get_receipt_from_db(repeat_uuid)
+            if existing_receipt:
+                print(f"[DEBUG] Repeat receipt UUID {repeat_uuid}: existing_receipt = {existing_receipt}")
+                parsed_receipt = existing_receipt
+                operation_type = existing_receipt.get('operation_type', 'sell')
+                
+                print(f"[DEBUG] Repeat receipt payments data: {parsed_receipt.get('payments')}")
+                
+                if 'company' not in parsed_receipt:
+                    parsed_receipt['company'] = {}
+                
+                parsed_receipt['company']['email'] = settings.get('company_email', parsed_receipt.get('company', {}).get('email', ''))
+                parsed_receipt['company']['inn'] = settings.get('inn', parsed_receipt.get('company', {}).get('inn', ''))
+                parsed_receipt['company']['sno'] = settings.get('sno', parsed_receipt.get('company', {}).get('sno', 'usn_income'))
+                parsed_receipt['company']['payment_address'] = settings.get('payment_address', parsed_receipt.get('company', {}).get('payment_address', ''))
+                
+                if not parsed_receipt.get('client', {}).get('email'):
+                    company_email = settings.get('company_email', '')
+                    if company_email:
+                        if 'client' not in parsed_receipt:
+                            parsed_receipt['client'] = {}
+                        parsed_receipt['client']['email'] = company_email
+                
+                if preview_only:
+                    return {
+                        'statusCode': 200,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*'
+                        },
+                        'body': json.dumps({
+                            'success': True,
+                            'message': f'Найден чек UUID {repeat_uuid}. Проверь данные перед повторной отправкой. При отправке будет создан новый external_id.',
+                            'receipt': parsed_receipt,
+                            'operation_type': operation_type,
+                            'preview': True,
+                            'is_repeat': True
+                        })
+                    }
+            else:
+                return {
+                    'statusCode': 404,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({
+                        'error': f'Чек с UUID {repeat_uuid} не найден в истории'
+                    })
+                }
         else:
-            return {
-                'statusCode': 404,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                'body': json.dumps({
-                    'error': f'Чек с UUID {repeat_uuid} не найден в истории'
-                })
-            }
-    else:
-        try:
-            parsed_receipt = parse_receipt_from_text(user_message, settings)
-        except ValueError as e:
-            return {
-                'statusCode': 400,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                'body': json.dumps({
-                    'error': str(e),
-                    'message': str(e)
-                })
-            }
-        
-        if previous_receipt:
-            parsed_receipt = merge_receipts(previous_receipt, parsed_receipt)
+            try:
+                parsed_receipt = parse_receipt_from_text(user_message, settings)
+            except ValueError as e:
+                return {
+                    'statusCode': 400,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({
+                        'error': str(e),
+                        'message': str(e)
+                    })
+                }
+            
+            if previous_receipt:
+                parsed_receipt = merge_receipts(previous_receipt, parsed_receipt)
     
     if parsed_receipt.get('payments'):
         total_from_payments = sum(payment.get('sum', 0) for payment in parsed_receipt['payments'])
