@@ -737,7 +737,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False,
             'body': json.dumps({
                 'success': True,
-                'message': f'Создано {len(created_receipts)} из {bulk_count} чеков',
+                'message': f'Копии чека {original_uuid} были отправлены: {len(created_receipts)} штук',
                 'created': created_receipts,
                 'failed': failed_receipts,
                 'total_requested': bulk_count,
