@@ -176,7 +176,9 @@ export const useReceiptHandlers = (
       );
 
       const typeName = OPERATION_NAMES[pendingReceipt.operationType] || pendingReceipt.operationType;
-      const messageContent = data.success ? 'Чек успешно отправлен в ЕкомКасса' : `Ошибка: ${data.message || data.error || 'Неизвестная ошибка'}`;
+      const messageContent = data.success 
+        ? (data.message || 'Чек успешно отправлен в ЕкомКасса') 
+        : `Ошибка: ${data.message || data.error || 'Неизвестная ошибка'}`;
       
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
