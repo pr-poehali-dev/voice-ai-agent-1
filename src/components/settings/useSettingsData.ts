@@ -184,8 +184,10 @@ export const useSettingsData = () => {
       updatedSettings.yandexgpt_folder_id = folderId;
     }
 
+    console.log('[DEBUG] Saving settings:', updatedSettings);
     setSettings(updatedSettings);
     localStorage.setItem('ecomkassa_settings', JSON.stringify(updatedSettings));
+    console.log('[DEBUG] Settings saved to localStorage');
     
     const provider = aiProviders.find(p => p.id === providerId);
     toast.success(`Подключен провайдер: ${provider?.name}`);
