@@ -101,7 +101,7 @@ export const ReceiptPreview = ({
             <div className="font-medium text-xs">{editedData.company?.sno || 'usn_income'}</div>
           )}
         </div>
-        <div className="bg-background/50 p-2 rounded col-span-2">
+        <div className="bg-background/50 p-2 rounded">
           <div className="text-xs text-muted-foreground">Адрес расчетов</div>
           {editMode ? (
             <Input 
