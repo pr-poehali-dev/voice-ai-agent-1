@@ -441,6 +441,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         for i in range(count):
             import time
             unique_external_id = f'BULK_{uuid}_{int(time.time() * 1000)}_{i}'
+            print(f"[DEBUG] Creating copy {i+1}/{count} with external_id: {unique_external_id}")
             
             receipt_payload = {
                 'external_id': unique_external_id,
@@ -456,14 +457,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
             
             try:
+                print(f"[DEBUG] Sending copy {i+1} to EcomKassa...")
                 result = send_to_ecomkassa(receipt_payload, operation_type, login, password, group_code)
+                print(f"[DEBUG] Copy {i+1} result: success={result.get('success')}, error={result.get('error')}")
                 if result.get('success'):
                     save_receipt_to_db(unique_external_id, f'Копия #{i+1} чека {uuid}', receipt_payload, operation_type, result.get('uuid'), False)
                     created_receipts.append({'index': i+1, 'uuid': result.get('uuid'), 'external_id': unique_external_id})
                 else:
                     failed_receipts.append({'index': i+1, 'error': result.get('error', 'Неизвестная ошибка')})
             except Exception as e:
+                print(f"[DEBUG] Copy {i+1} exception: {str(e)}")
                 failed_receipts.append({'index': i+1, 'error': str(e)})
+        
+        print(f"[DEBUG] Bulk creation finished: created={len(created_receipts)}, failed={len(failed_receipts)}")
         
         return {
             'statusCode': 200,
