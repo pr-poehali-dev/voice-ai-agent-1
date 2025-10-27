@@ -58,7 +58,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         cursor.execute(
             'SELECT id, external_id, user_message, operation_type, items, total, '
-            'payment_type, customer_email, status, demo_mode, created_at, uuid '
+            'payment_type, payments, customer_email, status, demo_mode, created_at, uuid '
             'FROM receipts ORDER BY created_at DESC LIMIT %s OFFSET %s',
             (limit, offset)
         )
@@ -73,6 +73,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         receipts_list = []
         for receipt in receipts:
+            payment_type_display = receipt['payment_type']
+            
+            # Если есть массив payments с несколькими типами оплаты
+            if receipt.get('payments') and isinstance(receipt['payments'], list) and len(receipt['payments']) > 1:
+                payment_types = [p.get('type', '1') for p in receipt['payments']]
+                unique_types = list(dict.fromkeys(payment_types))  # Убираем дубликаты, сохраняя порядок
+                if len(unique_types) > 1:
+                    payment_type_display = ', '.join(unique_types)
+            
             receipts_list.append({
                 'id': receipt['id'],
                 'external_id': receipt['external_id'],
@@ -80,7 +89,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'operation_type': receipt['operation_type'],
                 'items': receipt['items'],
                 'total': float(receipt['total']),
-                'payment_type': receipt['payment_type'],
+                'payment_type': payment_type_display,
                 'customer_email': receipt['customer_email'],
                 'status': receipt['status'],
                 'demo_mode': receipt['demo_mode'],
