@@ -76,10 +76,18 @@ def validate_gptunnel_key(api_key: str, model: str) -> Dict[str, Any]:
             timeout=15
         )
         
+        print(f"GPTunnel response status: {response.status_code}")
+        print(f"GPTunnel response body: {response.text[:500]}")
+        
         if response.status_code == 200:
             return {'valid': True, 'message': 'GPTunnel key is valid'}
         else:
-            return {'valid': False, 'message': f'Invalid key: {response.status_code}'}
+            try:
+                error_data = response.json()
+                error_msg = error_data.get('error', {}).get('message', response.text[:200])
+            except:
+                error_msg = response.text[:200]
+            return {'valid': False, 'message': f'Invalid key: {response.status_code} - {error_msg}'}
     except Exception as e:
         return {'valid': False, 'message': f'Validation error: {str(e)}'}
 
