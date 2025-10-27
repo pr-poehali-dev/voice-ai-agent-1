@@ -432,9 +432,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         for i in range(count):
             import time
-            base_external_id = f'BULK_{uuid}_{int(time.time() * 1000)}_{i}'
+            unique_external_id = f'BULK_{uuid}_{int(time.time() * 1000)}_{i}'
             
             receipt_payload = {
+                'external_id': unique_external_id,
                 'items': existing_receipt.get('items', []),
                 'payments': existing_receipt.get('payments', []),
                 'client': existing_receipt.get('client', {}),
@@ -446,22 +447,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             }
             
-            for duplicate_num in range(10):
-                unique_external_id = f'{base_external_id}_dup{duplicate_num}'
-                receipt_payload['external_id'] = unique_external_id
-                
-                try:
-                    result = send_to_ecomkassa(receipt_payload, operation_type, login, password, group_code)
-                    if result.get('success'):
-                        save_receipt_to_db(unique_external_id, f'Копия #{i+1} (дубль #{duplicate_num+1}) чека {uuid}', receipt_payload, operation_type, result.get('uuid'), False)
-                        created_receipts.append({'index': i+1, 'duplicate': duplicate_num+1, 'uuid': result.get('uuid'), 'external_id': unique_external_id})
-                        break
-                    else:
-                        if duplicate_num == 9:
-                            failed_receipts.append({'index': i+1, 'error': result.get('error', 'Неизвестная ошибка'), 'all_duplicates_failed': True})
-                except Exception as e:
-                    if duplicate_num == 9:
-                        failed_receipts.append({'index': i+1, 'error': str(e), 'all_duplicates_failed': True})
+            try:
+                result = send_to_ecomkassa(receipt_payload, operation_type, login, password, group_code)
+                if result.get('success'):
+                    save_receipt_to_db(unique_external_id, f'Копия #{i+1} чека {uuid}', receipt_payload, operation_type, result.get('uuid'), False)
+                    created_receipts.append({'index': i+1, 'uuid': result.get('uuid'), 'external_id': unique_external_id})
+                else:
+                    failed_receipts.append({'index': i+1, 'error': result.get('error', 'Неизвестная ошибка')})
+            except Exception as e:
+                failed_receipts.append({'index': i+1, 'error': str(e)})
         
         return {
             'statusCode': 200,
