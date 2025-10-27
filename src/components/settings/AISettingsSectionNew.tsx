@@ -141,36 +141,36 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
         )}
 
         <div className="space-y-2">
-          {providers
-            .filter(provider => !activeProvider || activeProvider === provider.id)
-            .map((provider) => {
-              const isActive = activeProvider === provider.id;
-              
-              return (
-                <div
-                  key={provider.id}
-                  className={`w-full flex items-center justify-between p-4 rounded-lg border transition-all ${
-                    isActive
-                      ? 'border-green-500 bg-green-50'
-                      : activeProvider
-                      ? 'border-gray-200 bg-gray-50 opacity-50'
-                      : 'border-gray-200 hover:border-primary hover:bg-primary/5'
-                  }`}
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className={`font-semibold ${isActive ? 'text-green-900' : 'text-gray-900'}`}>
-                        {provider.name}
-                      </h3>
-                      {isActive && (
-                        <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
-                          Активен
-                        </span>
-                      )}
-                    </div>
-                    <p className={`text-sm ${isActive ? 'text-green-700' : 'text-muted-foreground'}`}>
-                      {provider.description}
-                    </p>
+          {providers.map((provider) => {
+            const isActive = activeProvider === provider.id;
+            const isBlocked = activeProvider && activeProvider !== provider.id;
+            
+            if (isBlocked) return null;
+            
+            return (
+              <div
+                key={provider.id}
+                className={`w-full flex items-center justify-between p-4 rounded-lg border transition-all ${
+                  isActive
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-primary hover:bg-primary/5'
+                }`}
+              >
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className={`font-semibold ${isActive ? 'text-green-900' : 'text-gray-900'}`}>
+                      {provider.name}
+                    </h3>
+                    {isActive && (
+                      <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full font-medium">
+                        Активно
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-sm ${isActive ? 'text-green-700' : 'text-muted-foreground'}`}>
+                    {provider.description}
+                  </p>
+                  {!isActive && (
                     <div className="flex items-center gap-2 mt-2">
                       {provider.has_secret ? (
                         <span className="text-xs text-green-600 flex items-center gap-1">
@@ -184,34 +184,35 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
                         </span>
                       )}
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    {provider.has_secret && !isActive && !activeProvider && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleTestKey(provider.id)}
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                      >
-                        <Icon name="TestTube2" size={14} className="mr-1" />
-                        Проверить ключ
-                      </Button>
-                    )}
-                    {!isActive && !activeProvider && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleProviderChange(provider.id)}
-                        disabled={!provider.has_secret}
-                      >
-                        Активировать
-                      </Button>
-                    )}
-                  </div>
+                  )}
                 </div>
-              );
-            })}
+                
+                <div className="flex items-center gap-2">
+                  {!isActive && provider.has_secret && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleTestKey(provider.id)}
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    >
+                      <Icon name="TestTube2" size={14} className="mr-1" />
+                      Проверить ключ
+                    </Button>
+                  )}
+                  {!isActive && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleProviderChange(provider.id)}
+                      disabled={!provider.has_secret}
+                    >
+                      Активировать
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {providers.some(p => !p.has_secret) && (
