@@ -437,8 +437,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     elif repeat_uuid:
         existing_receipt = get_receipt_from_db(repeat_uuid)
         if existing_receipt:
+            print(f"[DEBUG] Repeat receipt UUID {repeat_uuid}: existing_receipt = {existing_receipt}")
             parsed_receipt = existing_receipt
             operation_type = existing_receipt.get('operation_type', 'sell')
+            
+            print(f"[DEBUG] Repeat receipt payments data: {parsed_receipt.get('payments')}")
             
             if 'company' not in parsed_receipt:
                 parsed_receipt['company'] = {}
