@@ -609,7 +609,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             })
         }
     
+    print(f"[DEBUG] Before email check: parsed_receipt exists: {parsed_receipt is not None}")
+    print(f"[DEBUG] parsed_receipt type: {type(parsed_receipt)}")
+    print(f"[DEBUG] parsed_receipt.get('client'): {parsed_receipt.get('client') if isinstance(parsed_receipt, dict) else 'NOT A DICT'}")
+    
     client_email = parsed_receipt.get('client', {}).get('email', '')
+    
+    print(f"[DEBUG] client_email: '{client_email}'")
     
     invalid_emails = ['customer@example.com', 'НЕ УКАЗАН email', 'email@example.com', '']
     if not client_email or client_email in invalid_emails or '@' not in client_email or '.' not in client_email:
