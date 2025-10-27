@@ -219,11 +219,21 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
           })}
         </div>
 
-        {providers.some(p => !p.has_secret) && (
+        {!activeProvider && providers.some(p => !p.has_secret) && !hasAnyKey && (
           <Alert className="bg-blue-50 border-blue-200">
             <AlertDescription className="text-sm text-blue-800">
               <Icon name="Info" size={14} className="inline mr-1" />
               Для активации провайдера добавьте соответствующий секрет в настройках проекта.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {hasAnyKey && providersWithKeys.length > 1 && !activeProvider && (
+          <Alert className="bg-orange-50 border-orange-200">
+            <AlertDescription className="text-sm text-orange-800">
+              <Icon name="AlertTriangle" size={14} className="inline mr-1" />
+              <strong>Внимание:</strong> Обнаружено несколько ключей. Может быть активен только один провайдер. 
+              Активируйте нужного провайдера, остальные ключи можно удалить из настроек проекта.
             </AlertDescription>
           </Alert>
         )}
