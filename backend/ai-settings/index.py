@@ -58,12 +58,39 @@ def validate_yandexgpt_key(api_key: str, folder_id: str) -> Dict[str, Any]:
         return {'valid': False, 'message': f'Validation error: {str(e)}'}
 
 def validate_gptunnel_key(api_key: str, model: str) -> Dict[str, Any]:
-    '''Validate GPTunnel API key with test completion request'''
+    '''Validate GPTunnel API key by fetching available models and checking if target model exists'''
     try:
+        # First, get list of available models
+        models_response = requests.get(
+            'https://gptunnel.ru/v1/models',
+            headers={'Authorization': api_key},
+            timeout=15
+        )
+        
+        print(f"GPTunnel models response status: {models_response.status_code}")
+        print(f"GPTunnel models response: {models_response.text[:1000]}")
+        
+        if models_response.status_code != 200:
+            return {'valid': False, 'message': f'Invalid key: {models_response.status_code}'}
+        
+        # Parse available models
+        models_data = models_response.json()
+        available_models = [m.get('id') for m in models_data.get('data', [])]
+        print(f"Available models: {available_models}")
+        
+        # Check if target model exists
+        if model not in available_models:
+            # Try to find Claude models
+            claude_models = [m for m in available_models if 'claude' in m.lower()]
+            if claude_models:
+                return {'valid': False, 'message': f'Model {model} not found. Available Claude models: {", ".join(claude_models)}'}
+            return {'valid': False, 'message': f'Model {model} not found in available models'}
+        
+        # Test the model with a simple request
         response = requests.post(
             'https://gptunnel.ru/v1/chat/completions',
             headers={
-                'Authorization': f'Bearer {api_key}',
+                'Authorization': api_key,
                 'Content-Type': 'application/json'
             },
             json={
@@ -76,9 +103,6 @@ def validate_gptunnel_key(api_key: str, model: str) -> Dict[str, Any]:
             timeout=15
         )
         
-        print(f"GPTunnel response status: {response.status_code}")
-        print(f"GPTunnel response body: {response.text[:500]}")
-        
         if response.status_code == 200:
             return {'valid': True, 'message': 'GPTunnel key is valid'}
         else:
@@ -87,7 +111,7 @@ def validate_gptunnel_key(api_key: str, model: str) -> Dict[str, Any]:
                 error_msg = error_data.get('error', {}).get('message', response.text[:200])
             except:
                 error_msg = response.text[:200]
-            return {'valid': False, 'message': f'Invalid key: {response.status_code} - {error_msg}'}
+            return {'valid': False, 'message': f'Test failed: {response.status_code} - {error_msg}'}
     except Exception as e:
         return {'valid': False, 'message': f'Validation error: {str(e)}'}
 
