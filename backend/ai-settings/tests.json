@@ -1,0 +1,46 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS returns CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET without token returns 401",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 401
+    },
+    {
+      "name": "GET with token returns settings",
+      "method": "GET",
+      "path": "/",
+      "headers": {
+        "X-Admin-Token": "test_token"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "POST without token returns 401",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "provider_id": "gigachat"
+      },
+      "expectedStatus": 401
+    },
+    {
+      "name": "POST with token sets provider",
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "X-Admin-Token": "test_token"
+      },
+      "body": {
+        "provider_id": ""
+      },
+      "expectedStatus": 200
+    }
+  ]
+}

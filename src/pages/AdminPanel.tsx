@@ -4,8 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
-import { AISettingsSection } from '@/components/settings/AISettingsSection';
-import { useSettingsData } from '@/components/settings/useSettingsData';
+import { AISettingsSectionNew } from '@/components/settings/AISettingsSectionNew';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface FeedbackItem {
@@ -27,15 +26,8 @@ interface Stats {
 export const AdminPanel = () => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [adminToken, setAdminToken] = useState<string>('');
   const navigate = useNavigate();
-  
-  const {
-    settings,
-    aiProviders,
-    handleConnect,
-    handleDisconnect,
-    saveSettings
-  } = useSettingsData();
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -44,6 +36,7 @@ export const AdminPanel = () => {
       return;
     }
 
+    setAdminToken(token);
     loadStats(token);
   }, [navigate]);
 
@@ -213,19 +206,7 @@ export const AdminPanel = () => {
           </TabsContent>
 
           <TabsContent value="ai">
-            <div className="space-y-6">
-              <AISettingsSection
-                settings={settings}
-                aiProviders={aiProviders}
-                onConnect={handleConnect}
-                onDisconnect={handleDisconnect}
-              />
-              
-              <Button onClick={saveSettings} className="w-full">
-                <Icon name="Save" size={16} className="mr-2" />
-                Сохранить настройки ИИ
-              </Button>
-            </div>
+            <AISettingsSectionNew adminToken={adminToken} />
           </TabsContent>
         </Tabs>
       </div>
