@@ -416,7 +416,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         password = settings.get('ecomkassa_password') or os.environ.get('ECOMKASSA_PASSWORD', '')
         group_code = settings.get('group_code') or os.environ.get('ECOMKASSA_GROUP_CODE', '')
         
+        print(f"[DEBUG] EcomKassa credentials: login={bool(login)}, password={bool(password)}, group_code={bool(group_code)}")
+        
         if not (login and password and group_code):
+            print(f"[DEBUG] Missing EcomKassa credentials - returning 400")
             return {
                 'statusCode': 400,
                 'headers': {
@@ -428,6 +431,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'message': 'Заполни настройки ЕкомКасса для массового создания чеков'
                 })
             }
+        
+        print(f"[DEBUG] Starting bulk creation: {count} copies")
         
         created_receipts = []
         failed_receipts = []
