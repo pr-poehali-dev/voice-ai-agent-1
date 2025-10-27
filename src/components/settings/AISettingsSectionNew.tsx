@@ -102,6 +102,8 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
   }
 
   const activeProviderData = providers.find(p => p.id === activeProvider);
+  const providersWithKeys = providers.filter(p => p.has_secret);
+  const hasAnyKey = providersWithKeys.length > 0;
 
   return (
     <Card>
@@ -135,7 +137,7 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
           <Alert>
             <AlertDescription className="flex items-center gap-2 text-gray-700">
               <Icon name="Plug" size={16} />
-              <span>AI провайдер не подключен. Выберите провайдера из списка ниже.</span>
+              <span>AI провайдер не подключен. {hasAnyKey ? 'Активируйте один из провайдеров с настроенным ключом.' : 'Добавьте секрет для провайдера.'}</span>
             </AlertDescription>
           </Alert>
         )}
@@ -143,52 +145,56 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
         <div className="space-y-2">
           {providers.map((provider) => {
             const isActive = activeProvider === provider.id;
-            const isBlocked = activeProvider && activeProvider !== provider.id;
+            const hasOtherActiveKey = hasAnyKey && !provider.has_secret;
             
-            if (isBlocked) return null;
+            if (isActive) {
+              return (
+                <div
+                  key={provider.id}
+                  className="w-full flex items-center justify-between p-4 rounded-lg border border-green-500 bg-green-50"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-green-900">{provider.name}</h3>
+                      <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full font-medium">
+                        Активно
+                      </span>
+                    </div>
+                    <p className="text-sm text-green-700">{provider.description}</p>
+                  </div>
+                </div>
+              );
+            }
+            
+            if (activeProvider || hasOtherActiveKey) return null;
             
             return (
               <div
                 key={provider.id}
-                className={`w-full flex items-center justify-between p-4 rounded-lg border transition-all ${
-                  isActive
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 hover:border-primary hover:bg-primary/5'
-                }`}
+                className="w-full flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className={`font-semibold ${isActive ? 'text-green-900' : 'text-gray-900'}`}>
-                      {provider.name}
-                    </h3>
-                    {isActive && (
-                      <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full font-medium">
-                        Активно
+                    <h3 className="font-semibold text-gray-900">{provider.name}</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{provider.description}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    {provider.has_secret ? (
+                      <span className="text-xs text-green-600 flex items-center gap-1">
+                        <Icon name="CheckCircle2" size={12} />
+                        Ключ настроен ({provider.secret_name})
+                      </span>
+                    ) : (
+                      <span className="text-xs text-orange-600 flex items-center gap-1">
+                        <Icon name="AlertCircle" size={12} />
+                        Требуется настроить секрет: {provider.secret_name}
                       </span>
                     )}
                   </div>
-                  <p className={`text-sm ${isActive ? 'text-green-700' : 'text-muted-foreground'}`}>
-                    {provider.description}
-                  </p>
-                  {!isActive && (
-                    <div className="flex items-center gap-2 mt-2">
-                      {provider.has_secret ? (
-                        <span className="text-xs text-green-600 flex items-center gap-1">
-                          <Icon name="CheckCircle2" size={12} />
-                          Ключ настроен ({provider.secret_name})
-                        </span>
-                      ) : (
-                        <span className="text-xs text-orange-600 flex items-center gap-1">
-                          <Icon name="AlertCircle" size={12} />
-                          Требуется настроить секрет: {provider.secret_name}
-                        </span>
-                      )}
-                    </div>
-                  )}
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  {!isActive && provider.has_secret && (
+                  {provider.has_secret && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -199,16 +205,14 @@ export const AISettingsSectionNew = ({ adminToken }: AISettingsSectionNewProps) 
                       Проверить ключ
                     </Button>
                   )}
-                  {!isActive && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleProviderChange(provider.id)}
-                      disabled={!provider.has_secret}
-                    >
-                      Активировать
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleProviderChange(provider.id)}
+                    disabled={!provider.has_secret}
+                  >
+                    Активировать
+                  </Button>
                 </div>
               </div>
             );
