@@ -91,7 +91,7 @@ export const AISettingsSection = ({
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className={`font-semibold ${isActive ? 'text-green-900' : ''}`}>{provider.name}</h3>
+                      <h3 className={`font-semibold ${isActive ? 'text-green-900' : 'text-gray-900'}`}>{provider.name}</h3>
                       {isActive && (
                         <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
                           Активен
