@@ -1474,6 +1474,17 @@ def create_ecomkassa_receipt(
     
     calculated_total = round(sum(item['sum'] for item in items_for_payload), 2)
     
+    # Get payment total from actual payments
+    payments_list = receipt_data.get('payments', [{'type': 1, 'sum': calculated_total}])
+    payment_total = round(sum(float(p.get('sum', 0)) for p in payments_list), 2)
+    
+    # Fix rounding: adjust last item sum to match payment total
+    items_total = round(sum(item['sum'] for item in items_for_payload), 2)
+    if items_total != payment_total and len(items_for_payload) > 0:
+        difference = round(payment_total - items_total, 2)
+        items_for_payload[-1]['sum'] = round(items_for_payload[-1]['sum'] + difference, 2)
+        print(f"[DEBUG] Adjusted last item sum by {difference} to match payment total: {payment_total}")
+    
     unique_id = f'AI_{int(time.time() * 1000000)}'
     
     ecomkassa_payload = {
@@ -1493,11 +1504,11 @@ def create_ecomkassa_receipt(
             'payments': [
                 {
                     'type': int(payment.get('type', 1)) if isinstance(payment.get('type'), str) and payment.get('type').isdigit() else 1,
-                    'sum': float(payment.get('sum', calculated_total))
+                    'sum': float(payment.get('sum', payment_total))
                 }
-                for payment in receipt_data.get('payments', [{'type': 1, 'sum': calculated_total}])
+                for payment in payments_list
             ],
-            'total': calculated_total
+            'total': payment_total
         }
     }
     
