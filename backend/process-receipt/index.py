@@ -839,7 +839,9 @@ def detect_bulk_repeat_command(text: str) -> Optional[tuple]:
         r'(?:создай|сделай|отправ[иь])\s+(\d+)\s+(?:копи[йи]|дубл[ей]я?|чек[ао]в?)\s+(?:чека?)?\s*№?\s*([a-zA-Z0-9_-]+)',
         r'(\d+)\s+(?:копи[йи]|дубл[ей]я?|раз[аы]?)\s+(?:чека?)?\s*№?\s*([a-zA-Z0-9_-]+)',
         r'(?:создай|сделай)\s+(\d+)\s+штук\s+(?:чека?)?\s*№?\s*([a-zA-Z0-9_-]+)',
-        r'(\d+)\s+(?:копи[йи]|дубл[ей]я?)\s+№?\s*([a-zA-Z0-9_-]+)'
+        r'(\d+)\s+(?:копи[йи]|дубл[ей]я?)\s+№?\s*([a-zA-Z0-9_-]+)',
+        r'([a-zA-Z0-9_-]{8,})\s+(?:создай|сделай)\s+(\d+)\s+(?:копи[йи]|дубл[ей]я?|чек[ао]в?)',
+        r'([a-zA-Z0-9_-]{8,})\s+(\d+)\s+(?:копи[йи]|дубл[ей]я?|раз[аы]?)'
     ]
     
     print(f"[DEBUG] Detecting bulk command in: {text_lower}")
@@ -847,8 +849,12 @@ def detect_bulk_repeat_command(text: str) -> Optional[tuple]:
     for i, pattern in enumerate(bulk_patterns):
         match = re.search(pattern, text_lower)
         if match:
-            count = int(match.group(1))
-            uuid_raw = match.group(2)
+            if i >= 4:
+                uuid_raw = match.group(1)
+                count = int(match.group(2))
+            else:
+                count = int(match.group(1))
+                uuid_raw = match.group(2)
             print(f"[DEBUG] Pattern {i} matched! Count: {count}, UUID raw: {uuid_raw}")
             uuid_clean = extract_uuid_with_ai(uuid_raw)
             result_uuid = uuid_clean if uuid_clean else uuid_raw
