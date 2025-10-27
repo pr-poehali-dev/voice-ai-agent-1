@@ -412,64 +412,27 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         print(f"[DEBUG] Receipt found! Items: {existing_receipt.get('items')}")
         
-        login = settings.get('ecomkassa_login') or os.environ.get('ECOMKASSA_LOGIN', '')
-        password = settings.get('ecomkassa_password') or os.environ.get('ECOMKASSA_PASSWORD', '')
-        group_code = settings.get('group_code') or os.environ.get('ECOMKASSA_GROUP_CODE', '')
-        
-        print(f"[DEBUG] EcomKassa credentials: login={bool(login)}, password={bool(password)}, group_code={bool(group_code)}")
-        
-        if not (login and password and group_code):
-            print(f"[DEBUG] Missing EcomKassa credentials - returning 400")
-            return {
-                'statusCode': 400,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                'body': json.dumps({
-                    'error': 'Массовое создание доступно только с настроенным ЕкомКасса',
-                    'message': 'Заполни настройки ЕкомКасса для массового создания чеков'
-                })
-            }
-        
-        print(f"[DEBUG] Starting bulk creation: {count} copies")
-        
-        created_receipts = []
-        failed_receipts = []
-        operation_type = existing_receipt.get('operation_type', 'sell')
-        
-        for i in range(count):
-            import time
-            unique_external_id = f'BULK_{uuid}_{int(time.time() * 1000)}_{i}'
-            print(f"[DEBUG] Creating copy {i+1}/{count} with external_id: {unique_external_id}")
-            
-            receipt_payload = {
-                'external_id': unique_external_id,
-                'items': existing_receipt.get('items', []),
-                'payments': existing_receipt.get('payments', []),
-                'client': existing_receipt.get('client', {}),
-                'company': {
-                    'email': settings.get('company_email', existing_receipt.get('company', {}).get('email', '')),
-                    'sno': settings.get('sno', existing_receipt.get('company', {}).get('sno', 'usn_income')),
-                    'inn': settings.get('inn', existing_receipt.get('company', {}).get('inn', '')),
-                    'payment_address': settings.get('payment_address', existing_receipt.get('company', {}).get('payment_address', ''))
-                }
-            }
-            
-            try:
-                print(f"[DEBUG] Sending copy {i+1} to EcomKassa...")
-                result = send_to_ecomkassa(receipt_payload, operation_type, login, password, group_code)
-                print(f"[DEBUG] Copy {i+1} result: success={result.get('success')}, error={result.get('error')}")
-                if result.get('success'):
-                    save_receipt_to_db(unique_external_id, f'Копия #{i+1} чека {uuid}', receipt_payload, operation_type, result.get('uuid'), False)
-                    created_receipts.append({'index': i+1, 'uuid': result.get('uuid'), 'external_id': unique_external_id})
-                else:
-                    failed_receipts.append({'index': i+1, 'error': result.get('error', 'Неизвестная ошибка')})
-            except Exception as e:
-                print(f"[DEBUG] Copy {i+1} exception: {str(e)}")
-                failed_receipts.append({'index': i+1, 'error': str(e)})
-        
-        print(f"[DEBUG] Bulk creation finished: created={len(created_receipts)}, failed={len(failed_receipts)}")
+        parsed_receipt = {
+            'items': existing_receipt['items'],
+            'total': existing_receipt['total'],
+            'payment_type': existing_receipt.get('payment_type', 'card'),
+            'payments': existing_receipt.get('payments', [{
+                'type': '0' if existing_receipt.get('payment_type') == 'cash' else '1',
+                'sum': existing_receipt['total']
+            }]),
+            'client': {
+                'email': existing_receipt.get('customer_email', ''),
+                'phone': existing_receipt.get('customer_phone', '')
+            },
+            'company': {
+                'email': settings.get('company_email', 'company@example.com'),
+                'sno': settings.get('sno', 'usn_income'),
+                'inn': settings.get('inn', '1234567890'),
+                'payment_address': settings.get('payment_address', 'example.com')
+            },
+            'bulk_count': count,
+            'original_uuid': uuid
+        }
         
         return {
             'statusCode': 200,
@@ -478,13 +441,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({
-                'success': True,
-                'message': f'Создано {len(created_receipts)} из {count} чеков',
-                'created': created_receipts,
-                'failed': failed_receipts,
-                'total_requested': count,
-                'total_created': len(created_receipts),
-                'total_failed': len(failed_receipts)
+                'preview': True,
+                'receipt': parsed_receipt,
+                'message': f'Будет создано {count} копий чека',
+                'original_user_message': existing_receipt.get('user_message', ''),
+                'operation_type': existing_receipt.get('operation_type', 'sell')
             })
         }
     
@@ -700,6 +661,71 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps(error_result)
+        }
+    
+    bulk_count = parsed_receipt.get('bulk_count')
+    original_uuid = parsed_receipt.get('original_uuid')
+    
+    if bulk_count and original_uuid:
+        print(f"[DEBUG] Bulk creation confirmed: {bulk_count} copies of {original_uuid}")
+        created_receipts = []
+        failed_receipts = []
+        
+        for i in range(bulk_count):
+            import time
+            unique_external_id = f'BULK_{original_uuid}_{int(time.time() * 1000)}_{i}'
+            print(f"[DEBUG] Creating copy {i+1}/{bulk_count} with external_id: {unique_external_id}")
+            
+            receipt_copy = parsed_receipt.copy()
+            receipt_copy.pop('bulk_count', None)
+            receipt_copy.pop('original_uuid', None)
+            
+            try:
+                result = create_ecomkassa_receipt(receipt_copy, token, group_code, operation_type)
+                print(f"[DEBUG] Copy {i+1} result: success={result.get('success')}")
+                
+                if result.get('success') or result.get('demo'):
+                    save_receipt_to_db(
+                        unique_external_id,
+                        f'Копия #{i+1} чека {original_uuid}',
+                        receipt_copy,
+                        operation_type,
+                        result.get('ecomkassa_response'),
+                        result.get('demo', False),
+                        result.get('uuid')
+                    )
+                    created_receipts.append({
+                        'index': i+1,
+                        'uuid': result.get('uuid'),
+                        'external_id': unique_external_id
+                    })
+                else:
+                    failed_receipts.append({
+                        'index': i+1,
+                        'error': result.get('error', 'Неизвестная ошибка')
+                    })
+            except Exception as e:
+                print(f"[DEBUG] Copy {i+1} exception: {str(e)}")
+                failed_receipts.append({'index': i+1, 'error': str(e)})
+        
+        print(f"[DEBUG] Bulk creation finished: created={len(created_receipts)}, failed={len(failed_receipts)}")
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'isBase64Encoded': False,
+            'body': json.dumps({
+                'success': True,
+                'message': f'Создано {len(created_receipts)} из {bulk_count} чеков',
+                'created': created_receipts,
+                'failed': failed_receipts,
+                'total_requested': bulk_count,
+                'total_created': len(created_receipts),
+                'total_failed': len(failed_receipts)
+            })
         }
     
     receipt_result = create_ecomkassa_receipt(
