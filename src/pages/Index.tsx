@@ -68,6 +68,12 @@ const Index = ({ repeatCommand, setRepeatCommand }: IndexProps) => {
     sendMessage(input, operationType, setInput);
   };
 
+  const handleRepeat = (messageContent: string) => {
+    if (messageContent) {
+      setInput(messageContent);
+    }
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -111,6 +117,7 @@ const Index = ({ repeatCommand, setRepeatCommand }: IndexProps) => {
                 handleConfirmReceipt={handleConfirmReceipt}
                 handleCancelReceipt={handleCancelReceipt}
                 userMessage={userMessageContext}
+                onRepeat={handleRepeat}
               />
             );
           })}

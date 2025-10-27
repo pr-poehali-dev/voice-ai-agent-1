@@ -29,7 +29,7 @@ interface ChatMessageProps {
   handleConfirmReceipt: () => void;
   handleCancelReceipt: () => void;
   userMessage?: string;
-  userMessage?: string;
+  onRepeat?: (messageContent: string) => void;
 }
 
 export const ChatMessage = ({
@@ -42,6 +42,7 @@ export const ChatMessage = ({
   handleConfirmReceipt,
   handleCancelReceipt,
   userMessage,
+  onRepeat,
 }: ChatMessageProps) => {
   const [feedbackSent, setFeedbackSent] = useState<'positive' | 'negative' | null>(null);
 
@@ -108,9 +109,22 @@ export const ChatMessage = ({
               : message.type === 'preview'
               ? 'bg-accent/10 border-accent'
               : 'bg-primary text-primary-foreground border-primary'
-          }`}
+          } relative`}
         >
-          <p className="text-sm leading-relaxed">{message.content}</p>
+          <div className="flex items-start gap-3">
+            <p className="text-sm leading-relaxed flex-1">{message.content}</p>
+            {message.receiptData && !message.hasError && onRepeat && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onRepeat(userMessage || '')}
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 flex-shrink-0"
+                title="Повторить"
+              >
+                <Icon name="RotateCw" size={14} />
+              </Button>
+            )}
+          </div>
           {message.previewData && editedData && (
             <ReceiptPreview
               editedData={editedData}
