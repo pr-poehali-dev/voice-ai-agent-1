@@ -294,6 +294,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     (settings.get('ecomkassa_password') or settings.get('password')) and \
                     settings.get('group_code')
     
+    active_ai_provider = settings.get('active_ai_provider', '')
     has_any_ai = any([
         settings.get('gigachat_auth_key'),
         settings.get('openrouter_api_key'),
@@ -317,7 +318,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             })
         }
     
-    if not has_any_ai and not preview_only:
+    if (not has_any_ai or not active_ai_provider) and not preview_only:
         return {
             'statusCode': 400,
             'headers': {
@@ -325,8 +326,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({
-                'error': 'Настройки AI не заполнены',
-                'message': 'Перейди в Настройки и выбери AI провайдера (GigaChat, Claude, OpenAI или YandexGPT)',
+                'error': 'AI провайдер не подключен',
+                'message': 'Перейди в Настройки и подключи AI провайдера (GigaChat, YandexGPT или GPT Tunnel)',
                 'missing_integration': 'ai'
             })
         }
