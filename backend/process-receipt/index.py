@@ -61,18 +61,27 @@ def get_ai_completion(user_text: str, settings: dict, context: str = '') -> Opti
 Поля (только корректные значения):
 operation_type: sell/sell_refund
 payment_object: commodity/service
-payment_method: full_payment (полная оплата) / advance (предоплата/частичная оплата при кредите)
 vat: none/vat20/vat10 (дефолт none)
 measure: шт/услуга
 client: email (проверь формат), phone (+7...), МОЖНО null если "без почты"
 
-ВАЖНО про payment_method:
-- full_payment: полная оплата (один способ: наличные / карта / безнал) ИЛИ смешанная без кредита (наличные+карта)
-- advance: частичная оплата с кредитом/рассрочкой (взнос + последующая оплата type="3")
+ВАЖНО про payment_method (признак способа расчета по ФФД 1.2):
+• full_prepayment – предоплата 100%. Полная предоплата до передачи товара
+• prepayment – предоплата (частичная). Частичная предоплата до передачи товара
+• advance – аванс
+• full_payment – полный расчет. Полная оплата (в т.ч. с учетом аванса) в момент передачи товара
+• partial_payment – частичный расчет и кредит. Частичная оплата при передаче + последующая оплата в кредит
+• credit – передача в кредит. Передача товара без оплаты с последующей оплатой в кредит
+• credit_payment – оплата кредита. Оплата товара после передачи (погашение кредита)
 
-Как определить payment_method:
-- Если в payments есть type="3" (кредит/последующая оплата) → payment_method: "advance"
-- Если в payments только type="0", "1", "2" без type="3" → payment_method: "full_payment"
+Как определить payment_method для ТИПИЧНЫХ сценариев:
+1. Обычная продажа (оплата сразу полностью): full_payment
+2. Частичная оплата + кредит (взнос + type="3"): partial_payment
+3. Только кредит без взноса (только type="3"): credit
+4. Предоплата 100%: full_prepayment
+5. Аванс: advance
+
+ПО УМОЛЧАНИЮ используй full_payment для обычных продаж
 
 Часть данных подставит бэкэнд (group_code, inn, sno, default_vat, company_email, payment_address), так как он связан с настройками который вводит пользователя.
 
@@ -88,7 +97,7 @@ client: email (проверь формат), phone (+7...), МОЖНО null ес
 Примеры запросов:
 - "кофе 200₽ без почты" → {{"operation_type":"sell","items":[{{"name":"кофе","price":200,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":200}}]}}
 - "услуга 1500₽ не отправлять чек" → {{"operation_type":"sell","items":[{{"name":"услуга","price":1500,"quantity":1,"measure":"услуга","vat":"none","payment_method":"full_payment","payment_object":"service"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":1500}}]}}
-- "Я продаю мебель на заказ за 1300.12 в кредит первоначальный взнос 500" → {{"operation_type":"sell","items":[{{"name":"мебель на заказ","price":1300.12,"quantity":1,"measure":"шт","vat":"none","payment_method":"advance","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":500}},{{"type":"3","sum":800.12}}]}}
+- "Я продаю мебель на заказ за 1300.12 в кредит первоначальный взнос 500" → {{"operation_type":"sell","items":[{{"name":"мебель на заказ","price":1300.12,"quantity":1,"measure":"шт","vat":"none","payment_method":"partial_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":500}},{{"type":"3","sum":800.12}}]}}
 - "товар 1000₽, 600 наличными остальное картой" → {{"operation_type":"sell","items":[{{"name":"товар","price":1000,"quantity":1,"measure":"шт","vat":"none","payment_method":"full_payment","payment_object":"commodity"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"0","sum":600}},{{"type":"1","sum":400}}]}}
 - "стрижка и укладка 2500₽" → {{"operation_type":"sell","items":[{{"name":"стрижка и укладка","price":2500,"quantity":1,"measure":"услуга","vat":"none","payment_method":"full_payment","payment_object":"service"}}],"client":{{"email":null,"phone":null}},"payments":[{{"type":"1","sum":2500}}]}}
 - "кофе" → {{"error":"Укажи цену. Email необязателен (будет дефолтный). Пример: кофе 200₽"}}
