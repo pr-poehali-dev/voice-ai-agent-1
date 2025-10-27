@@ -1454,9 +1454,9 @@ def create_ecomkassa_receipt(
     items_for_payload = [
         {
             'name': item['name'],
-            'price': float(item['price']),
+            'price': round(float(item['price']), 2),
             'quantity': float(item.get('quantity', 1)),
-            'sum': round(float(item['price']) * float(item.get('quantity', 1)), 2),
+            'sum': round(round(float(item['price']), 2) * float(item.get('quantity', 1)), 2),
             'measure': int(measure_map.get(item.get('measure', 'шт'), '0')),
             'payment_method': item.get('payment_method', 'full_payment'),
             'payment_object': {
