@@ -73,7 +73,9 @@ export const useReceiptHandlers = (
       const data = await sendReceiptPreview(userInput, operationType, settings, lastReceiptData);
 
       if (data.error) {
-        localStorage.setItem('context_message', userInput);
+        const currentContext = localStorage.getItem('context_message') || '';
+        const updatedContext = currentContext ? `${currentContext} ${userInput}` : userInput;
+        localStorage.setItem('context_message', updatedContext);
         
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -105,8 +107,6 @@ export const useReceiptHandlers = (
         }
         return;
       }
-      
-      localStorage.removeItem('context_message');
 
       const detectedType = data.operation_type || operationType;
       const typeName = OPERATION_NAMES[detectedType] || detectedType;
@@ -119,6 +119,8 @@ export const useReceiptHandlers = (
         previewData: { ...data.receipt, operation_type: detectedType, typeName },
       };
 
+      localStorage.removeItem('context_message');
+      
       setMessages((prev) => {
         const filtered = prev.filter(m => m.content !== 'Работаю, минуту...' && m.type !== 'preview');
         return [...filtered, previewMessage];
@@ -195,6 +197,7 @@ export const useReceiptHandlers = (
       setEditMode(false);
       setEditedData(null);
       setLastReceiptData(null);
+      localStorage.removeItem('context_message');
       
       if (data.success) {
         toast.success(`Чек успешно создан! Тип: ${typeName}`);
@@ -223,6 +226,7 @@ export const useReceiptHandlers = (
     setEditMode(false);
     setEditedData(null);
     setLastReceiptData(null);
+    localStorage.removeItem('context_message');
     toast.info('Отменено');
   };
 
