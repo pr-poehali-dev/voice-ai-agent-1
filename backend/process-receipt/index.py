@@ -1451,12 +1451,25 @@ def create_ecomkassa_receipt(
         'сутки': '24'
     }
     
-    items_for_payload = [
-        {
+    # Build items, ensuring price * quantity = sum exactly using Decimal
+    from decimal import Decimal, ROUND_HALF_UP
+    
+    items_for_payload = []
+    for item in receipt_data['items']:
+        qty = Decimal(str(item.get('quantity', 1)))
+        price = Decimal(str(item['price']))
+        
+        # Calculate sum with Decimal precision, then round to 2 decimals
+        item_sum = float((price * qty).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+        
+        # Recalculate price from sum to ensure exact match: price = sum / quantity
+        exact_price = float((Decimal(str(item_sum)) / qty).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
+        
+        items_for_payload.append({
             'name': item['name'],
-            'price': round(float(item['price']), 2),
-            'quantity': float(item.get('quantity', 1)),
-            'sum': round(round(float(item['price']), 2) * float(item.get('quantity', 1)), 2),
+            'price': exact_price,
+            'quantity': float(qty),
+            'sum': item_sum,
             'measure': int(measure_map.get(item.get('measure', 'шт'), '0')),
             'payment_method': item.get('payment_method', 'full_payment'),
             'payment_object': {
@@ -1468,9 +1481,7 @@ def create_ecomkassa_receipt(
             'vat': {
                 'type': item.get('vat', 'none')
             }
-        }
-        for item in receipt_data['items']
-    ]
+        })
     
     calculated_total = round(sum(item['sum'] for item in items_for_payload), 2)
     
