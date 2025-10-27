@@ -232,6 +232,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     import re
     text_lower = user_message.lower().strip()
     
+    context_message = settings.get('context_message', '')
+    has_context = bool(context_message)
+    
     irrelevant_keywords = [
         'привет', 'здравствуй', 'добрый', 'доброе', 'hello', 'hi', 'hey',
         'расскажи', 'что такое', 'как дела', 'анекдот', 'пошути', 
@@ -245,7 +248,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         'руб', '₽', 'email', '@', 'цена', 'сумма', 'отправ', 'созда'
     ])
     
-    if not has_receipt_keywords:
+    if not has_receipt_keywords and not has_context:
         for keyword in irrelevant_keywords:
             if keyword in text_lower:
                 print(f"[DEBUG] Irrelevant request blocked: '{user_message}' contains '{keyword}'")
@@ -261,7 +264,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
         
         if len(text_lower) < 10:
-            print(f"[DEBUG] Too short message without receipt keywords: '{user_message}'")
+            print(f"[DEBUG] Too short message without receipt keywords and no context: '{user_message}'")
             return {
                 'statusCode': 400,
                 'headers': {
