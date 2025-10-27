@@ -91,14 +91,14 @@ export const AISettingsSection = ({
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold">{provider.name}</h3>
+                      <h3 className={`font-semibold ${isActive ? 'text-green-900' : ''}`}>{provider.name}</h3>
                       {isActive && (
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                        <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
                           Активен
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{provider.description}</p>
+                    <p className={`text-sm ${isActive ? 'text-green-700' : 'text-muted-foreground'}`}>{provider.description}</p>
                   </div>
                   {!activeProvider && (
                     <ChevronRight className="h-5 w-5 text-gray-400" />
