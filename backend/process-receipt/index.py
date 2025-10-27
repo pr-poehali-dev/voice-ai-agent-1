@@ -397,7 +397,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         existing_receipt = get_receipt_from_db(uuid)
+        print(f"[DEBUG] Retrieved receipt from DB: {existing_receipt is not None}")
         if not existing_receipt:
+            print(f"[DEBUG] Receipt {uuid} not found in database")
             return {
                 'statusCode': 404,
                 'headers': {
@@ -408,6 +410,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'error': f'Чек с UUID {uuid} не найден в истории'
                 })
             }
+        print(f"[DEBUG] Receipt found! Items: {existing_receipt.get('items')}")
         
         login = settings.get('ecomkassa_login') or os.environ.get('ECOMKASSA_LOGIN', '')
         password = settings.get('ecomkassa_password') or os.environ.get('ECOMKASSA_PASSWORD', '')
