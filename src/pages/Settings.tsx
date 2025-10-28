@@ -22,26 +22,25 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white p-4">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => navigate('/')}
+        className="fixed top-8 right-8 text-gray-700 hover:bg-gray-100 hover:text-gray-900 z-50"
+      >
+        <X className="h-5 w-5" />
+      </Button>
+      
       <div className="max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/')}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-2xl font-bold">Настройки Екомкасса</h1>
-          </div>
+        <div className="flex items-center gap-4 mb-6">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate('/')}
-            className="text-gray-700 hover:bg-gray-100 hover:text-gray-900 mr-5"
           >
-            <X className="h-5 w-5" />
+            <ArrowLeft className="h-5 w-5" />
           </Button>
+          <h1 className="text-2xl font-bold">Настройки Екомкасса</h1>
         </div>
 
         <div className="space-y-6">
